@@ -19,7 +19,7 @@
 
 typedef Omnidirectional Agent;
 typedef Map3D<Omnidirectional> Workspace;
-typedef GridDiscretization<Workspace> Discretization;
+typedef GridDiscretization<Workspace, Agent> Discretization;
 typedef UniformSampler<Workspace, Agent> Sampler;
 // typedef FBiasedSampler<Workspace, Agent, Discretization> Sampler;
 
@@ -53,8 +53,8 @@ int main(int argc, char *argv[]) {
 	auto goalVars = parseDoubles(args.value("Agent Goal Location"));
 	Agent::State goal(goalVars);
 
-	// std::vector<double> discretizations(3, 2./3.);
-	// Discretization discretization(workspace, discretizations);
+	std::vector<double> discretizations(3, 2./3.);
+	Discretization discretization(workspace, agent, discretizations);
 
 	// Sampler sampler(workspace, agent, discretization, start, goal);
 

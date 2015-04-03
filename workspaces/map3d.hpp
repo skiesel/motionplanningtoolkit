@@ -34,6 +34,10 @@ public:
 		return !MeshHandler::isInCollision(mesh, agent.getMesh(), agent.getPoses(edge, dt));
 	}
 
+	bool safePoses(const Agent &agent, const std::vector<fcl::Transform3f> &poses) const {
+		return !MeshHandler::isInCollision(mesh, agent.getMesh(), poses);
+	}
+
 #ifdef WITHGRAPHICS
 	void draw() { mesh.draw(); }
 #endif

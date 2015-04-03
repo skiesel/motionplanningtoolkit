@@ -1,15 +1,12 @@
 #pragma once
 
 #include <cassert>
+#include <bitset>
 
-template <class Workspace>
+template <class Workspace, class Agent>
 class GridDiscretization {
-	class Cell {
-	public:
-		void *data;
-	};
 public:
-	GridDiscretization(const Workspace &workspace, const std::vector<double> &discretizationSizes) :
+	GridDiscretization(const Workspace &workspace, const Agent &agent, const std::vector<double> &discretizationSizes) :
 		discretizationSizes(discretizationSizes.begin(), discretizationSizes.end()) {
 		bounds = workspace.getBounds();
 		assert(bounds.size() == discretizationSizes.size());
@@ -22,6 +19,16 @@ public:
 		}
 
 		grid.resize(cellCount);
+
+		for(unsigned int i = 0; i < cellCount; i++) {
+			auto pt = getGridCenter(i);
+			if(workspace.safePoses(agent, agent.getRepresentivePosesForLocation(pt))) {
+				grid[i] = 0;
+			} else {
+				grid[i] = 1;
+			}
+		}
+
 		populateGridNeighborOffsets();
 	}
 
@@ -60,8 +67,9 @@ public:
 				}
 				neighbor[i] = coord;
 			}
-			if(valid) {
-				neighbors.push_back(getIndex(neighbor));
+			unsigned int index = getIndex(neighbor);
+			if(valid && grid[index] == 0) {
+				neighbors.push_back(index);
 			}
 		}
 
@@ -82,6 +90,21 @@ private:
 		}
 
 		return coordinate;
+	}
+
+	std::vector<double> getGridCenter(unsigned int n) const {
+		std::vector<double> point;
+
+		point.push_back((double)(n % dimensions[0]) * discretizationSizes[0] + discretizationSizes[0]  * 0.5);
+		if(dimensions.size() > 1) {
+			unsigned int previousDimSizes = 1;
+			for(unsigned int i = 1; i < dimensions.size(); i++) {
+				previousDimSizes *= dimensions[i];
+				point.push_back((double)(n / previousDimSizes % dimensions[i]) * discretizationSizes[i] + discretizationSizes[1]  * 0.5);
+			}
+		}
+
+		return point;
 	}
 
 	unsigned int getIndex(const std::vector<double> &point) const {
@@ -142,7 +165,7 @@ private:
 	}
 
 	std::vector< std::pair<double, double> > bounds;
-	std::vector<Cell> grid;
+	std::vector<bool> grid;
 	std::vector<double> discretizationSizes;
 	std::vector<unsigned int> dimensions;
 	std::vector< std::vector<int> > gridNeighborOffsets;

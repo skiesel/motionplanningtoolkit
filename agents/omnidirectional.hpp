@@ -138,6 +138,15 @@ public:
 		return mesh;
 	}
 
+	std::vector<fcl::Transform3f> getRepresentivePosesForLocation(const std::vector<double> &loc) const {
+		std::vector<fcl::Transform3f> poses;
+
+		fcl::Vec3f pose(loc[0], loc[1], loc[2]);
+		poses.push_back(fcl::Transform3f(pose));
+
+		return poses;
+	}
+
 	std::vector<fcl::Transform3f> getPoses(const Edge &edge, double dt) const {
 		std::vector<fcl::Transform3f> poses;
 		
