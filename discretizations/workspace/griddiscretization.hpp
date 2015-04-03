@@ -14,7 +14,11 @@ public:
 		unsigned int cellCount = 1;
 		for(unsigned int i = 0; i < discretizationSizes.size(); i++) {
 			double range = fabs(bounds[i].first - bounds[i].second);
-			dimensions.push_back(ceil(range / discretizationSizes[i]));
+			if(range == 0) {
+				dimensions.push_back(1);
+			} else {
+				dimensions.push_back(ceil(range / discretizationSizes[i]));
+			}
 			cellCount *= dimensions.back();
 		}
 
@@ -23,9 +27,9 @@ public:
 		for(unsigned int i = 0; i < cellCount; i++) {
 			auto pt = getGridCenter(i);
 			if(workspace.safePoses(agent, agent.getRepresentivePosesForLocation(pt))) {
-				grid[i] = 0;
+				grid[i] = true;
 			} else {
-				grid[i] = 1;
+				grid[i] = false;
 			}
 		}
 
@@ -51,6 +55,20 @@ public:
 		return sqrt(sum);
 	}
 
+	std::vector< std::vector<double> > getCellBoundingHyperRect(unsigned int n) const {
+		std::vector< std::vector<double> > bounds(dimensions.size());
+
+		auto center = getGridCenter(n);
+
+		for(unsigned int i = 0; i < center.size(); ++i) {
+			double halfDisc = discretizationSizes[i];
+			bounds[i].push_back(center[i] - halfDisc);
+			bounds[i].push_back(center[i] + halfDisc);
+		}
+
+		return bounds;
+	}
+
 	std::vector<unsigned int> getNeighbors(unsigned int n) const {
 		std::vector<unsigned int> neighbors;
 
@@ -68,7 +86,7 @@ public:
 				neighbor[i] = coord;
 			}
 			unsigned int index = getIndex(neighbor);
-			if(valid && grid[index] == 0) {
+			if(valid && grid[index]) {
 				neighbors.push_back(index);
 			}
 		}
@@ -95,12 +113,12 @@ private:
 	std::vector<double> getGridCenter(unsigned int n) const {
 		std::vector<double> point;
 
-		point.push_back((double)(n % dimensions[0]) * discretizationSizes[0] + discretizationSizes[0]  * 0.5);
+		point.push_back(bounds[0].first + (double)(n % dimensions[0]) * discretizationSizes[0] + discretizationSizes[0]  * 0.5);
 		if(dimensions.size() > 1) {
 			unsigned int previousDimSizes = 1;
 			for(unsigned int i = 1; i < dimensions.size(); i++) {
 				previousDimSizes *= dimensions[i];
-				point.push_back((double)(n / previousDimSizes % dimensions[i]) * discretizationSizes[i] + discretizationSizes[1]  * 0.5);
+				point.push_back(bounds[i].first + (double)(n / previousDimSizes % dimensions[i]) * discretizationSizes[i] + discretizationSizes[1]  * 0.5);
 			}
 		}
 

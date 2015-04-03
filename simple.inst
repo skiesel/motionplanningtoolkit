@@ -1,12 +1,12 @@
 Agent Model ? Omnidirectional
 Agent Mesh ? ../environment_models/unit_box.dae
-Agent Start Location ?  0 0 0 1 0 0 0
-Agent Goal Location ? 0.5 0.5 0 1 0 0 0
+Agent Start Location ?  -5 -5 0 1 0 0 0
+Agent Goal Location ? 5 5 0 1 0 0 0
 
 Environment Model ? Map3D
 Environment Mesh ? ../environment_models/unit_box.dae
-Environment Location ? -1.5 0 0 1 0 0 0
-Environment Bounding Box ? -1 1 -1 1 -1 1
+Environment Location ? 0 0 0 1 0 0 0
+Environment Bounding Box ? -10 10 -10 10 0 0
 
 Steering Delta t ? 0.1
 Collision Check Delta t ? 0.01

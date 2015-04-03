@@ -19,29 +19,109 @@ class FBiasedSampler {
 		static bool sortH(const Node *n1, const Node *n2) { return n1->h > n2->h; }
 
 		unsigned int id;
-		double g, h;
+		double g, h, f;
+		double score;
+		double min, max;
 	};
 
 public:
 	FBiasedSampler(const Workspace &workspace, const Agent &agent, const WorkspaceDiscretization& discretization,
-				const State& start, const State& goal) :
-		workspace(workspace), agent(agent), discretization(discretization) {
+				const State& start, const State& goal, double omega = 4) :
+		workspace(workspace), agent(agent), discretization(discretization), omega(omega) {
 
 			unsigned int startIndex = discretization.getContainingCellId(start.getStateVars());
 			unsigned int goalIndex = discretization.getContainingCellId(goal.getStateVars());
 			unsigned int discretizationCells = discretization.getCellCount();
 
-			std::vector<Node> nodes(discretizationCells);
+			nodes.resize(discretizationCells);
 
 			dijkstraG(startIndex, nodes);
 			dijkstraH(goalIndex, nodes);
+
+			double minF = std::numeric_limits<double>::infinity();
+			std::vector<Node*> untouched;
+			for(Node &n : nodes) {
+				n.f = n.g + n.h;
+				if(n.f >= 0){
+					if(n.f < minF) {
+						minF = n.f;
+					}
+				} else {
+					untouched.push_back(&n);
+				}
+			}
+
+			double numerator = pow(minF, omega);
+			double minScore = std::numeric_limits<double>::infinity();
+			double scoreSum = 0;
+			for(Node &n : nodes) {
+				if(n.f >= 0) {
+					n.score = numerator / pow(n.f, omega);
+					scoreSum += n.score;
+					if(n.score <= minScore) {
+						minScore = n.score;
+					}
+				}
+			}
+
+			minScore /= 2;
+			for(Node *n : untouched) {
+				n->score = minScore;
+			}
+
+			scoreSum += (double)untouched.size() * minScore;
+
+			double lowerBound = 0;
+			for(Node &n : nodes) {
+				n.min = lowerBound;
+				n.max = lowerBound + n.score / scoreSum;
+				lowerBound = n.max;
+			}
 		}
 
 	State sampleConfiguration() const {
 		StateVars vars;
-		return agent.buildState(vars);
+
+		const Node &n = getNode(distribution(generator));
+
+		std::vector< std::vector<double> > cellBounds = discretization.getCellBoundingHyperRect(n.id);
+
+		vars.resize(cellBounds.size());
+
+		std::vector< std::uniform_real_distribution<double> > distributions;
+
+		for(const std::vector<double> &cellBound : cellBounds) {
+			distributions.emplace_back(cellBound[0], cellBound[1]);
+		}
+
+		// while(true) {
+			for(unsigned int i = 0; i < distributions.size(); ++i) {
+				vars[i] = distributions[i](generator);
+			}
+
+			// if(discretization.getContainingCellId(vars) == n.id) {
+				return agent.buildState(vars);
+			// }
+		// }
 	};
 private:
+
+	const Node& getNode(double value) const {
+		unsigned int min = 0;
+		unsigned int max = nodes.size();
+		while(true) {
+			unsigned int pivot = min + (max - min) / 2;
+			const Node &n = nodes[pivot];
+			if(value < n.min) {
+				max = pivot - 1;
+			} else if(value > n.max) {
+				min = pivot + 1;
+			} else {
+				return n;
+			}
+		}
+	}
+
 	void dijkstraG(unsigned int start, std::vector<Node>& nodes) const {
 		dijkstra(start, nodes, Node::getG, Node::setG, Node::sortG);
 	}
@@ -80,5 +160,8 @@ private:
 	const Agent &agent;
 	const WorkspaceDiscretization &discretization;
 	StateVarRanges stateVarDomains;
-
+	std::vector<Node> nodes;
+	mutable std::uniform_real_distribution<double> distribution;
+	mutable std::default_random_engine generator;
+	double omega;
 };

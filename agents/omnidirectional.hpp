@@ -90,9 +90,9 @@ public:
 	}
 
 	bool isGoal(const State &state, const State &goal) const {
-		return fabs(state.x() - goal.x()) < 0.01 &&
-		fabs(state.y() - goal.y()) < 0.01 &&
-		fabs(state.z() - goal.z()) < 0.01;
+		return fabs(state.x() - goal.x()) < 0.001 &&
+		fabs(state.y() - goal.y()) < 0.001 &&
+		fabs(state.z() - goal.z()) < 0.001;
 	}
 
 	Edge steer(const State &start, const State &goal, double dt) const {

@@ -253,9 +253,9 @@ private:
 		makeIdentity(translateMatrix);
 		makeIdentity(xRotateMatrix);
 		makeIdentity(yRotateMatrix);
-		scaleMatrix[0] = 0.5;
-		scaleMatrix[5] = 0.5;
-		scaleMatrix[10] = 0.5;
+		scaleMatrix[0] = .1;
+		scaleMatrix[5] = .1;
+		scaleMatrix[10] = .1;
 	}
 
 	void drawCommon(std::function<void(void)> drawType, const std::vector<double> &verts) const {

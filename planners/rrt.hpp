@@ -40,7 +40,7 @@ public:
 			auto sample = sampler.sampleConfiguration();
 
 #ifdef WITHGRAPHICS
-			sample.draw();
+			samples.push_back(sample);
 #endif
 
 			//intentionally not in the pool
@@ -75,6 +75,10 @@ public:
 		for(const Edge* edge : treeEdges) {
 			edge->draw();
 		}
+
+		for(const State &sample : samples) {
+			sample.draw();
+		}
 #endif
 
 		return false;
@@ -86,6 +90,7 @@ private:
 	NN &nn;
 	boost::object_pool<Edge> pool;
 	std::vector<const Edge*> treeEdges;
+	std::vector<State> samples;
 
 	double steeringDT, collisionCheckDT;
 };
