@@ -71,10 +71,12 @@ public:
 
 			scoreSum += (double)untouched.size() * minScore;
 
+			unsigned int num = 0;
 			double lowerBound = 0;
 			for(Node &n : nodes) {
 				n.min = lowerBound;
 				n.max = lowerBound + n.score / scoreSum;
+				assert(n.max - n.min > 0);
 				lowerBound = n.max;
 			}
 		}
@@ -94,15 +96,15 @@ public:
 			distributions.emplace_back(cellBound[0], cellBound[1]);
 		}
 
-		// while(true) {
+		while(true) {
 			for(unsigned int i = 0; i < distributions.size(); ++i) {
 				vars[i] = distributions[i](generator);
 			}
 
-			// if(discretization.getContainingCellId(vars) == n.id) {
+			if(discretization.getContainingCellId(vars) == n.id) {
 				return agent.buildState(vars);
-			// }
-		// }
+			}
+		}
 	};
 private:
 

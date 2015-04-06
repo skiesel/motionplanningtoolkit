@@ -17,7 +17,7 @@ public:
 		}
 
 
-	bool query(const State &start, const State &goal, int iterationsAtATime = -1, bool firstInvocation = true) {
+	void query(const State &start, const State &goal, int iterationsAtATime = -1, bool firstInvocation = true) {
 
 #ifdef WITHGRAPHICS
 		auto green = OpenGLWrapper::Color::Green();
@@ -27,7 +27,7 @@ public:
 
 		if(firstInvocation) {
 			if(agent.isGoal(start, goal)) {
-				return true;
+				return;
 			}
 
 			auto root = pool.construct(start, start, 0);
@@ -59,16 +59,25 @@ public:
 			}
 
 			if(agent.isGoal(edge.end, goal)) {
+				std::vector<const Edge*> newSolution;
+				double newSolutionCost = 0;
 				State cur = edge.start;
-				solution.push_back(pool.construct(edge.start, edge.end, edge.cost));
+				newSolution.push_back(pool.construct(edge.start, edge.end, edge.cost));
+				newSolutionCost += edge.cost;
 				while(!cur.equals(start)) {
 					auto e = Edge(cur, cur, 0);
 					typename NN::KNNResult r = nn.nearest(&e);
-					solution.push_back(r.elements[0]);
+					newSolution.push_back(r.elements[0]);
+					newSolutionCost += r.elements[0]->cost;
 					cur = r.elements[0]->start;
 				}
-				std::reverse(solution.begin(), solution.end());
-				return true;
+				if(solutionCost < 0 || newSolutionCost < solutionCost) {
+					std::reverse(newSolution.begin(), newSolution.end());
+					solution.clear();
+					solution.insert(solution.begin(), newSolution.begin(), newSolution.end());
+				}
+				
+				break;
 			}
 
 			Edge *e = pool.construct(edge.start, edge.end, edge.cost);
@@ -95,8 +104,6 @@ public:
 			edge->draw(red);
 		}
 #endif
-
-		return false;
 	}
 private:
 	const Workspace &workspace;
