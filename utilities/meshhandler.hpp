@@ -15,7 +15,7 @@ public:
 			exit(0);
 		}
 
-		meshLoader.get(vertices, triangles);
+		meshLoader.get(vertices, triangles, normals);
 
 		fcl::Transform3f tf = fcl_helpers::parseTransform(pose);
 
@@ -59,34 +59,16 @@ public:
 
 			auto c = color.getColor();
 			for(auto tri : tris) {
-				
-				pts[0] = verts[tri[0]][0];
-				pts[1] = verts[tri[0]][1];
-				pts[2] = verts[tri[0]][2];
-				//pts[3] = 1;
-				pts[4] = c[0];
-				pts[5] = c[1];
-				pts[6] = c[2];
-				pts[7] = c[3];
-
-				pts[8] = verts[tri[1]][0];
-				pts[9] = verts[tri[1]][1];
-				pts[10] = verts[tri[1]][2];
-				//pts[11] = 1;
-				pts[12] = c[0];
-				pts[13] = c[1];
-				pts[14] = c[2];
-				pts[15] = c[3];
-
-				pts[16] = verts[tri[2]][0];
-				pts[17] = verts[tri[2]][1];
-				pts[18] = verts[tri[2]][2];
-				//pts[19] = 1;
-				pts[20] = c[0];
-				pts[21] = c[1];
-				pts[22] = c[2];
-				pts[23] = c[3];
-
+				unsigned int cur = 0;
+				for(unsigned int i = 0; i < 3; ++i) {
+					for(unsigned int j = 0; j < 3; ++j) {
+						pts[cur++] = verts[tri[i]][j];
+					}
+					cur++; // add one extra for the 4th vector component
+					for(unsigned int j = 0; j < 4; ++j) {
+						pts[cur++] = c[j];
+					}
+				}
 
 				opengl.drawTriangles(pts);
 				//opengl.drawPoints(pts);
@@ -100,6 +82,7 @@ private:
 	std::vector<fcl::CollisionObject *> worldObjects;
 	std::vector< std::vector<fcl::Vec3f> > vertices;
 	std::vector< std::vector<fcl::Triangle> > triangles;
+	std::vector< std::vector<double> > normals;
 };
 
 class SimpleAgentMeshHandler {
@@ -111,7 +94,7 @@ public:
 			exit(0);
 		}
 
-		meshLoader.get(vertices, triangles);
+		meshLoader.get(vertices, triangles, normals);
 
 		fcl::Transform3f tf;
 		for(unsigned int i = 0; i < vertices.size(); i++) {
@@ -142,34 +125,16 @@ public:
 
 			auto c = color.getColor();
 			for(auto tri : tris) {
-				
-				pts[0] = verts[tri[0]][0];
-				pts[1] = verts[tri[0]][1];
-				pts[2] = verts[tri[0]][2];
-				//pts[3] = 1;
-				pts[4] = c[0];
-				pts[5] = c[1];
-				pts[6] = c[2];
-				pts[7] = c[3];
-
-				pts[8] = verts[tri[1]][0];
-				pts[9] = verts[tri[1]][1];
-				pts[10] = verts[tri[1]][2];
-				//pts[11] = 1;
-				pts[12] = c[0];
-				pts[13] = c[1];
-				pts[14] = c[2];
-				pts[15] = c[3];
-
-				pts[16] = verts[tri[2]][0];
-				pts[17] = verts[tri[2]][1];
-				pts[18] = verts[tri[2]][2];
-				//pts[19] = 1;
-				pts[20] = c[0];
-				pts[21] = c[1];
-				pts[22] = c[2];
-				pts[23] = c[3];
-
+				unsigned int cur = 0;
+				for(unsigned int i = 0; i < 3; ++i) {
+					for(unsigned int j = 0; j < 3; ++j) {
+						pts[cur++] = verts[tri[i]][j];
+					}
+					cur++; // add one extra for the 4th vector component
+					for(unsigned int j = 0; j < 4; ++j) {
+						pts[cur++] = c[j];
+					}
+				}
 
 				opengl.drawTriangles(pts);
 				//opengl.drawPoints(pts);
@@ -182,6 +147,7 @@ private:
 	boost::shared_ptr<Model> agentModel;
 	std::vector< std::vector<fcl::Vec3f> > vertices;
 	std::vector< std::vector<fcl::Triangle> > triangles;
+	std::vector< std::vector<double> > normals;
 };
 
 class MeshHandler {
