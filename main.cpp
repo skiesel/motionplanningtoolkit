@@ -69,9 +69,11 @@ int main(int argc, char *argv[]) {
 		bool firstInvocation = true;
 		bool foundGoal = false;
 		auto lambda = [&](){
-			if(!foundGoal)
+			// if(!foundGoal)
 				foundGoal = planner.query(start, goal, 100, firstInvocation);
 			firstInvocation = false;
+			agent.draw();
+			workspace.draw();
 		};
 		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda);
 	#else

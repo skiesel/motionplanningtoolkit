@@ -34,18 +34,38 @@ class OpenGLWrapper {
 	const GLchar *vertexSource =
 	    "#version 150\n"
 	    "in vec4 position;"
+		"in vec4 color;"
+		"out vec4 Color;"
 		"uniform mat4 transformMatrix;"
 	    "void main() {"
+	    "	Color = color;"
 	    "	gl_Position = transformMatrix * position;"
 	    "}";
 	const GLchar *fragmentSource =
 	    "#version 150 core\n"
+	    "in vec4 Color;"
 	    "out vec4 outColor;"
 	    "void main() {"
-	    "	outColor = vec4(1.0, 1.0, 1.0, 1.0);"
+	    "	outColor = Color;"
 	    "}";
 
 public:
+
+	class Color {
+	public:
+		Color(double r = 1, double g = 1, double b = 1, double a = 1) : color(4) {
+			color[0] = r;
+			color[1] = g;
+			color[2] = b;
+			color[3] = a;
+		}
+		const std::vector<double>& getColor() const { return color; }
+		static Color Red() { return Color(1,0,0); }
+		static Color Green() { return Color(0,1,0); }
+		static Color Blue() { return Color(0,0,1); }
+	private:
+		std::vector<double> color;
+	};
 
 	static OpenGLWrapper& getOpenGLWrapper() {
 		if(wrapperInstance == NULL) {
@@ -227,22 +247,22 @@ public:
 	}
 
 	void drawPolygon(const std::vector<double> &verts) const {
-		auto lambda = [&](){ glDrawArrays(GL_LINE_LOOP, 0, verts.size() / 4); };
+		auto lambda = [&](){ glDrawArrays(GL_LINE_LOOP, 0, verts.size() / 8); };
 		drawCommon(lambda, verts);
 	}
 
 	void drawTriangles(const std::vector<double> &verts) const {
-		auto lambda = [&](){ glDrawArrays(GL_TRIANGLE_STRIP, 0, verts.size() / 4); };
+		auto lambda = [&](){ glDrawArrays(GL_TRIANGLE_STRIP, 0, verts.size() / 8); };
 		drawCommon(lambda, verts);
 	}
 
 	void drawPoints(const std::vector<double> &verts) const {
-		auto lambda = [&](){ glDrawArrays(GL_POINTS, 0, verts.size() / 4); };
+		auto lambda = [&](){ glDrawArrays(GL_POINTS, 0, verts.size() / 8); };
 		drawCommon(lambda, verts);
 	}
 
 	void drawLines(const std::vector<double> &verts) const {
-		auto lambda = [&](){ glDrawArrays(GL_LINE_STRIP, 0, verts.size() / 4); };
+		auto lambda = [&](){ glDrawArrays(GL_LINE_STRIP, 0, verts.size() / 8); };
 		drawCommon(lambda, verts);
 	}
 
@@ -272,7 +292,11 @@ private:
 		// Specify the layout of the vertex data
 		GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
 		glEnableVertexAttribArray(posAttrib);
-		glVertexAttribPointer(posAttrib, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+		glVertexAttribPointer(posAttrib, 4, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
+
+		GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
+		glEnableVertexAttribArray(colAttrib);
+		glVertexAttribPointer(colAttrib, 4, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(4*sizeof(float)));
 
 		drawType();
 

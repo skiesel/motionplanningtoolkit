@@ -30,25 +30,29 @@ public:
 
 		State(const StateVars &vars) : stateVars(vars.begin(), vars.begin()+3) {}
 
+		const bool equals(const State &s) const {
+			return fabs(stateVars[0] - s.stateVars[0]) <= 0.000001 &&
+					fabs(stateVars[1] - s.stateVars[1]) <= 0.000001 &&
+					fabs(stateVars[2] - s.stateVars[2]) <= 0.000001;
+		}
+
 		double x() const { return stateVars[0]; }
 		double y() const { return stateVars[1]; }
 		double z() const { return stateVars[2]; }
 		const StateVars& getStateVars() const { return stateVars; }
 
-		int getPointIndex() const { return treeIndex; }
-		void setPointIndex(int ptInd) { treeIndex = ptInd; }
-
 #ifdef WITHGRAPHICS
-		void draw() const {
+		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
 			std::vector<double> pt(stateVars.begin(), stateVars.end());
 			pt.push_back(1);
+			pt.insert(pt.end(), color.getColor().begin(), color.getColor().end());
+
 			OpenGLWrapper::getOpenGLWrapper().drawPoints(pt);
 		}
 #endif
 
 	private:
 		StateVars stateVars;
-		int treeIndex;
 	};
 
 	class Edge {
@@ -62,11 +66,14 @@ public:
 		void setPointIndex(int ptInd) { treeIndex = ptInd; }
 
 #ifdef WITHGRAPHICS
-		void draw() const {
+		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
 			std::vector<double> line(start.getStateVars().begin(), start.getStateVars().end());
 			line.push_back(1);
+			line.insert(line.end(), color.getColor().begin(), color.getColor().end());
+
 			line.insert(line.end(), end.getStateVars().begin(), end.getStateVars().end());
 			line.push_back(1);
+			line.insert(line.end(), color.getColor().begin(), color.getColor().end());
 			OpenGLWrapper::getOpenGLWrapper().drawLines(line);
 		}
 #endif
@@ -90,9 +97,9 @@ public:
 	}
 
 	bool isGoal(const State &state, const State &goal) const {
-		return fabs(state.x() - goal.x()) < 0.001 &&
-		fabs(state.y() - goal.y()) < 0.001 &&
-		fabs(state.z() - goal.z()) < 0.001;
+		return fabs(state.x() - goal.x()) < 0.1 &&
+		fabs(state.y() - goal.y()) < 0.1 &&
+		fabs(state.z() - goal.z()) < 0.1;
 	}
 
 	Edge steer(const State &start, const State &goal, double dt) const {
@@ -189,6 +196,12 @@ public:
 
 		return poses;
 	}
+
+#ifdef WITHGRAPHICS
+	void draw() const {
+		mesh.draw();
+	}
+#endif
 
 private:
 	SimpleAgentMeshHandler mesh;

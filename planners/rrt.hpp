@@ -11,7 +11,7 @@ public:
 	typedef typename Agent::Edge Edge;
 
 	RRT(const Workspace &workspace, const Agent &agent, const Sampler &sampler, NN &nn, const InstanceFileMap &args) :
-		workspace(workspace), agent(agent), sampler(sampler), nn(nn) {
+		workspace(workspace), agent(agent), sampler(sampler), nn(nn), solutionCost(-1) {
 			steeringDT = stod(args.value("Steering Delta t"));
 			collisionCheckDT = stod(args.value("Collision Check Delta t"));
 		}
@@ -20,8 +20,9 @@ public:
 	bool query(const State &start, const State &goal, int iterationsAtATime = -1, bool firstInvocation = true) {
 
 #ifdef WITHGRAPHICS
-			start.draw();
-			goal.draw();
+		auto green = OpenGLWrapper::Color::Green();
+		start.draw(green);
+		goal.draw(green);
 #endif
 
 		if(firstInvocation) {
@@ -58,6 +59,15 @@ public:
 			}
 
 			if(agent.isGoal(edge.end, goal)) {
+				State cur = edge.start;
+				solution.push_back(pool.construct(edge.start, edge.end, edge.cost));
+				while(!cur.equals(start)) {
+					auto e = Edge(cur, cur, 0);
+					typename NN::KNNResult r = nn.nearest(&e);
+					solution.push_back(r.elements[0]);
+					cur = r.elements[0]->start;
+				}
+				std::reverse(solution.begin(), solution.end());
 				return true;
 			}
 
@@ -65,7 +75,7 @@ public:
 			nn.insertPoint(e);
 
 #ifdef WITHGRAPHICS
-			// treeEdges.push_back(e);
+			treeEdges.push_back(e);
 #endif
 
 			if(iterationsAtATime > 0 && ++iterations > iterationsAtATime) break;
@@ -79,6 +89,11 @@ public:
 		for(const State &sample : samples) {
 			sample.draw();
 		}
+
+		auto red = OpenGLWrapper::Color::Red();
+		for(const Edge *edge : solution) {
+			edge->draw(red);
+		}
 #endif
 
 		return false;
@@ -89,8 +104,9 @@ private:
 	const Sampler &sampler;
 	NN &nn;
 	boost::object_pool<Edge> pool;
+	std::vector<const Edge*> solution;
 	std::vector<const Edge*> treeEdges;
 	std::vector<State> samples;
-
+	double solutionCost;
 	double steeringDT, collisionCheckDT;
 };
