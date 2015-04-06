@@ -55,7 +55,7 @@ public:
 			//auto edge = agent.randomSteer(nearest, steeringDT);
 
 			if(!workspace.safeEdge(agent, edge, collisionCheckDT)) {
-				++iterations
+				++iterations;
 				continue;
 			}
 
