@@ -55,7 +55,7 @@ public:
 		for(unsigned int i = 0; i < triangles.size(); ++i) {
 			const std::vector<fcl::Vec3f>& verts = vertices[i];
 			const std::vector<fcl::Triangle>& tris = triangles[i];
-			std::vector<double> pts(24, 1.0);
+			std::vector<double> pts(36, 1.0);
 
 			auto c = color.getColor();
 			for(auto tri : tris) {
@@ -63,6 +63,10 @@ public:
 				for(unsigned int i = 0; i < 3; ++i) {
 					for(unsigned int j = 0; j < 3; ++j) {
 						pts[cur++] = verts[tri[i]][j];
+					}
+					cur++; // add one extra for the 4th vector component
+					for(unsigned int j = 0; j < 3; ++j) {
+						pts[cur++] = normals[tri[i]][j];
 					}
 					cur++; // add one extra for the 4th vector component
 					for(unsigned int j = 0; j < 4; ++j) {
@@ -121,7 +125,7 @@ public:
 		for(unsigned int i = 0; i < triangles.size(); ++i) {
 			const std::vector<fcl::Vec3f>& verts = vertices[i];
 			const std::vector<fcl::Triangle>& tris = triangles[i];
-			std::vector<double> pts(24, 1.0);
+			std::vector<double> pts(36, 1.0);
 
 			auto c = color.getColor();
 			for(auto tri : tris) {
@@ -131,10 +135,13 @@ public:
 						pts[cur++] = verts[tri[i]][j];
 					}
 					cur++; // add one extra for the 4th vector component
+					for(unsigned int j = 0; j < 3; ++j) {
+						pts[cur++] = normals[tri[i]][j];
+					}
+					cur++; // add one extra for the 4th vector component
 					for(unsigned int j = 0; j < 4; ++j) {
 						pts[cur++] = c[j];
-					}
-				}
+					}				}
 
 				opengl.drawTriangles(pts);
 				//opengl.drawPoints(pts);

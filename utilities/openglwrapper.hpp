@@ -238,22 +238,22 @@ public:
 	}
 
 	void drawPolygon(const std::vector<double> &verts) const {
-		auto lambda = [&](){ glDrawArrays(GL_LINE_LOOP, 0, verts.size() / 8); };
+		auto lambda = [&](){ glDrawArrays(GL_LINE_LOOP, 0, verts.size() / 12); };
 		drawCommon(lambda, verts);
 	}
 
 	void drawTriangles(const std::vector<double> &verts) const {
-		auto lambda = [&](){ glDrawArrays(GL_TRIANGLE_STRIP, 0, verts.size() / 8); };
+		auto lambda = [&](){ glDrawArrays(GL_TRIANGLE_STRIP, 0, verts.size() / 12); };
 		drawCommon(lambda, verts);
 	}
 
 	void drawPoints(const std::vector<double> &verts) const {
-		auto lambda = [&](){ glDrawArrays(GL_POINTS, 0, verts.size() / 8); };
+		auto lambda = [&](){ glDrawArrays(GL_POINTS, 0, verts.size() / 12); };
 		drawCommon(lambda, verts);
 	}
 
 	void drawLines(const std::vector<double> &verts) const {
-		auto lambda = [&](){ glDrawArrays(GL_LINE_STRIP, 0, verts.size() / 8); };
+		auto lambda = [&](){ glDrawArrays(GL_LINE_STRIP, 0, verts.size() / 12); };
 		drawCommon(lambda, verts);
 	}
 
@@ -302,11 +302,15 @@ private:
 		// Specify the layout of the vertex data
 		GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
 		glEnableVertexAttribArray(posAttrib);
-		glVertexAttribPointer(posAttrib, 4, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
+		glVertexAttribPointer(posAttrib, 4, GL_FLOAT, GL_FALSE, 12*sizeof(float), (void*)0);
+
+		GLint normAttrib = glGetAttribLocation(shaderProgram, "normal");
+		glEnableVertexAttribArray(normAttrib);
+		glVertexAttribPointer(normAttrib, 4, GL_FLOAT, GL_FALSE, 12*sizeof(float), (void*)(4*sizeof(float)));
 
 		GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
 		glEnableVertexAttribArray(colAttrib);
-		glVertexAttribPointer(colAttrib, 4, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(4*sizeof(float)));
+		glVertexAttribPointer(colAttrib, 4, GL_FLOAT, GL_FALSE, 12*sizeof(float), (void*)(8*sizeof(float)));
 
 		drawType();
 

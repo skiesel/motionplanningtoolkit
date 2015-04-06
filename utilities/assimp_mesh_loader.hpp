@@ -18,7 +18,8 @@ public:
 	}
 
 	void get(std::vector< std::vector<fcl::Vec3f> > &vertices,
-					std::vector< std::vector<fcl::Triangle> > &triangles) {
+					std::vector< std::vector<fcl::Triangle> > &triangles,
+					std::vector< std::vector<double> > &normals) {
 
 		for(unsigned int i = 0; i < scene->mNumMeshes; ++i) {
 			
@@ -29,7 +30,11 @@ public:
 			
 			for(unsigned int j = 0; j < mesh->mNumVertices; ++j) {
 				auto vertex = mesh->mVertices[j];
-				vertices.back().emplace_back(vertex.x, vertex.y, vertex.z);
+				vertices.back().emplace_back(vertex.x, vertex.y, vertex.z);				
+				normals.emplace_back(3);
+				normals.back()[0] = mesh->mNormals[j][0];
+				normals.back()[1] = mesh->mNormals[j][1];
+				normals.back()[2] = mesh->mNormals[j][2];
 			}
 
 			for(unsigned int j = 0; j < mesh->mNumFaces; ++j) {
