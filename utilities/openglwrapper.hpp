@@ -12,6 +12,8 @@
 #include <cmath>
 #include <vector>
 #include <functional>
+#include <fstream>
+#include <string>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/thread/thread.hpp> 
@@ -31,23 +33,8 @@ class OpenGLWrapper {
 
 
 	// Shader sources
-	const GLchar *vertexSource =
-	    "#version 150\n"
-	    "in vec4 position;"
-		"in vec4 color;"
-		"out vec4 Color;"
-		"uniform mat4 transformMatrix;"
-	    "void main() {"
-	    "	Color = color;"
-	    "	gl_Position = transformMatrix * position;"
-	    "}";
-	const GLchar *fragmentSource =
-	    "#version 150 core\n"
-	    "in vec4 Color;"
-	    "out vec4 outColor;"
-	    "void main() {"
-	    "	outColor = Color;"
-	    "}";
+	const GLchar *vertexSource = "../utilities/shaders/shader.vert";
+	const GLchar *fragmentSource = "../utilities/shaders/shader.frag";
 
 public:
 
@@ -99,12 +86,16 @@ public:
 
 		// Create and compile the vertex shader
 		GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-		glShaderSource(vertexShader, 1, &vertexSource, NULL);
+		std::string src = readShader(vertexSource);
+		const char *srcPtr = src.c_str();
+		glShaderSource(vertexShader, 1, &srcPtr, NULL);
 		glCompileShader(vertexShader);
 
 		// Create and compile the fragment shader
 		GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-		glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
+		src = readShader(fragmentSource);
+		srcPtr = src.c_str();
+		glShaderSource(fragmentShader, 1, &srcPtr, NULL);
 		glCompileShader(fragmentShader);
 
 		// Link the vertex and fragment shader into a shader program
@@ -276,6 +267,25 @@ private:
 		scaleMatrix[0] = .1;
 		scaleMatrix[5] = .1;
 		scaleMatrix[10] = .1;
+	}
+
+	std::string readShader(const char* filename) const {
+		std::fstream file;
+  		file.open(filename, std::fstream::in);
+
+		if(!file.is_open()) {
+			fprintf(stderr, "can't open shader file: %s\n", filename);
+			exit(1);
+		}
+
+		std::string shader;
+		std::string line;
+		while(!file.eof()) {
+			std::getline(file, line);
+			shader += line + "\n";
+		}
+		file.close();
+		return shader;
 	}
 
 	void drawCommon(std::function<void(void)> drawType, const std::vector<double> &verts) const {
