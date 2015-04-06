@@ -49,26 +49,44 @@ public:
 	}
 
 #ifdef WITHGRAPHICS
-	void draw() const {
+	void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
 		const OpenGLWrapper& opengl = OpenGLWrapper::getOpenGLWrapper();
 
 		for(unsigned int i = 0; i < triangles.size(); ++i) {
 			const std::vector<fcl::Vec3f>& verts = vertices[i];
 			const std::vector<fcl::Triangle>& tris = triangles[i];
-			std::vector<double> pts(12, 1.0);
+			std::vector<double> pts(24, 1.0);
+
+			auto c = color.getColor();
 			for(auto tri : tris) {
 				
 				pts[0] = verts[tri[0]][0];
 				pts[1] = verts[tri[0]][1];
 				pts[2] = verts[tri[0]][2];
-				
-				pts[4] = verts[tri[1]][0];
-				pts[5] = verts[tri[1]][1];
-				pts[6] = verts[tri[1]][2];
+				//pts[3] = 1;
+				pts[4] = c[0];
+				pts[5] = c[1];
+				pts[6] = c[2];
+				pts[7] = c[3];
 
-				pts[8] = verts[tri[2]][0];
-				pts[9] = verts[tri[2]][1];
-				pts[10] = verts[tri[2]][2];
+				pts[8] = verts[tri[1]][0];
+				pts[9] = verts[tri[1]][1];
+				pts[10] = verts[tri[1]][2];
+				//pts[11] = 1;
+				pts[12] = c[0];
+				pts[13] = c[1];
+				pts[14] = c[2];
+				pts[15] = c[3];
+
+				pts[16] = verts[tri[2]][0];
+				pts[17] = verts[tri[2]][1];
+				pts[18] = verts[tri[2]][2];
+				//pts[19] = 1;
+				pts[20] = c[0];
+				pts[21] = c[1];
+				pts[22] = c[2];
+				pts[23] = c[3];
+
 
 				opengl.drawTriangles(pts);
 				//opengl.drawPoints(pts);
@@ -114,26 +132,44 @@ public:
 	}
 
 #ifdef WITHGRAPHICS
-	void draw() const {
+	void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
 		const OpenGLWrapper& opengl = OpenGLWrapper::getOpenGLWrapper();
 
 		for(unsigned int i = 0; i < triangles.size(); ++i) {
 			const std::vector<fcl::Vec3f>& verts = vertices[i];
 			const std::vector<fcl::Triangle>& tris = triangles[i];
-			std::vector<double> pts(12, 1.0);
+			std::vector<double> pts(24, 1.0);
+
+			auto c = color.getColor();
 			for(auto tri : tris) {
 				
 				pts[0] = verts[tri[0]][0];
 				pts[1] = verts[tri[0]][1];
 				pts[2] = verts[tri[0]][2];
-				
-				pts[4] = verts[tri[1]][0];
-				pts[5] = verts[tri[1]][1];
-				pts[6] = verts[tri[1]][2];
+				//pts[3] = 1;
+				pts[4] = c[0];
+				pts[5] = c[1];
+				pts[6] = c[2];
+				pts[7] = c[3];
 
-				pts[8] = verts[tri[2]][0];
-				pts[9] = verts[tri[2]][1];
-				pts[10] = verts[tri[2]][2];
+				pts[8] = verts[tri[1]][0];
+				pts[9] = verts[tri[1]][1];
+				pts[10] = verts[tri[1]][2];
+				//pts[11] = 1;
+				pts[12] = c[0];
+				pts[13] = c[1];
+				pts[14] = c[2];
+				pts[15] = c[3];
+
+				pts[16] = verts[tri[2]][0];
+				pts[17] = verts[tri[2]][1];
+				pts[18] = verts[tri[2]][2];
+				//pts[19] = 1;
+				pts[20] = c[0];
+				pts[21] = c[1];
+				pts[22] = c[2];
+				pts[23] = c[3];
+
 
 				opengl.drawTriangles(pts);
 				//opengl.drawPoints(pts);
