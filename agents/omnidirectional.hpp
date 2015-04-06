@@ -45,6 +45,10 @@ public:
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
 			std::vector<double> pt(stateVars.begin(), stateVars.end());
 			pt.push_back(1);
+			pt.push_back(0);
+			pt.push_back(0);
+			pt.push_back(1);
+			pt.push_back(1);
 			pt.insert(pt.end(), color.getColor().begin(), color.getColor().end());
 
 			OpenGLWrapper::getOpenGLWrapper().drawPoints(pt);
@@ -69,9 +73,17 @@ public:
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
 			std::vector<double> line(start.getStateVars().begin(), start.getStateVars().end());
 			line.push_back(1);
+			line.push_back(0);
+			line.push_back(0);
+			line.push_back(1);
+			line.push_back(1);
 			line.insert(line.end(), color.getColor().begin(), color.getColor().end());
 
 			line.insert(line.end(), end.getStateVars().begin(), end.getStateVars().end());
+			line.push_back(1);
+			line.push_back(0);
+			line.push_back(0);
+			line.push_back(1);
 			line.push_back(1);
 			line.insert(line.end(), color.getColor().begin(), color.getColor().end());
 			OpenGLWrapper::getOpenGLWrapper().drawLines(line);
