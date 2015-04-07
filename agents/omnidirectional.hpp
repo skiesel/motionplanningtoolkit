@@ -64,6 +64,7 @@ public:
 
 	class Edge {
 	public:
+		Edge(const State &start) : start(start), end(start), cost(0), treeIndex(0) {}
 		Edge(const State &start, const State &end, double cost) : start(start), end(end), cost(cost), treeIndex(0) {}
 		Edge(const Edge& e) : start(e.start), end(e.end), cost(e.cost), treeIndex(e.treeIndex) {}
 

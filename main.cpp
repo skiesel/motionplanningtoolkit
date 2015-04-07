@@ -5,6 +5,7 @@
 #include "workspaces/map3d.hpp"
 
 #include "agents/omnidirectional.hpp"
+#include "agents/dubins.hpp"
 
 #include "planners/rrt.hpp"
 
@@ -17,11 +18,12 @@
 #include "utilities/flannkdtreewrapper.hpp"
 #include "utilities/instancefilemap.hpp"
 
-typedef Omnidirectional Agent;
-typedef Map3D<Omnidirectional> Workspace;
+//typedef Omnidirectional Agent;
+typedef Dubins Agent;
+typedef Map3D<Agent> Workspace;
 typedef GridDiscretization<Workspace, Agent> Discretization;
-//typedef UniformSampler<Workspace, Agent> Sampler;
-typedef FBiasedSampler<Workspace, Agent, Discretization> Sampler;
+typedef UniformSampler<Workspace, Agent> Sampler;
+//typedef FBiasedSampler<Workspace, Agent, Discretization> Sampler;
 
 typedef flann::KDTreeSingleIndexParams KDTreeType;
 typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, Agent::Edge> KDTree;
@@ -53,12 +55,12 @@ int main(int argc, char *argv[]) {
 	auto goalVars = parseDoubles(args.value("Agent Goal Location"));
 	Agent::State goal(goalVars);
 
-	std::vector<double> discretizations(3, 0.1);
-	Discretization discretization(workspace, agent, discretizations);
+	// std::vector<double> discretizations(3, 0.1);
+	// Discretization discretization(workspace, agent, discretizations);
 
-	Sampler sampler(workspace, agent, discretization, start, goal, 4);
+	// Sampler sampler(workspace, agent, discretization, start, goal, 4);
 
-	//Sampler sampler(workspace, agent);
+	Sampler sampler(workspace, agent);
 
 	KDTreeType kdtreeType;
 	KDTree kdtree(kdtreeType, 3);

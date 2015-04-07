@@ -8,5 +8,6 @@ Environment Mesh ? ../environment_models/unit_box.dae
 Environment Location ? 0 0 0 1 0 0 0
 Environment Bounding Box ? -10 10 -10 10 0 0
 
-Steering Delta t ? 0.1
+Steering Delta t ? 0.5
 Collision Check Delta t ? 10
+Turning Radius ? 1

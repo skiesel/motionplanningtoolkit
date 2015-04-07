@@ -30,7 +30,7 @@ public:
 				return;
 			}
 
-			auto root = pool.construct(start, start, 0);
+			auto root = pool.construct(start);
 
 			nn.insertPoint(root);
 		}
@@ -45,7 +45,7 @@ public:
 #endif
 
 			//intentionally not in the pool
-			auto sampleEdge = Edge(sample, sample, 0);
+			auto sampleEdge = Edge(sample);
 
 			typename NN::KNNResult result = nn.nearest(&sampleEdge);
 
@@ -63,10 +63,10 @@ public:
 				std::vector<const Edge*> newSolution;
 				double newSolutionCost = 0;
 				State cur = edge.start;
-				newSolution.push_back(pool.construct(edge.start, edge.end, edge.cost));
+				newSolution.push_back(pool.construct(edge));
 				newSolutionCost += edge.cost;
 				while(!cur.equals(start)) {
-					auto e = Edge(cur, cur, 0);
+					auto e = Edge(cur);
 					typename NN::KNNResult r = nn.nearest(&e);
 					newSolution.push_back(r.elements[0]);
 					newSolutionCost += r.elements[0]->cost;
@@ -82,7 +82,7 @@ public:
 				break;
 			}
 
-			Edge *e = pool.construct(edge.start, edge.end, edge.cost);
+			Edge *e = pool.construct(edge);
 			nn.insertPoint(e);
 
 #ifdef WITHGRAPHICS
