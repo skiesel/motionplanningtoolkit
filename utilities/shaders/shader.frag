@@ -20,7 +20,7 @@ void main() {
 
 	if(lambertian > 0.0) {
 		float specAngle = max(dot(reflectDir, viewDir), 0.0);
-		specular = pow(specAngle, 16.0);
+		specular = pow(specAngle, 4.0);
 	}
 	outColor = vec4(lambertian*diffuseColor + specular*specColor + ambient, 1.0);
 }

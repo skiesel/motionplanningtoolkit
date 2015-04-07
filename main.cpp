@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
 	#ifdef WITHGRAPHICS
 		bool firstInvocation = true;
 		auto lambda = [&](){
-			// planner.query(start, goal, 100, firstInvocation);
+			planner.query(start, goal, 100, firstInvocation);
 			firstInvocation = false;
 			agent.draw();
 			workspace.draw();

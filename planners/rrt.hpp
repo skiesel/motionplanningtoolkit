@@ -11,7 +11,7 @@ public:
 	typedef typename Agent::Edge Edge;
 
 	RRT(const Workspace &workspace, const Agent &agent, const Sampler &sampler, NN &nn, const InstanceFileMap &args) :
-		workspace(workspace), agent(agent), sampler(sampler), nn(nn), solutionCost(-1) {
+		workspace(workspace), agent(agent), sampler(sampler), nn(nn), solutionCost(-1), poseNumber(-1) {
 			steeringDT = stod(args.value("Steering Delta t"));
 			collisionCheckDT = stod(args.value("Collision Check Delta t"));
 		}
@@ -37,7 +37,7 @@ public:
 
 		unsigned int iterations = 0;
 
-		while(true) {
+		while(true && poseNumber == -1) {
 			auto sample = sampler.sampleConfiguration();
 
 #ifdef WITHGRAPHICS
@@ -73,6 +73,7 @@ public:
 					cur = r.elements[0]->start;
 				}
 				if(solutionCost < 0 || newSolutionCost < solutionCost) {
+					poseNumber = 0;
 					std::reverse(newSolution.begin(), newSolution.end());
 					solution.clear();
 					solution.insert(solution.begin(), newSolution.begin(), newSolution.end());
@@ -100,10 +101,18 @@ public:
 			sample.draw();
 		}
 
-		auto red = OpenGLWrapper::Color::Red();
-		for(const Edge *edge : solution) {
-			edge->draw(red);
+		if(solution.size() > 0) {
+			auto red = OpenGLWrapper::Color::Red();
+			for(const Edge *edge : solution) {
+				edge->draw(red);
+			}
+			//agent.drawSolution(solution);
+			if(poseNumber >= solution.size() * 2) poseNumber = -1;
+			if(poseNumber >= 0)
+				agent.animateSolution(solution, poseNumber++);
 		}
+
+
 #endif
 	}
 private:
@@ -117,4 +126,5 @@ private:
 	std::vector<State> samples;
 	double solutionCost;
 	double steeringDT, collisionCheckDT;
+	int poseNumber;
 };

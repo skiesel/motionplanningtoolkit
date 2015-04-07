@@ -116,24 +116,24 @@ public:
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
 
-			xRot += M_PI / ((double)rand() / (double)RAND_MAX * 10. + 170);
-			yRot += M_PI / ((double)rand() / (double)RAND_MAX * 10. + 170);
+			// xRot += M_PI / ((double)rand() / (double)RAND_MAX * 10. + 170);
+			// yRot += M_PI / ((double)rand() / (double)RAND_MAX * 10. + 170);
 
-			double sinDeltaX = sin(xRot);
-			double cosDeltaX = cos(xRot);
+			// double sinDeltaX = sin(xRot);
+			// double cosDeltaX = cos(xRot);
 
-			double sinDeltaY = sin(yRot);
-			double cosDeltaY = cos(yRot);
+			// double sinDeltaY = sin(yRot);
+			// double cosDeltaY = cos(yRot);
 
-			yRotateMatrix[5] = cosDeltaY;
-			yRotateMatrix[6] = -sinDeltaY;
-			yRotateMatrix[9] = sinDeltaY;
-			yRotateMatrix[10] = cosDeltaY;
+			// yRotateMatrix[5] = cosDeltaY;
+			// yRotateMatrix[6] = -sinDeltaY;
+			// yRotateMatrix[9] = sinDeltaY;
+			// yRotateMatrix[10] = cosDeltaY;
 
-			xRotateMatrix[0] = cosDeltaX;
-			xRotateMatrix[2] = sinDeltaX;
-			xRotateMatrix[8] = -sinDeltaX;
-			xRotateMatrix[10] = cosDeltaX;
+			// xRotateMatrix[0] = cosDeltaX;
+			// xRotateMatrix[2] = sinDeltaX;
+			// xRotateMatrix[8] = -sinDeltaX;
+			// xRotateMatrix[10] = cosDeltaX;
 
 			buildTransform();
 			glUniformMatrix4fv(transformInt, 1, true, transformMatrix);
@@ -257,27 +257,29 @@ public:
 	}
 
 	void drawPolygon(const std::vector<double> &verts) const {
-		auto lambda = [&](){ glDrawArrays(GL_LINE_LOOP, 0, verts.size() / 12); };
+		auto lambda = [&](){ glDrawArrays(GL_LINE_LOOP, 0, verts.size() / 28); };
 		drawCommon(lambda, verts);
 	}
 
 	void drawTriangles(const std::vector<double> &verts) const {
-		auto lambda = [&](){ glDrawArrays(GL_TRIANGLE_STRIP, 0, verts.size() / 12); };
+		auto lambda = [&](){ glDrawArrays(GL_TRIANGLE_STRIP, 0, verts.size() / 28); };
 		drawCommon(lambda, verts);
 	}
 
 	void drawPoints(const std::vector<double> &verts) const {
-		auto lambda = [&](){ glDrawArrays(GL_POINTS, 0, verts.size() / 12); };
+		auto lambda = [&](){ glDrawArrays(GL_POINTS, 0, verts.size() / 28); };
 		drawCommon(lambda, verts);
 	}
 
 	void drawLines(const std::vector<double> &verts) const {
-		auto lambda = [&](){ glDrawArrays(GL_LINE_STRIP, 0, verts.size() / 12); };
+		auto lambda = [&](){ glDrawArrays(GL_LINE_STRIP, 0, verts.size() / 28); };
 		drawCommon(lambda, verts);
 	}
 
+	const std::vector<double>& getIdentity() const { return Identity; }
+
 private:
-	OpenGLWrapper() : xRot(0), yRot(0) {
+	OpenGLWrapper() : xRot(0), yRot(0), Identity(16, 0) {
 		makeIdentity(transformMatrix);
 		makeIdentity(scaleMatrix);
 		makeIdentity(translateMatrix);
@@ -286,6 +288,8 @@ private:
 		scaleMatrix[0] = .1;
 		scaleMatrix[5] = .1;
 		scaleMatrix[10] = .1;
+
+		Identity[0] = Identity[5] = Identity[10] = Identity[15] = 1;
 	}
 
 	std::string readShader(const char* filename) const {
@@ -321,15 +325,25 @@ private:
 		// Specify the layout of the vertex data
 		GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
 		glEnableVertexAttribArray(posAttrib);
-		glVertexAttribPointer(posAttrib, 4, GL_FLOAT, GL_FALSE, 12*sizeof(float), (void*)0);
+		glVertexAttribPointer(posAttrib, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void*)0);
 
 		GLint normAttrib = glGetAttribLocation(shaderProgram, "normal");
 		glEnableVertexAttribArray(normAttrib);
-		glVertexAttribPointer(normAttrib, 4, GL_FLOAT, GL_FALSE, 12*sizeof(float), (void*)(4*sizeof(float)));
+		glVertexAttribPointer(normAttrib, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void*)(4*sizeof(float)));
 
 		GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
 		glEnableVertexAttribArray(colAttrib);
-		glVertexAttribPointer(colAttrib, 4, GL_FLOAT, GL_FALSE, 12*sizeof(float), (void*)(8*sizeof(float)));
+		glVertexAttribPointer(colAttrib, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void*)(8*sizeof(float)));
+
+		GLint transformAttrib = glGetAttribLocation(shaderProgram, "transform");
+		glEnableVertexAttribArray(transformAttrib + 0);
+		glEnableVertexAttribArray(transformAttrib + 1);
+		glEnableVertexAttribArray(transformAttrib + 2);
+		glEnableVertexAttribArray(transformAttrib + 3);
+		glVertexAttribPointer(transformAttrib + 0, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void*)(12*sizeof(float)));
+		glVertexAttribPointer(transformAttrib + 1, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void*)(16*sizeof(float)));
+		glVertexAttribPointer(transformAttrib + 2, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void*)(20*sizeof(float)));
+		glVertexAttribPointer(transformAttrib + 3, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void*)(24*sizeof(float)));
 
 		drawType();
 
@@ -378,7 +392,6 @@ private:
 			} else {
 				fprintf(stderr, "%g\t", m[i]);
 			}
-			
 		}
 		fprintf(stderr, "\n");
 	}
@@ -392,6 +405,7 @@ private:
 	double xRot, yRot;
 	GLfloat transformMatrix[16];
 	MouseInfo mouseInfo;
+	std::vector<double> Identity;
 
 	static OpenGLWrapper *wrapperInstance;
 };

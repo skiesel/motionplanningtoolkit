@@ -43,6 +43,8 @@ public:
 
 #ifdef WITHGRAPHICS
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
+			const auto &identity = OpenGLWrapper::getOpenGLWrapper().getIdentity();
+
 			std::vector<double> pt(stateVars.begin(), stateVars.end());
 			pt.push_back(1);
 			pt.push_back(0);
@@ -50,6 +52,7 @@ public:
 			pt.push_back(1);
 			pt.push_back(1);
 			pt.insert(pt.end(), color.getColor().begin(), color.getColor().end());
+			pt.insert(pt.end(), identity.begin(), identity.end());
 
 			OpenGLWrapper::getOpenGLWrapper().drawPoints(pt);
 		}
@@ -71,6 +74,7 @@ public:
 
 #ifdef WITHGRAPHICS
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
+			const auto &identity = OpenGLWrapper::getOpenGLWrapper().getIdentity();
 			std::vector<double> line(start.getStateVars().begin(), start.getStateVars().end());
 			line.push_back(1);
 			line.push_back(0);
@@ -78,6 +82,7 @@ public:
 			line.push_back(1);
 			line.push_back(1);
 			line.insert(line.end(), color.getColor().begin(), color.getColor().end());
+			line.insert(line.end(), identity.begin(), identity.end());
 
 			line.insert(line.end(), end.getStateVars().begin(), end.getStateVars().end());
 			line.push_back(1);
@@ -86,6 +91,8 @@ public:
 			line.push_back(1);
 			line.push_back(1);
 			line.insert(line.end(), color.getColor().begin(), color.getColor().end());
+			line.insert(line.end(), identity.begin(), identity.end());
+
 			OpenGLWrapper::getOpenGLWrapper().drawLines(line);
 		}
 #endif
@@ -212,6 +219,35 @@ public:
 #ifdef WITHGRAPHICS
 	void draw() const {
 		mesh.draw();
+	}
+
+	void drawSolution(const std::vector<const Edge*> &solution, double dt = std::numeric_limits<double>::infinity()) const {
+		for(const Edge *edge : solution) {
+			std::vector<fcl::Transform3f> poses = getPoses(*edge, dt);
+			auto transform = OpenGLWrapper::getOpenGLWrapper().getIdentity();
+			for(auto pose : poses) {
+				const Vec3f &translation = pose.getTranslation();
+				transform[12] = translation[0];
+				transform[13] = translation[1];
+				transform[14] = translation[2];
+
+				mesh.draw(OpenGLWrapper::Color(), transform);
+			}
+		}
+	}
+
+	void animateSolution(const std::vector<const Edge*> &solution, unsigned int poseNumber) const {
+		auto transform = OpenGLWrapper::getOpenGLWrapper().getIdentity();
+		unsigned int edgeNumber = poseNumber / 2;
+		unsigned int endpoint = poseNumber % 2;
+		const Edge *edge = solution[edgeNumber];
+		std::vector<fcl::Transform3f> poses = getPoses(*edge, std::numeric_limits<double>::infinity());
+		const Vec3f &translation = poses[endpoint].getTranslation();
+		transform[12] = translation[0];
+		transform[13] = translation[1];
+		transform[14] = translation[2];
+
+		mesh.draw(OpenGLWrapper::Color(), transform);
 	}
 #endif
 
