@@ -224,8 +224,13 @@ public:
 				}
 				else {
 					if(mouseInfo.oldCoordIsGood) {
-						xRot += M_PI / 180 * (x - mouseInfo.oldX) ? 1 : -1 ;
-						yRot += M_PI / 180 * (y - mouseInfo.oldY) ? 1 : -1 ;
+						double dx = fabs(x - mouseInfo.oldX);
+						double dy = fabs(y - mouseInfo.oldY);
+
+						if(dx >= dy) 
+							xRot += M_PI / 180 * ((x - mouseInfo.oldX > 0) ? 1 : -1);
+						else
+							yRot += M_PI / 180 * ((y - mouseInfo.oldY > 0) ? 1 : -1);
 
 						double sinDeltaX = sin(xRot);
 						double cosDeltaX = cos(xRot);
