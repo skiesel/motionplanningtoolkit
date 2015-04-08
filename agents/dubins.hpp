@@ -274,7 +274,7 @@ public:
 		rotation.setIdentity();
 
 		while(currentStep < totalLength) {
-			dubins_path_sample(&edge.path, dt, vars);
+			dubins_path_sample(&edge.path, currentStep, vars);
 
 			pose[0] = vars[0];
 			pose[1] = vars[1];
@@ -286,7 +286,6 @@ public:
 			rotation(1,0) = -sinTheta;
 			rotation(0,1) = sinTheta;
 			rotation(1,1) = cosTheta;
-
 
 			poses.emplace_back(rotation, pose);
 
@@ -317,11 +316,59 @@ public:
 	}
 
 	void drawSolution(const std::vector<const Edge*> &solution, double dt = std::numeric_limits<double>::infinity()) const {
+		for(const Edge *edge : solution) {
+			std::vector<fcl::Transform3f> poses = getPoses(*edge, dt);
+			auto transform = OpenGLWrapper::getOpenGLWrapper().getIdentity();
+			for(auto pose : poses) {
+				const Matrix3f &rotation = pose.getRotation();
+				transform[0] = rotation(0,0);
+				transform[1] = rotation(1,0);
+				transform[2] = rotation(2,0);
 
+				transform[4] = rotation(0,1);
+				transform[5] = rotation(1,1);
+				transform[6] = rotation(2,1);
+
+				transform[8] = rotation(0,2);
+				transform[9] = rotation(1,2);
+				transform[10] = rotation(2,2);
+
+				const Vec3f &translation = pose.getTranslation();
+				transform[12] += translation[0];
+				transform[13] += translation[1];
+				// transform[14] += translation[2];
+
+				mesh.draw(OpenGLWrapper::Color(), transform);
+			}
+		}
 	}
 
 	void animateSolution(const std::vector<const Edge*> &solution, unsigned int poseNumber) const {
+		auto transform = OpenGLWrapper::getOpenGLWrapper().getIdentity();
+		unsigned int edgeNumber = poseNumber / 2;
+		unsigned int endpoint = poseNumber % 2;
+		const Edge *edge = solution[edgeNumber];
+		std::vector<fcl::Transform3f> poses = getPoses(*edge, std::numeric_limits<double>::infinity());
+		
+		const Matrix3f &rotation = poses[endpoint].getRotation();
+		transform[0] = rotation(0,0);
+		transform[1] = rotation(1,0);
+		transform[2] = rotation(2,0);
 
+		transform[4] = rotation(0,1);
+		transform[5] = rotation(1,1);
+		transform[6] = rotation(2,1);
+
+		transform[8] = rotation(0,2);
+		transform[9] = rotation(1,2);
+		transform[10] = rotation(2,2);
+
+		const Vec3f &translation = poses[endpoint].getTranslation();
+		transform[12] += translation[0];
+		transform[13] += translation[1];
+		// transform[14] += translation[2];
+
+		mesh.draw(OpenGLWrapper::Color(), transform);
 	}
 #endif
 
