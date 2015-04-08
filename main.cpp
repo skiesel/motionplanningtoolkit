@@ -18,8 +18,8 @@
 #include "utilities/flannkdtreewrapper.hpp"
 #include "utilities/instancefilemap.hpp"
 
-//typedef Omnidirectional Agent;
-typedef Dubins Agent;
+typedef Omnidirectional Agent;
+//typedef Dubins Agent;
 typedef Map3D<Agent> Workspace;
 typedef GridDiscretization<Workspace, Agent> Discretization;
 //typedef UniformSampler<Workspace, Agent> Sampler;

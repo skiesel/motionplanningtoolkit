@@ -22,5 +22,7 @@ void main() {
 		float specAngle = max(dot(reflectDir, viewDir), 0.0);
 		specular = pow(specAngle, 4.0);
 	}
-	outColor = vec4(lambertian*diffuseColor + specular*specColor + ambient, 1.0);
+
+	vec3 colorScale = lambertian*diffuseColor + specular*specColor + ambient;
+	outColor = vec4(vertInColor.x * colorScale.x, vertInColor.y * colorScale.y, vertInColor.z * colorScale.z, 1.0);
 }

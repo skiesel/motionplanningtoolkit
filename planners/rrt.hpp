@@ -106,6 +106,7 @@ public:
 			for(const Edge *edge : solution) {
 				edge->draw(red);
 			}
+			
 			//agent.drawSolution(solution);
 			if(poseNumber >= solution.size() * 2) poseNumber = -1;
 			if(poseNumber >= 0)
