@@ -18,6 +18,8 @@
 #include "utilities/flannkdtreewrapper.hpp"
 #include "utilities/instancefilemap.hpp"
 
+#include "bullet_interface/bullet_raycast_vehicle.hpp"
+
 typedef Omnidirectional Agent;
 //typedef Dubins Agent;
 typedef Map3D<Agent> Workspace;
