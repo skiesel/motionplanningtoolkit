@@ -22,9 +22,13 @@ public:
 
 		State(const StateVars &vars) : stateVars(vars.begin(), vars.begin()+3) {}
 
-		const StateVars& getStateVars() const { return stateVars; }
+		const StateVars &getStateVars() const {
+			return stateVars;
+		}
 
-		bool equals(const State& s) const { return false; }
+		bool equals(const State &s) const {
+			return false;
+		}
 
 #ifdef WITHGRAPHICS
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {}
@@ -36,12 +40,18 @@ public:
 
 	class Edge {
 	public:
-		Edge(const State& s) {}
+		Edge(const State &s) {}
 
 		/* needed for being inserted into NN datastructure */
-		const StateVars& getStateVars() const { return end.getStateVars(); }
-		int getPointIndex() const { return treeIndex; }
-		void setPointIndex(int ptInd) { treeIndex = ptInd; }
+		const StateVars &getStateVars() const {
+			return end.getStateVars();
+		}
+		int getPointIndex() const {
+			return treeIndex;
+		}
+		void setPointIndex(int ptInd) {
+			treeIndex = ptInd;
+		}
 
 #ifdef WITHGRAPHICS
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {}
@@ -49,7 +59,7 @@ public:
 
 		const State start, end;
 		double cost;
-	
+
 	private:
 		int treeIndex;
 	};
@@ -187,11 +197,49 @@ public:
 	}
 
 	~BulletRayCastVehicle() {
+		//cleanup in the reverse order of creation/initialization
 
+		//remove the rigidbodies from the dynamics world and delete them
+		int i;
+		for(i=m_dynamicsWorld->getNumCollisionObjects()-1; i>=0 ; i--) {
+			btCollisionObject *obj = m_dynamicsWorld->getCollisionObjectArray()[i];
+			btRigidBody *body = btRigidBody::upcast(obj);
+			if(body && body->getMotionState()) {
+				delete body->getMotionState();
+			}
+			m_dynamicsWorld->removeCollisionObject(obj);
+			delete obj;
+		}
+
+		//delete collision shapes
+		for(int j=0; j<m_collisionShapes.size(); j++) {
+			btCollisionShape *shape = m_collisionShapes[j];
+			delete shape;
+		}
+
+		//delete dynamics world
+		delete m_dynamicsWorld;
+
+		delete m_vehicleRayCaster;
+
+		delete m_vehicle;
+
+		delete m_wheelShape;
+
+		//delete solver
+		delete m_constraintSolver;
+
+		//delete broadphase
+		delete m_overlappingPairCache;
+
+		//delete dispatcher
+		delete m_dispatcher;
+
+		delete m_collisionConfiguration;
 	}
 
 	//from the perspective of the environment
-	const WorkspaceBounds& getBounds() const {
+	const WorkspaceBounds &getBounds() const {
 		return bounds;
 	}
 
@@ -205,13 +253,13 @@ public:
 
 
 	//from the perspective of the agent
-	StateVarRanges getStateVarRanges(const WorkspaceBounds& bounds) const {
+	StateVarRanges getStateVarRanges(const WorkspaceBounds &bounds) const {
 
 		//possible extend to include additional state variables besides x,y,z
 		return bounds;
 	}
 
-	State buildState(const StateVars& vars) const {
+	State buildState(const StateVars &vars) const {
 		return State(vars);
 	}
 
@@ -225,16 +273,16 @@ public:
 		return e;
 	}
 
-	bool isGoal(const State& state, const State& goal) const {
+	bool isGoal(const State &state, const State &goal) const {
 		return false;
 	}
 
 #ifdef WITHGRAPHICS
 	void draw() const {}
 
-	void drawSolution(const std::vector<const Edge*> &solution, double dt = std::numeric_limits<double>::infinity()) const {}
+	void drawSolution(const std::vector<const Edge *> &solution, double dt = std::numeric_limits<double>::infinity()) const {}
 
-	void animateSolution(const std::vector<const Edge*> &solution, unsigned int poseNumber) const {}
+	void animateSolution(const std::vector<const Edge *> &solution, unsigned int poseNumber) const {}
 #endif
 
 private:
