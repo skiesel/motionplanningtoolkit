@@ -25,12 +25,13 @@ public:
 		goal.draw(green);
 #endif
 
-		if(firstInvocation) {
-			if(agent.isGoal(start, goal)) {
-				return;
-			}
+		if(agent.isGoal(start, goal)) {
+			return;
+		}
 
+		if(firstInvocation) {
 			auto root = pool.construct(start);
+
 
 			nn.insertPoint(root);
 		}
@@ -41,7 +42,7 @@ public:
 			auto sample = sampler.sampleConfiguration();
 
 #ifdef WITHGRAPHICS
-			samples.push_back(sample);
+			//samples.push_back(sample);
 #endif
 
 			//intentionally not in the pool
@@ -86,7 +87,7 @@ public:
 			nn.insertPoint(e);
 
 #ifdef WITHGRAPHICS
-			treeEdges.push_back(e);
+			// treeEdges.push_back(e);
 #endif
 
 			if(iterationsAtATime > 0 && ++iterations > iterationsAtATime) break;
@@ -107,7 +108,7 @@ public:
 				edge->draw(red);
 			}
 			
-			//agent.drawSolution(solution);
+			// agent.drawSolution(solution);
 			if(poseNumber >= solution.size() * 2) poseNumber = -1;
 			if(poseNumber >= 0)
 				agent.animateSolution(solution, poseNumber++);
