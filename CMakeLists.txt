@@ -15,18 +15,22 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost 1.57.0 COMPONENTS thread system REQUIRED)
 
 find_package(ASSIMP REQUIRED)
+find_package(BULLET REQUIRED)
 
 include_directories(
 	${Boost_INCLUDE_DIRS}
 	${Boost_LIBRARY_DIRS}
 	${FCL_LIBRARY_DIRS}
 	${ASSIMP_LIBRARY_DIRS}
+	${BULLET_LIBRARY_DIRS}
+	"/usr/local/include/bullet"
 )
 
 target_link_libraries(Planner
 	${Boost_LIBRARIES}
 	${FCL_LIBRARIES}
 	${ASSIMP_LIBRARIES}
+	${BULLET_LIBRARIES}
 )
 
 if(BUILDGRAPHICS)

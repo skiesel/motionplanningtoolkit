@@ -5,6 +5,7 @@
 #include <assimp/postprocess.h>
 
 #include <fcl/collision.h>
+#include <bullet/btBulletDynamicsCommon.h>
 
 class AssimpMeshLoader {
 public:
@@ -18,8 +19,8 @@ public:
 	}
 
 	void get(std::vector< std::vector<fcl::Vec3f> > &vertices,
-					std::vector< std::vector<fcl::Triangle> > &triangles,
-					std::vector< std::vector<double> > &normals) {
+				std::vector< std::vector<fcl::Triangle> > &triangles,
+				std::vector< std::vector<double> > &normals) const {
 
 		for(unsigned int i = 0; i < scene->mNumMeshes; ++i) {
 			
@@ -52,7 +53,40 @@ public:
 		}
 	}
 
-	//don't let the importer get destructor if you want to use scene (really stupid...)
+	void get(std::vector<btTriangleMesh*> &meshes) const {
+		struct pt {
+			pt(double x, double y, double z) : x(x), y(y), z(z) {}
+			double x, y, z;
+		};
+
+		for(unsigned int i = 0; i < scene->mNumMeshes; ++i) {
+			
+			meshes.push_back(new btTriangleMesh());
+
+			auto mesh = scene->mMeshes[i];
+
+			for(unsigned int j = 0; j < mesh->mNumVertices; ++j) {
+				auto vertex = mesh->mVertices[j];
+				btVector3 vert(vertex.x, vertex.y, vertex.z);
+				meshes.back()->findOrAddVertex(vert, false);
+			}
+
+			for(unsigned int j = 0; j < mesh->mNumFaces; ++j) {
+				auto face = mesh->mFaces[j];
+
+				if(face.mNumIndices != 3) {
+					fprintf(stderr, "face does not have 3 vertices: %d\n", face.mNumIndices);
+					continue;
+				}
+
+				meshes.back()->addTriangleIndices(face.mIndices[0],
+													face.mIndices[1],
+													face.mIndices[2]);
+			}
+		}
+	}
+
+	//don't let the importer get destructed if you want to use scene (really stupid...)
 	Assimp::Importer importer;
 	const aiScene *scene;
 	bool error;

@@ -1,10 +1,11 @@
 #pragma once
 
 #include <bullet/btBulletDynamicsCommon.h>
+#include "../utilities/assimp_mesh_loader.hpp"
 
 class BulletInterface {
 public:
-	BulletInterface() {
+	BulletInterface(const InstanceFileMap& args) {
 		broadphase = new btDbvtBroadphase();
 
 		// Set up the collision configuration and dispatcher
@@ -23,14 +24,15 @@ public:
 		btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, groundMotionState, groundShape, btVector3(0, 0, 0));
 		groundRigidBody = new btRigidBody(groundRigidBodyCI);
 		dynamicsWorld->addRigidBody(groundRigidBody);
-	}
+		
 
-	void addEnvironment() {
-		btConvexTriangleMeshShape mesh(new btTriangleMesh());
-	}
+		std::string agentMeshFile = args.value("Agent Mesh");
+		AssimpMeshLoader agentMeshLoader(agentMeshFile.c_str());
+		std::vector<btTriangleMesh*> agentMeshes;
+		agentMeshLoader.get(agentMeshes);
 
-	void addAgent() {
-		btConvexTriangleMeshShape mesh(new btTriangleMesh());
+		
+		//btTriangleMesh *environmentMesh = new btTriangleMesh();
 	}
 
 	~BulletInterface() {
