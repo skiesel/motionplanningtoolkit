@@ -41,6 +41,8 @@ public:
 	class Edge {
 	public:
 		Edge(const State &s) {}
+		Edge(const State &start, const State &end, double cost) : start(start), end(end), cost(cost), treeIndex(0) {}
+		Edge(const Edge& e) : start(e.start), end(e.end), cost(e.cost), treeIndex(e.treeIndex) {}
 
 		/* needed for being inserted into NN datastructure */
 		const StateVars &getStateVars() const {
@@ -264,13 +266,19 @@ public:
 	}
 
 	Edge steer(const State &start, const State &goal, double dt) const {
-		Edge e(start);
-		return e;
+		return randomSteer(start, dt);
 	}
 
 	Edge randomSteer(const State &start, double dt) const {
 		Edge e(start);
-		return e;
+
+		unpackCurrentVehicle(start.getStateVars());
+
+		step(0, 0, 0, dt);
+
+		State newState(packCurrentVehicle());
+
+		return Edge(start, newState, dt);
 	}
 
 	bool isGoal(const State &state, const State &goal) const {
@@ -286,6 +294,66 @@ public:
 #endif
 
 private:
+	std::vector<double> packCurrentVehicle() const {
+		std::vector<double> state(29);
+
+		int i = 0;
+		btTransform transform = m_carChassis->getCenterOfMassTransform();
+		btVector3 translation = transform.getOrigin();
+		state[i++] = translation.x();
+		state[i++] = translation.y();
+		state[i++] = translation.z();
+
+		btQuaternion rotation = transform.getRotation();
+		state[i++] = rotation.x();
+		state[i++] = rotation.y();
+		state[i++] = rotation.z();
+		state[i++] = rotation.w();
+
+		btVector3 linearVelocity = m_carChassis->getLinearVelocity();
+		state[i++] = linearVelocity.x();
+		state[i++] = linearVelocity.y();
+		state[i++] = linearVelocity.z();
+
+		btVector3 angularVelocity = m_carChassis->getAngularVelocity();
+		state[i++] = angularVelocity.x();
+		state[i++] = angularVelocity.y();
+		state[i++] = angularVelocity.z();
+
+
+		for(unsigned int j = 0; j < 4; ++j) {
+			const btWheelInfo& info = m_vehicle->getWheelInfo(i);
+			state[i++] = info.m_steering;
+			state[i++] = info.m_suspensionRelativeVelocity;
+			state[i++] = info.m_wheelsSuspensionForce;
+		}
+
+		return state;
+	}
+
+	void unpackCurrentVehicle(const StateVars& vars) const {
+		int i = 0;
+		//Update the vehicle to match the state
+		btVector3 translation(vars[i++], vars[i++], vars[i++]);
+		btQuaternion rotation(vars[i++], vars[i++], vars[i++], vars[i++]);
+		btTransform transform(rotation, translation);
+
+		m_carChassis->proceedToTransform(transform);
+
+		btVector3 linearVelocity(vars[i++], vars[i++], vars[i++]);
+		btVector3 angularVelocity(vars[i++], vars[i++], vars[i++]);
+
+		m_carChassis->setLinearVelocity(linearVelocity);
+		m_carChassis->setAngularVelocity(angularVelocity);
+
+		for(unsigned int j = 0; j < 4; ++j) {
+			btWheelInfo& info = m_vehicle->getWheelInfo(j);
+			info.m_steering = vars[i++];
+			info.m_suspensionRelativeVelocity = vars[i++];
+			info.m_wheelsSuspensionForce = vars[i++];
+		}
+	}
+
 	btRigidBody *localCreateRigidBody(float mass, const btTransform &startTransform, btCollisionShape *shape) const {
 		btAssert((!shape || shape->getShapeType() != INVALID_SHAPE_PROXYTYPE));
 
@@ -307,15 +375,13 @@ private:
 		return body;
 	}
 
-	void step(btDynamicsWorld *m_dynamicsWorld, btRaycastVehicle *m_vehicle, double gEngineForce,
-	          double gBreakingForce, double gVehicleSteering, double dt) {
+	void step(double gEngineForce, double gBreakingForce, double gVehicleSteering, double dt) const {
 		int wheelIndex = 2;
 		m_vehicle->applyEngineForce(gEngineForce,wheelIndex);
 		m_vehicle->setBrake(gBreakingForce,wheelIndex);
 		wheelIndex = 3;
 		m_vehicle->applyEngineForce(gEngineForce,wheelIndex);
 		m_vehicle->setBrake(gBreakingForce,wheelIndex);
-
 
 		wheelIndex = 0;
 		m_vehicle->setSteeringValue(gVehicleSteering,wheelIndex);
