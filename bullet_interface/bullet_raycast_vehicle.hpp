@@ -9,8 +9,53 @@
 
 class BulletRayCastVehicle {
 public:
+	typedef std::vector< std::pair<double, double> > WorkspaceBounds;
+	typedef std::vector< std::pair<double, double> > StateVarRanges;
+
+	typedef std::vector<double> StateVars;
+
+	class State {
+	public:
+		State() {}
+
+		State(const State &s) : stateVars(s.stateVars.begin(), s.stateVars.end()) {}
+
+		State(const StateVars &vars) : stateVars(vars.begin(), vars.begin()+3) {}
+
+		const StateVars& getStateVars() const { return stateVars; }
+
+		bool equals(const State& s) const { return false; }
+
+#ifdef WITHGRAPHICS
+		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {}
+#endif
+
+	private:
+		StateVars stateVars;
+	};
+
+	class Edge {
+	public:
+		Edge(const State& s) {}
+
+		/* needed for being inserted into NN datastructure */
+		const StateVars& getStateVars() const { return end.getStateVars(); }
+		int getPointIndex() const { return treeIndex; }
+		void setPointIndex(int ptInd) { treeIndex = ptInd; }
+
+#ifdef WITHGRAPHICS
+		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {}
+#endif
+
+		const State start, end;
+		double cost;
+	
+	private:
+		int treeIndex;
+	};
+
 	BulletRayCastVehicle(const InstanceFileMap &args) : m_defaultContactProcessingThreshold(BT_LARGE_FLOAT),
-		suspensionRestLength(0.6), wheelDirectionCS0(0,-1,0), wheelAxleCS(-1,0,0) {
+		suspensionRestLength(0.6), wheelDirectionCS0(0,-1,0), wheelAxleCS(-1,0,0), bounds(3) {
 
 		btCollisionShape *groundShape = new btBoxShape(btVector3(50,3,50));
 		m_collisionShapes.push_back(groundShape);
@@ -18,6 +63,14 @@ public:
 		m_dispatcher = new btCollisionDispatcher(m_collisionConfiguration);
 		btVector3 worldMin(-1000,-1000,-1000);
 		btVector3 worldMax(1000,1000,1000);
+
+		bounds[0].first = -1000;
+		bounds[0].second = 1000;
+		bounds[1].first = -1000;
+		bounds[1].second = 1000;
+		bounds[2].first = -1000;
+		bounds[2].second = 1000;
+
 		m_overlappingPairCache = new btAxisSweep3(worldMin,worldMax);
 		m_constraintSolver = new btSequentialImpulseConstraintSolver();
 		m_dynamicsWorld = new btDiscreteDynamicsWorld(m_dispatcher,m_overlappingPairCache,m_constraintSolver,m_collisionConfiguration);
@@ -137,6 +190,53 @@ public:
 
 	}
 
+	//from the perspective of the environment
+	const WorkspaceBounds& getBounds() const {
+		return bounds;
+	}
+
+	bool safeEdge(const BulletRayCastVehicle &agent, const Edge &edge, double dt) const {
+		return true;
+	}
+
+	bool safePoses(const BulletRayCastVehicle &agent, const std::vector<fcl::Transform3f> &poses) const {
+		return true;;
+	}
+
+
+	//from the perspective of the agent
+	StateVarRanges getStateVarRanges(const WorkspaceBounds& bounds) const {
+
+		//possible extend to include additional state variables besides x,y,z
+		return bounds;
+	}
+
+	State buildState(const StateVars& vars) const {
+		return State(vars);
+	}
+
+	Edge steer(const State &start, const State &goal, double dt) const {
+		Edge e(start);
+		return e;
+	}
+
+	Edge randomSteer(const State &start, double dt) const {
+		Edge e(start);
+		return e;
+	}
+
+	bool isGoal(const State& state, const State& goal) const {
+		return false;
+	}
+
+#ifdef WITHGRAPHICS
+	void draw() const {}
+
+	void drawSolution(const std::vector<const Edge*> &solution, double dt = std::numeric_limits<double>::infinity()) const {}
+
+	void animateSolution(const std::vector<const Edge*> &solution, unsigned int poseNumber) const {}
+#endif
+
 private:
 	btRigidBody *localCreateRigidBody(float mass, const btTransform &startTransform, btCollisionShape *shape) const {
 		btAssert((!shape || shape->getShapeType() != INVALID_SHAPE_PROXYTYPE));
@@ -176,7 +276,6 @@ private:
 
 		m_dynamicsWorld->stepSimulation(dt);
 	}
-
 
 	btDynamicsWorld *m_dynamicsWorld;
 	btAlignedObjectArray<btCollisionShape *> m_collisionShapes;
@@ -218,4 +317,6 @@ private:
 	int forwardIndex = 2;
 	btVector3 wheelDirectionCS0;
 	btVector3 wheelAxleCS;
+
+	WorkspaceBounds bounds;
 };
