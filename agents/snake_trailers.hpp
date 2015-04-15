@@ -95,6 +95,7 @@ public:
 
 		newState[X] = vars[X] + cos(vars[THETA]) * vars[V] * dt;
 		newState[Y] = vars[Y] + sin(vars[THETA]) * vars[V] * dt;
+		newState[THETA] = vars[THETA] + vars[V] * tan(vars[PSI]) / trailerLength;
 		newState[V] = vars[V] + a * dt;
 		newState[PSI] = vars[PSI] + w * dt;
 
