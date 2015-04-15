@@ -1,3 +1,5 @@
+#pragma once
+
 #include <fcl/BVH/BVH_model.h>
 #include <fcl/broadphase/broadphase.h>
 
