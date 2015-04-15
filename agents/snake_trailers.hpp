@@ -30,7 +30,7 @@ public:
 		
 		State(const State &s) : stateVars(s.stateVars.begin(), s.stateVars.end()) {}
 
-		State(const StateVars &vars) : stateVars(vars.begin(), vars.begin()) {}
+		State(const StateVars &vars) : stateVars(vars.begin(), vars.begin() + 5 + trailerCount) {}
 
 		const bool equals(const State &s) const { return false; }
 
@@ -39,6 +39,8 @@ public:
 #ifdef WITHGRAPHICS
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {}
 #endif
+
+		static unsigned int trailerCount;
 
 	private:
 		StateVars stateVars;
@@ -65,7 +67,7 @@ public:
 	};
 
 	SnakeTrailers(const InstanceFileMap &args) : mesh(""), linearAccelerations(-1, 1), angularAccelerations(-0.1745, 0.1745) {
-		trailerCount = stoi(args.value("Trailer Count"));
+		trailerCount = State::trailerCount = stoi(args.value("Trailer Count"));
 		trailerLength = stod(args.value("Trailer Length"));
 		hitchLength = stod(args.value("Hitch Length"));
 	}
