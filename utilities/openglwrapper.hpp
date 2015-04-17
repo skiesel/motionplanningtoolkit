@@ -79,6 +79,10 @@ public:
 		glewExperimental = GL_TRUE;
 		glewInit();
 
+		glEnable(GL_CULL_FACE);
+		glDepthFunc(GL_LEQUAL);
+		glEnable(GL_DEPTH_TEST);
+
 		// Create Vertex Array Object
 		GLuint vao;
 		glGenVertexArrays(1, &vao);
@@ -114,7 +118,7 @@ public:
 
 		while(!glfwWindowShouldClose(window)) {
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			// xRot += M_PI / ((double)rand() / (double)RAND_MAX * 10. + 170);
 			// yRot += M_PI / ((double)rand() / (double)RAND_MAX * 10. + 170);
@@ -155,14 +159,24 @@ public:
 	}
 
 	static void keyboard(GLFWwindow *window, int key, int scancode, int action, int mods) {
-		switch(key) {
-			case GLFW_KEY_ESCAPE:
-				glfwSetWindowShouldClose(window, GL_TRUE);
-				break;
-			case GLFW_KEY_LEFT_SHIFT:
-			case GLFW_KEY_RIGHT_SHIFT:
-				getOpenGLWrapper().setShiftModifier(action);
-				break;
+		if(action == 0) {
+			switch(key) {
+				case GLFW_KEY_ESCAPE:
+					glfwSetWindowShouldClose(window, GL_TRUE);
+					break;
+				case GLFW_KEY_LEFT_SHIFT:
+				case GLFW_KEY_RIGHT_SHIFT:
+					getOpenGLWrapper().setShiftModifier(action);
+					break;
+				case '-': getOpenGLWrapper().zoom(-1); break;
+				case '=': if(mods == GLFW_MOD_SHIFT) getOpenGLWrapper().zoom(1); break;
+				case 'A': mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().translate(0, 1) : getOpenGLWrapper().translate(0, -1); break;
+				case 'S': mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().translate(1, -1) : getOpenGLWrapper().translate(1, 1); break;
+				case 'D': mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().translate(2, 1) : getOpenGLWrapper().translate(2, -1); break;
+				case 'Z': mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().rotate(0, 1) : getOpenGLWrapper().rotate(0, -1); break;
+				case 'X': mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().rotate(1, -1) : getOpenGLWrapper().rotate(1, 1); break;
+				case 'C': mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().rotate(2, 1) : getOpenGLWrapper().rotate(2, -1); break;
+			}
 		}
 	}
 
@@ -174,6 +188,58 @@ public:
 		OpenGLWrapper &wrapper = getOpenGLWrapper();
 		if(wrapper.isMouseClicked()) {
 			wrapper.setMousePosition(x, y);
+		}
+	}
+
+	void translate(int axis, double direction) {
+		double translateDistance = 0.1;
+		if(axis == 0) {
+			translateMatrix[3] += translateDistance * direction;
+		} else if(axis == 1) {
+			translateMatrix[7] -= translateDistance * direction;
+		} else if(axis == 2) {
+			translateMatrix[11] += translateDistance * direction;
+		}
+
+	}
+
+	void zoom(double direction) {
+		double scaleFactor = direction < 0 ? 0.9 : 1.1;
+		scaleMatrix[0] *= scaleFactor;
+		scaleMatrix[5] *= scaleFactor;
+		scaleMatrix[10] *= scaleFactor;
+	}
+
+	void rotate(int axis, double direction) {
+		double rotation = 0.1745;
+
+		if(axis == 0) {
+			xRot += rotation * direction;
+			double sinVal = sin(xRot);
+			double cosVal = cos(xRot);
+
+			xRotateMatrix[0] = cosVal;
+			xRotateMatrix[2] = sinVal;
+			xRotateMatrix[8] = -sinVal;
+			xRotateMatrix[10] = cosVal;
+		} else if(axis == 1) {
+			yRot += rotation * direction;
+			double sinVal = sin(yRot);
+			double cosVal = cos(yRot);
+
+			yRotateMatrix[5] = cosVal;
+			yRotateMatrix[6] = -sinVal;
+			yRotateMatrix[9] = sinVal;
+			yRotateMatrix[10] = cosVal;
+		} else if(axis == 2) {
+			zRot += rotation * direction;
+			double sinVal = sin(zRot);
+			double cosVal = cos(zRot);
+
+			zRotateMatrix[0] = cosVal;
+			zRotateMatrix[1] = -sinVal;
+			zRotateMatrix[4] = sinVal;
+			zRotateMatrix[5] = cosVal;
 		}
 	}
 
@@ -284,15 +350,16 @@ public:
 	const std::vector<double>& getIdentity() const { return Identity; }
 
 private:
-	OpenGLWrapper() : xRot(0), yRot(0), Identity(16, 0) {
+	OpenGLWrapper() : xRot(0), yRot(0), zRot(0), Identity(16, 0) {
 		makeIdentity(transformMatrix);
 		makeIdentity(scaleMatrix);
 		makeIdentity(translateMatrix);
 		makeIdentity(xRotateMatrix);
 		makeIdentity(yRotateMatrix);
-		scaleMatrix[0] = .1;
-		scaleMatrix[5] = .1;
-		scaleMatrix[10] = .1;
+		makeIdentity(zRotateMatrix);
+		scaleMatrix[0] = .01;
+		scaleMatrix[5] = .01;
+		scaleMatrix[10] = .01;
 
 		Identity[0] = Identity[5] = Identity[10] = Identity[15] = 1;
 	}
@@ -360,6 +427,7 @@ private:
 
 		multiply(translateMatrix, xRotateMatrix, transformMatrix);
 		multiply(transformMatrix, yRotateMatrix, transformMatrix);
+		multiply(transformMatrix, zRotateMatrix, transformMatrix);
 		multiply(transformMatrix, scaleMatrix, transformMatrix);
 	}
 
@@ -407,7 +475,8 @@ private:
 	GLfloat translateMatrix[16];
 	GLfloat xRotateMatrix[16];
 	GLfloat yRotateMatrix[16];
-	double xRot, yRot;
+	GLfloat zRotateMatrix[16];
+	double xRot, yRot, zRot;
 	GLfloat transformMatrix[16];
 	MouseInfo mouseInfo;
 	std::vector<double> Identity;
