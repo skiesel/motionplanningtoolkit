@@ -49,7 +49,7 @@ public:
 		auto c1Vec = getGridCoordinates(c1);
 		auto c2Vec = getGridCoordinates(c2);
 		for(unsigned int i = 0; i < discretizationSizes.size(); ++i) {
-			double delta = (double)abs(c1Vec[i] - c2Vec[i]) * discretizationSizes[i];
+			double delta = fabs((double)c1Vec[i] - (double)c2Vec[i]) * (double)discretizationSizes[i];
 			sum += delta * delta;
 		}
 		return sqrt(sum);
