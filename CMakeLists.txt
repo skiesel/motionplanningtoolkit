@@ -1,10 +1,20 @@
 cmake_minimum_required (VERSION 2.6)
 project (MotionPlanning)
 
+set ( CMAKE_MODULE_PATH
+  ${PROJECT_SOURCE_DIR}/CMakeModules
+)
+
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 set(BUILDGRAPHICS 1)
 
 add_executable(Planner main.cpp)
+
+if(IS_DIRECTORY "/Library/Frameworks/3DconnexionClient.framework")
+	add_definitions(-DWITHCONNEXION)
+	set(CONNEXION_LIBRARIES "/Library/Frameworks/3DconnexionClient.framework")
+endif(IS_DIRECTORY "/Library/Frameworks/3DconnexionClient.framework")
+
 
 find_package(PkgConfig REQUIRED)
 pkg_search_module(FCL REQUIRED fcl)
@@ -31,6 +41,7 @@ target_link_libraries(Planner
 	${FCL_LIBRARIES}
 	${ASSIMP_LIBRARIES}
 	${BULLET_LIBRARIES}
+	${CONNEXION_LIBRARIES}
 )
 
 if(BUILDGRAPHICS)

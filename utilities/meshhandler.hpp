@@ -1,6 +1,11 @@
 #pragma once
 
 #include <fcl/BVH/BVH_model.h>
+
+#ifdef __APPLE__
+//Wow.
+#undef nil
+#endif
 #include <fcl/broadphase/broadphase.h>
 
 #include "fcl_helpers.hpp"

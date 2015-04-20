@@ -16,7 +16,9 @@
 #include <string>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/thread/thread.hpp> 
+#include <boost/thread/thread.hpp>
+
+#include "connexion_3d_mouse.hpp"
 
 class OpenGLWrapper {
 
@@ -116,6 +118,8 @@ public:
 
 		GLint transformInt = glGetUniformLocation(shaderProgram, "transformMatrix");
 
+		Connexion3DMouse::createConnexion3DMouse();
+
 		while(!glfwWindowShouldClose(window)) {
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClearDepthf(1.0f);
@@ -147,8 +151,10 @@ public:
 
 			glfwSwapBuffers(window);
 			glfwPollEvents();
+			handle3DMouseEvents();
 		}
 
+		Connexion3DMouse::destroyConnexion3DMouse();
 
 		glDeleteProgram(shaderProgram);
 		glDeleteShader(fragmentShader);
@@ -157,6 +163,17 @@ public:
 		glDeleteVertexArrays(1, &vao);
 
 		glfwTerminate();
+	}
+
+	static void handle3DMouseEvents() {
+		Connexion3DMouse::MouseState state = Connexion3DMouse::getLatestState();
+		OpenGLWrapper& gl = getOpenGLWrapper();
+		gl.translate(0, 1, state.tx / 1000);
+		gl.translate(1, 1, state.ty / 1000);
+		gl.translate(2, 1, state.tz / 1000);
+		gl.rotate(0, 1, state.rx / 1000);
+		gl.rotate(1, 1, state.ry / 1000);
+		gl.rotate(2, 1, state.rz / 1000);
 	}
 
 	static void keyboard(GLFWwindow *window, int key, int scancode, int action, int mods) {
@@ -192,8 +209,8 @@ public:
 		}
 	}
 
-	void translate(int axis, double direction) {
-		double translateDistance = 0.1;
+	void translate(int axis, double direction, double magnitude = 1) {
+		double translateDistance = 0.1 * magnitude;
 		if(axis == 0) {
 			translateMatrix[3] += translateDistance * direction;
 		} else if(axis == 1) {
@@ -204,15 +221,15 @@ public:
 
 	}
 
-	void zoom(double direction) {
-		double scaleFactor = direction < 0 ? 0.9 : 1.1;
+	void zoom(double direction, double magnitude = 1) {
+		double scaleFactor = (direction < 0 ? 0.9 : 1.1) * magnitude;
 		scaleMatrix[0] *= scaleFactor;
 		scaleMatrix[5] *= scaleFactor;
 		scaleMatrix[10] *= scaleFactor;
 	}
 
-	void rotate(int axis, double direction) {
-		double rotation = 0.1745;
+	void rotate(int axis, double direction, double magnitude = 1) {
+		double rotation = 0.1745 * magnitude;
 
 		if(axis == 0) {
 			xRot += rotation * direction;

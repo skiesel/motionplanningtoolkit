@@ -31,11 +31,18 @@ public:
 			
 			for(unsigned int j = 0; j < mesh->mNumVertices; ++j) {
 				auto vertex = mesh->mVertices[j];
-				vertices.back().emplace_back(vertex.x, vertex.y, vertex.z);				
+				vertices.back().emplace_back(vertex.x, vertex.y, vertex.z);
+
 				normals.emplace_back(3);
-				normals.back()[0] = mesh->mNormals[j][0];
-				normals.back()[1] = mesh->mNormals[j][1];
-				normals.back()[2] = mesh->mNormals[j][2];
+				if(mesh->HasNormals()) {
+					normals.back()[0] = mesh->mNormals[j][0];
+					normals.back()[1] = mesh->mNormals[j][1];
+					normals.back()[2] = mesh->mNormals[j][2];
+				} else {
+					normals.back()[0] = 1;
+					normals.back()[1] = 0;
+					normals.back()[2] = 0;
+				}
 			}
 
 			for(unsigned int j = 0; j < mesh->mNumFaces; ++j) {
