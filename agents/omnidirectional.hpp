@@ -106,6 +106,11 @@ public:
 	Omnidirectional(const InstanceFileMap &args) :
 		mesh(args.value("Agent Mesh")) {
 
+			boost::char_separator<char> sep(" ");
+			boost::tokenizer< boost::char_separator<char> > tokens(args.value("Goal Thresholds"), sep);
+			for(auto token : tokens) {
+				goalThresholds.push_back(std::stod(token));
+			}
 		}
 
 	StateVarRanges getStateVarRanges(const WorkspaceBounds& bounds) const {
@@ -117,9 +122,9 @@ public:
 	}
 
 	bool isGoal(const State &state, const State &goal) const {
-		return fabs(state.x() - goal.x()) < 0.1 &&
-		fabs(state.y() - goal.y()) < 0.1 &&
-		fabs(state.z() - goal.z()) < 0.1;
+		return fabs(state.x() - goal.x()) < goalThresholds[0] &&
+		fabs(state.y() - goal.y()) < goalThresholds[1] &&
+		fabs(state.z() - goal.z()) < goalThresholds[2];
 	}
 
 	Edge steer(const State &start, const State &goal, double dt) const {
@@ -254,4 +259,5 @@ public:
 
 private:
 	SimpleAgentMeshHandler mesh;
+	std::vector<double> goalThresholds;
 };
