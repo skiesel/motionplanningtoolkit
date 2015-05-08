@@ -57,11 +57,12 @@ private:
 			ConnexionDeviceState *deviceState = (ConnexionDeviceState *) messageArgument;
 			switch(deviceState->command) {
 			case kConnexionCmdHandleAxis:
+				//the following are intentionally swapped
 				mouseState.tx =  deviceState->axis[0];
 				mouseState.ty =  deviceState->axis[1];
 				mouseState.tz =  deviceState->axis[2];
-				mouseState.rx =  deviceState->axis[3];
-				mouseState.ry =  deviceState->axis[4];
+				mouseState.rx =  deviceState->axis[4];
+				mouseState.ry =  deviceState->axis[3];
 				mouseState.rz =  deviceState->axis[5];
 				break;
 

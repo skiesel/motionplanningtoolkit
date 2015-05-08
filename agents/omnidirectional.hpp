@@ -41,6 +41,13 @@ public:
 		double z() const { return stateVars[2]; }
 		const StateVars& getStateVars() const { return stateVars; }
 
+		void print() const {
+			for(auto v : stateVars) {
+				fprintf(stderr, "%g ", v);
+			}
+			fprintf(stderr, "\n");
+		}
+
 #ifdef WITHGRAPHICS
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
 			const auto &identity = OpenGLWrapper::getOpenGLWrapper().getIdentity();
@@ -69,7 +76,7 @@ public:
 		Edge(const Edge& e) : start(e.start), end(e.end), cost(e.cost), treeIndex(e.treeIndex) {}
 
 		/* needed for being inserted into NN datastructure */
-		const StateVars& getStateVars() const { return end.getStateVars(); }
+		const StateVars& getTreeStateVars() const { return end.getStateVars(); }
 		int getPointIndex() const { return treeIndex; }
 		void setPointIndex(int ptInd) { treeIndex = ptInd; }
 
@@ -106,12 +113,16 @@ public:
 	Omnidirectional(const InstanceFileMap &args) :
 		mesh(args.value("Agent Mesh")) {
 
-			boost::char_separator<char> sep(" ");
-			boost::tokenizer< boost::char_separator<char> > tokens(args.value("Goal Thresholds"), sep);
-			for(auto token : tokens) {
-				goalThresholds.push_back(std::stod(token));
-			}
+		boost::char_separator<char> sep(" ");
+		boost::tokenizer< boost::char_separator<char> > tokens(args.value("Goal Thresholds"), sep);
+		for(auto token : tokens) {
+			goalThresholds.push_back(std::stod(token));
 		}
+	}
+
+	unsigned int getTreeStateSize() const {
+		return 3;
+	}
 
 	StateVarRanges getStateVarRanges(const WorkspaceBounds& bounds) const {
 		return bounds;
@@ -166,21 +177,24 @@ public:
 		return Edge(start, state, dt);
 	}
 
-	const SimpleAgentMeshHandler& getMesh() const {
-		return mesh;
+	std::vector<const SimpleAgentMeshHandler*> getMeshes() const {
+		std::vector<const SimpleAgentMeshHandler*> meshes(1, &mesh);
+		return meshes;
 	}
 
-	std::vector<fcl::Transform3f> getRepresentivePosesForLocation(const std::vector<double> &loc) const {
-		std::vector<fcl::Transform3f> poses;
+	std::vector< std::vector<fcl::Transform3f> > getRepresentivePosesForLocation(const std::vector<double> &loc) const {
+		std::vector<std::vector<fcl::Transform3f> > retPoses;
 
 		fcl::Vec3f pose(loc[0], loc[1], loc[2]);
-		poses.push_back(fcl::Transform3f(pose));
 
-		return poses;
+		retPoses.emplace_back();
+		retPoses.back().push_back(fcl::Transform3f(pose));
+
+		return retPoses;
 	}
 
-	std::vector<fcl::Transform3f> getPoses(const Edge &edge, double dt) const {
-		std::vector<fcl::Transform3f> poses;
+	std::vector<std::vector<fcl::Transform3f> > getPoses(const Edge &edge, double dt) const {
+		std::vector<std::vector<fcl::Transform3f> > retPoses;
 		
 		double startX = edge.start.x();
 		double startY = edge.start.y();
@@ -200,8 +214,10 @@ public:
 		if(iterations < 1) {
 			fcl::Vec3f start(startX, startY, startZ);
 			fcl::Vec3f end(endX, endY, endZ);
-			poses.push_back(fcl::Transform3f(start));
-			poses.push_back(fcl::Transform3f(end));
+			retPoses.emplace_back();
+			retPoses.back().push_back(fcl::Transform3f(start));
+			retPoses.emplace_back();
+			retPoses.back().push_back(fcl::Transform3f(end));
 		} else {
 			double step = dt / dist;
 
@@ -211,15 +227,17 @@ public:
 				fcl::Vec3f translation(startX + stepSize * dx, 
 										startY + stepSize * dy,
 										startZ + stepSize * dz);
-				poses.push_back(fcl::Transform3f(translation));
+				retPoses.emplace_back();
+				retPoses.back().push_back(fcl::Transform3f(translation));
 			}
 			if((double)iterations * dt < dist) {
 				fcl::Vec3f end(endX, endY, endZ);
-				poses.push_back(fcl::Transform3f(end));
+				retPoses.emplace_back();
+				retPoses.back().push_back(fcl::Transform3f(end));
 			}
 		}
 
-		return poses;
+		return retPoses;
 	}
 
 #ifdef WITHGRAPHICS
@@ -229,10 +247,10 @@ public:
 
 	void drawSolution(const std::vector<const Edge*> &solution, double dt = std::numeric_limits<double>::infinity()) const {
 		for(const Edge *edge : solution) {
-			std::vector<fcl::Transform3f> poses = getPoses(*edge, dt);
+			std::vector< std::vector<fcl::Transform3f> > poses = getPoses(*edge, dt);
 			auto transform = OpenGLWrapper::getOpenGLWrapper().getIdentity();
 			for(auto pose : poses) {
-				const Vec3f &translation = pose.getTranslation();
+				const Vec3f &translation = pose[0].getTranslation();
 				transform[12] = translation[0];
 				transform[13] = translation[1];
 				transform[14] = translation[2];
@@ -247,8 +265,8 @@ public:
 		unsigned int edgeNumber = poseNumber / 2;
 		unsigned int endpoint = poseNumber % 2;
 		const Edge *edge = solution[edgeNumber];
-		std::vector<fcl::Transform3f> poses = getPoses(*edge, std::numeric_limits<double>::infinity());
-		const Vec3f &translation = poses[endpoint].getTranslation();
+		std::vector< std::vector<fcl::Transform3f> > poses = getPoses(*edge, std::numeric_limits<double>::infinity());
+		const Vec3f &translation = poses[endpoint][0].getTranslation();
 		transform[12] = translation[0];
 		transform[13] = translation[1];
 		transform[14] = translation[2];

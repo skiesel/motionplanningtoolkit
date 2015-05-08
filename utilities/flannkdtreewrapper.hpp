@@ -24,7 +24,7 @@ public:
 	}
 
 	void insertPoint(Element *elem) {
-		const std::vector<double>& stateVars = elem->getStateVars();
+		const std::vector<double>& stateVars = elem->getTreeStateVars();
 		double* data = new double[stateVars.size()];
 		for(unsigned int i = 0; i < stateVars.size(); i++)
 			data[i] = stateVars[i];
@@ -60,7 +60,7 @@ public:
 	KNNResult kNearest(const Element *elem, unsigned int k) {
 		assert(k > 0);
 
-		auto stateVars = elem->getStateVars();
+		auto stateVars = elem->getTreeStateVars();
 		flann::Matrix<double> point(stateVars.data(), 1, stateVars.size());
 		
 		std::vector< std::vector<int> > indices;
@@ -87,7 +87,7 @@ public:
 	}
 
 	KNNResult kNearestWithin(const Element *elem, double radius, int max_neighbors=-1) const {
-		auto stateVars = elem->getStateVars();
+		auto stateVars = elem->getTreeStateVars();
 		flann::Matrix<double> point(stateVars.data(), 1, stateVars.size());
 		
 		std::vector< std::vector<int> > indices;

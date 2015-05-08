@@ -1,0 +1,21 @@
+Agent Type ? Blimp
+Agent Mesh ? ../mesh_models/agent_models/blimp.3ds
+Agent Start Location ?  0 0 0 1 0 0 0
+Agent Goal Location ? 5 5 0 1 0 0 0
+Goal Thresholds ? 1 1 1
+
+Blimp Length ? 10
+Minimum Velocity ? -1
+Maximum Velocity ? 5
+Minimum Turning ? -0.785398
+Maximum Turning ? 0.785398
+Minimum Velocity Z ? -5
+Maximum Velocity Z ? 5
+
+Environment Mesh ? ../mesh_models/environment_models/unit_box.dae
+Environment Location ? 0 0 0 1 0 0 0
+Environment Bounding Box ? -100 100 -100 100 -100 100
+
+Steering Delta t ? 0.1
+Collision Check Delta t ? 0.1
+Turning Radius ? 1

@@ -63,6 +63,10 @@ public:
 		return *wrapperInstance;
 	}
 
+	static void setExternalKeyboardCallback(std::function<void(int)> keyboard) {
+		externalKeyboardCallback = keyboard;
+	}
+
 	void runWithCallback(std::function<void(void)> callback) {
 		glfwInit();
 
@@ -177,6 +181,10 @@ public:
 	}
 
 	static void keyboard(GLFWwindow *window, int key, int scancode, int action, int mods) {
+		if(action == GLFW_PRESS) {
+			externalKeyboardCallback(key);
+		}
+
 		if(action == 0) {
 			switch(key) {
 				case GLFW_KEY_ESCAPE:
@@ -375,9 +383,9 @@ private:
 		makeIdentity(xRotateMatrix);
 		makeIdentity(yRotateMatrix);
 		makeIdentity(zRotateMatrix);
-		scaleMatrix[0] = .01;
-		scaleMatrix[5] = .01;
-		scaleMatrix[10] = .01;
+		scaleMatrix[0] = 0.01;
+		scaleMatrix[5] = 0.01;
+		scaleMatrix[10] = 0.01;
 
 		Identity[0] = Identity[5] = Identity[10] = Identity[15] = 1;
 	}
@@ -500,6 +508,8 @@ private:
 	std::vector<double> Identity;
 
 	static OpenGLWrapper *wrapperInstance;
+	static std::function<void(int)> externalKeyboardCallback;
 };
 
 OpenGLWrapper *OpenGLWrapper::wrapperInstance = NULL;
+std::function<void(int)> OpenGLWrapper::externalKeyboardCallback([](int key){});

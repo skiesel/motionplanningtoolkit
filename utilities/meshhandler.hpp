@@ -185,14 +185,38 @@ private:
 class MeshHandler {
 public:
 	static bool isInCollision(const StaticEnvironmentMeshHandler &environment,
-								const SimpleAgentMeshHandler &agent,
-								const std::vector<fcl::Transform3f> &poses,
+								const std::vector<const SimpleAgentMeshHandler*> &agent,
+								const std::vector<std::vector<fcl::Transform3f> > &poses,
+								bool checkSelfCollision = false,
 								bool debug = false) {
 
 		std::vector<fcl::CollisionObject*> agentPoses;
-		for(const fcl::Transform3f &pose : poses) {
-			fcl::CollisionObject *agentPose = agent.getMeshPose(pose);
-			agentPoses.push_back(agentPose);
+		for(unsigned int i = 0; i < poses.size(); ++i) {
+			const std::vector<fcl::Transform3f> &pose = poses[i];
+
+			std::vector<fcl::CollisionObject*> selfCollisionObjects;
+
+			for(unsigned int j = 0; j < pose.size(); ++j) {
+				fcl::CollisionObject *agentPose = agent[j]->getMeshPose(pose[j]);
+				selfCollisionObjects.push_back(agentPose);
+				agentPoses.push_back(agentPose);
+			}
+
+			if(checkSelfCollision) {
+				fcl::BroadPhaseCollisionManager *selfCollisionManager = new fcl::DynamicAABBTreeCollisionManager();
+				selfCollisionManager->registerObjects(selfCollisionObjects);
+				selfCollisionManager->setup();
+
+				fcl_helpers::CollisionData selfCollisionData;
+				selfCollisionManager->collide(&selfCollisionData, fcl_helpers::defaultCollisionFunction);
+
+				if(selfCollisionData.result.numContacts() > 0) {
+					for(unsigned int i = 0; i < agentPoses.size(); ++i) {
+						delete agentPoses[i];
+					}
+					return true;
+				}
+			}
 		}
 
 		fcl_helpers::CollisionData collisionData;

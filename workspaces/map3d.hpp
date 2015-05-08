@@ -30,12 +30,15 @@ public:
 		return bounds;
 	}
 
-	bool safeEdge(const Agent &agent, const Edge &edge, double dt) const {
-		return !MeshHandler::isInCollision(mesh, agent.getMesh(), agent.getPoses(edge, dt));
+	bool safeEdge(const Agent &agent, const Edge &edge, double dt, bool checkSelfCollision = false) const {
+		auto agentMeshes = agent.getMeshes();
+		auto agentPoses = agent.getPoses(edge, dt);
+		return !MeshHandler::isInCollision(mesh, agentMeshes, agentPoses, checkSelfCollision);
 	}
 
 	bool safePoses(const Agent &agent, const std::vector<fcl::Transform3f> &poses) const {
-		return !MeshHandler::isInCollision(mesh, agent.getMesh(), poses);
+		auto agentMeshes = agent.getMeshes();
+		return !MeshHandler::isInCollision(mesh, agentMeshes, poses);
 	}
 
 #ifdef WITHGRAPHICS

@@ -98,6 +98,13 @@ public:
 		}
 		const StateVars& getStateVars() const { return stateVars; }
 
+		void print() const {
+			for(auto v : stateVars) {
+				fprintf(stderr, "%g ", v);
+			}
+			fprintf(stderr, "\n");
+		}
+
 #ifdef WITHGRAPHICS
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
 			const auto &identity = OpenGLWrapper::getOpenGLWrapper().getIdentity();
@@ -131,7 +138,7 @@ public:
 		Edge(const Edge& e) : start(e.start), end(e.end), path(e.path), cost(e.cost), treeIndex(e.treeIndex) {}
 
 		/* needed for being inserted into NN datastructure */
-		const StateVars& getStateVars() const { return end.getStateVars(); }
+		const StateVars& getTreeStateVars() const { return end.getStateVars(); }
 		int getPointIndex() const { return treeIndex; }
 		void setPointIndex(int ptInd) { treeIndex = ptInd; }
 
@@ -193,6 +200,10 @@ public:
 		return bounds;
 	}
 
+	unsigned int getTreeStateSize() const {
+		return 3;
+	}
+
 	State buildState(const StateVars& stateVars) const {
 		return State(stateVars);
 	}
@@ -232,12 +243,13 @@ public:
 	}
 */
 
-	const SimpleAgentMeshHandler& getMesh() const {
-		return mesh;
+	std::vector<const SimpleAgentMeshHandler*> getMeshes() const {
+		std::vector<const SimpleAgentMeshHandler*> meshes(1, &mesh);
+		return meshes;
 	}
 
-	std::vector<fcl::Transform3f> getRepresentivePosesForLocation(const std::vector<double> &loc) const {
-		std::vector<fcl::Transform3f> poses;
+	std::vector< std::vector<fcl::Transform3f> > getRepresentivePosesForLocation(const std::vector<double> &loc) const {
+		std::vector<std::vector<fcl::Transform3f> > retPoses;
 
 		fcl::Vec3f pose(loc[0], loc[1], 0);
 
@@ -255,14 +267,15 @@ public:
 			rotation(0,1) = sinTheta;
 			rotation(1,1) = cosTheta;
 
-			poses.emplace_back(rotation, pose);
+			retPoses.emplace_back();
+			retPoses.back().emplace_back(rotation, pose);
 		}
 
-		return poses;
+		return retPoses;
 	}
 
-	std::vector<fcl::Transform3f> getPoses(const Edge &edge, double dt) const {
-		std::vector<fcl::Transform3f> poses;
+	std::vector<std::vector<fcl::Transform3f> > getPoses(const Edge &edge, double dt) const {
+		std::vector<std::vector<fcl::Transform3f> > retPoses;
 
 		double totalLength = dubins_path_length(&edge.path);
 		double currentStep = 0;
@@ -287,7 +300,8 @@ public:
 			rotation(0,1) = sinTheta;
 			rotation(1,1) = cosTheta;
 
-			poses.emplace_back(rotation, pose);
+			retPoses.emplace_back();
+			retPoses.back().emplace_back(rotation, pose);
 
 			currentStep += dt;
 		}
@@ -305,9 +319,10 @@ public:
 		rotation(0,1) = sinTheta;
 		rotation(1,1) = cosTheta;
 
-		poses.emplace_back(rotation, pose);
+		retPoses.emplace_back();
+		retPoses.back().emplace_back(rotation, pose);
 
-		return poses;
+		return retPoses;
 	}
 
 #ifdef WITHGRAPHICS
@@ -317,10 +332,10 @@ public:
 
 	void drawSolution(const std::vector<const Edge*> &solution, double dt = std::numeric_limits<double>::infinity()) const {
 		for(const Edge *edge : solution) {
-			std::vector<fcl::Transform3f> poses = getPoses(*edge, dt);
+			std::vector< std::vector<fcl::Transform3f> > poses = getPoses(*edge, dt);
 			auto transform = OpenGLWrapper::getOpenGLWrapper().getIdentity();
 			for(auto pose : poses) {
-				const Matrix3f &rotation = pose.getRotation();
+				const Matrix3f &rotation = pose[0].getRotation();
 				transform[0] = rotation(0,0);
 				transform[1] = rotation(1,0);
 				transform[2] = rotation(2,0);
@@ -333,7 +348,7 @@ public:
 				transform[9] = rotation(1,2);
 				transform[10] = rotation(2,2);
 
-				const Vec3f &translation = pose.getTranslation();
+				const Vec3f &translation = pose[0].getTranslation();
 				transform[12] += translation[0];
 				transform[13] += translation[1];
 				// transform[14] += translation[2];
@@ -348,9 +363,9 @@ public:
 		unsigned int edgeNumber = poseNumber / 2;
 		unsigned int endpoint = poseNumber % 2;
 		const Edge *edge = solution[edgeNumber];
-		std::vector<fcl::Transform3f> poses = getPoses(*edge, std::numeric_limits<double>::infinity());
+		std::vector< std::vector<fcl::Transform3f> > poses = getPoses(*edge, std::numeric_limits<double>::infinity());
 		
-		const Matrix3f &rotation = poses[endpoint].getRotation();
+		const Matrix3f &rotation = poses[endpoint][0].getRotation();
 		transform[0] = rotation(0,0);
 		transform[1] = rotation(1,0);
 		transform[2] = rotation(2,0);
@@ -363,7 +378,7 @@ public:
 		transform[9] = rotation(1,2);
 		transform[10] = rotation(2,2);
 
-		const Vec3f &translation = poses[endpoint].getTranslation();
+		const Vec3f &translation = poses[endpoint][0].getTranslation();
 		transform[12] += translation[0];
 		transform[13] += translation[1];
 		// transform[14] += translation[2];

@@ -1,0 +1,21 @@
+Agent Type ? Snake
+Agent Mesh ? ../mesh_models/agent_models/unit_box.dae
+Agent Start Location ?  0 0
+Agent Goal Location ? 0 20
+Goal Thresholds ? 1 1
+
+Trailer Length ? 1
+Trailer Count ? 10
+Hitch Length ? 0.25
+
+Minimum Velocity ? -1
+Maximum Velocity ? 5
+Minimum Turning ? -0.785398
+Maximum Turning ? 0.785398
+
+Environment Mesh ? ../mesh_models/environment_models/unit_box.dae
+Environment Location ? -100 0 0 1 0 0 0
+Environment Bounding Box ? -50 50 -50 50 0 0
+
+Steering Delta t ? 0.25
+Collision Check Delta t ? 1.

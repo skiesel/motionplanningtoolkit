@@ -1,10 +1,9 @@
-Agent Model ? Omnidirectional
+Agent Type ? Omnidirectional
 Agent Mesh ? ../mesh_models/agent_models/unit_box.dae
 Agent Start Location ?  -5 -5 0 1 0 0 0
 Agent Goal Location ? 5 5 0 1 0 0 0
 Goal Thresholds ? 1 1 1
 
-Environment Model ? Map3D
 Environment Mesh ? ../mesh_models/environment_models/unit_box.dae
 Environment Location ? 0 0 0 1 0 0 0
 Environment Bounding Box ? -10 10 -10 10 -10 10
