@@ -1,0 +1,30 @@
+#/Users/skiesel/Desktop/motionplanningtoolkit/vrep/description_files/manta.inst
+
+Scene File ? /Users/skiesel/Desktop/motionplanningtoolkit/vrep/scenes/manta.ttt
+
+Agent Handle Name ? Manta
+Agent Collision Group Handle Name ? STL_Imported19
+Environment Collision Group Handle Name ? EverythingButRobot
+
+Controllable Velocity Joint Name List ? motor_joint
+Controllable Velocity Joint Ranges ? 0 15
+Controllable Position Joint Name List ? steer_joint
+Controllable Position Joint Ranges ? -1 1
+
+
+State Position Name List ? Manta
+State Orientation Name List ? Manta
+State Velocity Name List ? Manta
+
+State Position Goal Name ? Manta
+State Orientation Goal Name ? Manta
+Goal Position Thresholds ? 0.25 0.25 100
+Goal Orientation Thresholds ? -1 -1 -1
+
+Sampling Ranges ? -100 100 -100 100 -50 50 -3.2 3.2 -3.2 3.2 -3.2 3.2 -10 10 -10 10 -10 10 -10 10 -10 10 -10 10
+
+Collision Checking ? true
+
+Steering Delta t ? 1
+# this is currently ignored
+Collision Check Delta t ? 0.5

@@ -25,6 +25,7 @@ public:
 #endif
 
 		if(agent.isGoal(start, goal)) {
+			fprintf(stderr, "found goal\n");
 			return;
 		}
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <boost/tokenizer.hpp>
 #include <unordered_map>
 #include <fstream>
 #include <algorithm> 
@@ -46,6 +47,20 @@ public:
 			exit(1);
 		}
 		return map.at(key);
+	}
+
+	std::vector<std::string> valueList(const std::string &key, const std::string delim = " ") const {
+		if(!exists(key)) {
+			fprintf(stderr, "Key \"%s\" not bound\n", key.c_str());
+			exit(1);
+		}
+		std::vector<std::string> list;
+		boost::char_separator<char> sep(delim.c_str());
+		boost::tokenizer< boost::char_separator<char> > tokens(map.at(key), sep);
+		for(auto token : tokens) {
+			list.push_back(token);
+		}
+		return list;
 	}
 
 private:

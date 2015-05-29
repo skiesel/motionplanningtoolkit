@@ -411,7 +411,7 @@ private:
 	std::vector<fcl::Transform3f> stateToFCLTransforms(const State& s) const {
 		std::vector<fcl::Transform3f> transforms;
 
-		const StateVars &vars = state.getStateVars();
+		const StateVars &vars = s.getStateVars();
 
 		fcl::Vec3f pose;
 		pose[0] = vars[X];

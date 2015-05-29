@@ -1,0 +1,29 @@
+#/Users/skiesel/Desktop/motionplanningtoolkit/vrep/description_files/p3dx.inst
+
+Scene File ? /Users/skiesel/Desktop/motionplanningtoolkit/vrep/scenes/p3dx_simple.ttt
+
+Agent Handle Name ? Pioneer_p3dx
+Agent Collision Group Handle Name ? Pioneer_p3dx_visible
+Environment Collision Group Handle Name ? EverythingButRobot
+
+Controllable Velocity Joint Name List ? Pioneer_p3dx_leftMotor Pioneer_p3dx_rightMotor
+Controllable Velocity Joint Ranges ? 0 1 0 1
+Controllable Position Joint Name List ? 
+Controllable Position Joint Ranges ? 
+
+State Position Name List ? Pioneer_p3dx
+State Orientation Name List ? Pioneer_p3dx
+State Velocity Name List ? Pioneer_p3dx
+
+State Position Goal Name ? Pioneer_p3dx
+State Orientation Goal Name ? Pioneer_p3dx
+Goal Position Thresholds ? 0.25 0.25 0.25
+Goal Orientation Thresholds ? -1 -1 -1
+
+Sampling Ranges ? -5 5 -5 5 0 0 0 0 0 0 -3.2 3.2 -1 1 -1 1 -1 1 -1 1 -1 1 -1 1
+
+Collision Checking ? true
+
+Steering Delta t ? 1
+# this is currently ignored
+Collision Check Delta t ? 0.5

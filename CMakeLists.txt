@@ -1,12 +1,12 @@
 cmake_minimum_required (VERSION 2.6)
 project (MotionPlanning)
 
-set ( CMAKE_MODULE_PATH
+set(CMAKE_MODULE_PATH
   ${PROJECT_SOURCE_DIR}/CMakeModules
 )
+set(BUILDGRAPHICS 1)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
-set(BUILDGRAPHICS 1)
 
 add_executable(Planner main.cpp)
 
@@ -34,6 +34,7 @@ include_directories(
 	${ASSIMP_LIBRARY_DIRS}
 	${BULLET_LIBRARY_DIRS}
 	"/usr/local/include/bullet"
+	"dependencies/V-REP_PRO_EDU_V3_2_1_Mac/programming/include"
 )
 
 target_link_libraries(Planner
@@ -45,7 +46,8 @@ target_link_libraries(Planner
 )
 
 if(BUILDGRAPHICS)
-	add_definitions(-DWITHGRAPHICS)
+	set_target_properties(Planner PROPERTIES
+	COMPILE_DEFINITIONS "WITHGRAPHICS")
 
 	find_package(PkgConfig REQUIRED)
 	pkg_search_module(GLFW REQUIRED glfw3)
@@ -80,3 +82,21 @@ if(BUILDGRAPHICS)
 		)
 	endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif(BUILDGRAPHICS)
+
+
+
+
+######### VREP Plugin ##########
+
+add_library(v_repExtskiesel SHARED dependencies/V-REP_PRO_EDU_V3_2_1_Mac/programming/common/v_repLib.cpp vrep/plugin.cpp)
+ADD_CUSTOM_COMMAND(
+	TARGET v_repExtskiesel
+	POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy ARGS ${CMAKE_BINARY_DIR}/libv_repExtskiesel.dylib
+	${CMAKE_BINARY_DIR}/../dependencies/V-REP_PRO_EDU_V3_2_1_Mac/vrep.app/Contents/MacOS/
+)
+
+target_link_libraries(v_repExtskiesel
+	${Boost_LIBRARIES}
+	${FCL_LIBRARIES}
+)
