@@ -20,8 +20,6 @@
 #include "utilities/flannkdtreewrapper.hpp"
 #include "utilities/instancefilemap.hpp"
 
-#include "bullet_interface/bullet_raycast_vehicle.hpp"
-
 std::vector<double> parseDoubles(const std::string &str) {
 	std::vector<double> values;
 	boost::char_separator<char> sep(" ");
@@ -183,22 +181,6 @@ void blimp(const InstanceFileMap& args) {
 	#else
 		planner.query(start, goal);
 	#endif
-}
-
-void raycastvehicle(const InstanceFileMap& args) {
-	// BulletRayCastVehicle brcv(args);
-
-	// BulletRayCastVehicle::State start = brcv.getCurrentState();
-
-	// BulletRayCastVehicle::State goal(parseDoubles(args.value("Agent Goal Location")));
-
-	// UniformSampler<BulletRayCastVehicle, BulletRayCastVehicle> sampler(brcv, brcv);
-
-	// flann::KDTreeSingleIndexParams kdtreeType;
-	// FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, BulletRayCastVehicle::Edge> kdtree(kdtreeType, brcv.getTreeStateSize());
-	// RRT< BulletRayCastVehicle, BulletRayCastVehicle,
-	// 	UniformSampler<BulletRayCastVehicle, BulletRayCastVehicle>,
-	// 	FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, BulletRayCastVehicle::Edge> > planner(brcv, brcv, sampler, kdtree, args);	
 }
 
 int main(int argc, char *argv[]) {
