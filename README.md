@@ -10,6 +10,10 @@ https://github.com/bulletphysics/bullet3
 
 http://assimp.sourceforge.net/
 
+Optionally:
+
+http://www.coppeliarobotics.com/
+
 ##### Also using a modified version of:
 
 https://github.com/AndrewWalker/Dubins-Curves
