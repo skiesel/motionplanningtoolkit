@@ -1,8 +1,0 @@
-Agent Model ? Bullet
-Agent Goal Location ? 0 0 7 1 0 0 0
-Goal Thresholds ? 1 0 1
-
-Environment Model ? Bullet
-
-Steering Delta t ? 0.1
-Collision Check Delta t ? 1000

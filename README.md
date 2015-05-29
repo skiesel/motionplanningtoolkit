@@ -6,8 +6,6 @@ https://github.com/flexible-collision-library/fcl
 
 https://github.com/mariusmuja/flann
 
-https://github.com/bulletphysics/bullet3
-
 http://assimp.sourceforge.net/
 
 Optionally:
