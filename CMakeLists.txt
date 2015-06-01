@@ -85,10 +85,13 @@ endif(BUILDGRAPHICS)
 
 
 
-
 ######### VREP Plugin ##########
 
 add_library(v_repExtskiesel SHARED dependencies/V-REP_PRO_EDU_V3_2_1_Mac/programming/common/v_repLib.cpp vrep/plugin.cpp)
+
+set_target_properties(v_repExtskiesel PROPERTIES
+	COMPILE_DEFINITIONS "VREPPLUGIN")
+
 ADD_CUSTOM_COMMAND(
 	TARGET v_repExtskiesel
 	POST_BUILD

@@ -116,9 +116,13 @@ public:
 			if(poseNumber >= 0)
 				agent.animateSolution(solution, poseNumber++);
 		}
-
-
 #endif
+
+#ifdef VREPPLUGIN
+	if(solution.size() > 0)
+		agent.animateSolution(solution);
+#endif
+
 	}
 private:
 	const Workspace &workspace;

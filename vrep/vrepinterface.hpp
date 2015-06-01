@@ -210,8 +210,6 @@ public:
 		State end;
 		saveState(end);
 
-		// fprintf(stderr, "%g %g -> %g %g\n", start.goalPositionVars[0], start.goalPositionVars[1], end.goalPositionVars[0], end.goalPositionVars[1]);
-
 		return Edge(start, end, dt, controls, result.first, true);
 	}
 
@@ -235,6 +233,26 @@ public:
 
 	void makeStartState(State &start) const {
 		saveState(start);
+	}
+
+
+	void animateSolution(const std::vector<const Edge*> &solution) const {
+		while(true) {
+			for(const Edge* edge : solution) {
+				loadState(edge->start);
+				unsigned int controlNum = 0;
+				const std::vector<double> &controls = edge->controls;
+				for(unsigned int i = 0; i < controllableVelocityJointHandles.size(); ++i) {
+					simSetJointTargetVelocity(controllableVelocityJointHandles[i], controls[controlNum++]);
+				}
+
+				for(unsigned int i = 0; i < controllablePositionJointHandles.size(); ++i) {
+					simSetJointTargetPosition(controllablePositionJointHandles[i], controls[controlNum++]);
+				}
+
+				startSimulation(edge->duration);
+			}
+		}
 	}
 
 	std::vector<simInt> getHandleListFromNameList(const std::vector<std::string> &list) {
