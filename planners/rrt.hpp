@@ -119,8 +119,14 @@ public:
 #endif
 
 #ifdef VREPPLUGIN
-	if(solution.size() > 0)
+	if(solution.size() > 0) {
+		if(agent.validateSolution(solution, goal)) {
+			fprintf(stderr, "VALID SOLUTION!\n");
+		} else {
+			fprintf(stderr, "INVALID SOLUTION!\n");
+		}
 		agent.animateSolution(solution);
+	}
 #endif
 
 	}

@@ -235,7 +235,6 @@ public:
 		saveState(start);
 	}
 
-
 	void animateSolution(const std::vector<const Edge*> &solution) const {
 		while(true) {
 			for(const Edge* edge : solution) {
@@ -253,6 +252,29 @@ public:
 				startSimulation(edge->duration);
 			}
 		}
+	}
+
+	bool validateSolution(const std::vector<const Edge*> &solution, const State &goal) const {
+		for(const Edge* edge : solution) {
+			loadState(edge->start);
+			unsigned int controlNum = 0;
+			const std::vector<double> &controls = edge->controls;
+			for(unsigned int i = 0; i < controllableVelocityJointHandles.size(); ++i) {
+				simSetJointTargetVelocity(controllableVelocityJointHandles[i], controls[controlNum++]);
+			}
+
+			for(unsigned int i = 0; i < controllablePositionJointHandles.size(); ++i) {
+				simSetJointTargetPosition(controllablePositionJointHandles[i], controls[controlNum++]);
+			}
+
+			std::pair<double, bool> result = startSimulation(edge->duration);
+
+			if(result.second) {
+				return false;
+			}
+		}
+
+		return isGoal(solution[solution.size()-1]->end, goal);
 	}
 
 	std::vector<simInt> getHandleListFromNameList(const std::vector<std::string> &list) {
