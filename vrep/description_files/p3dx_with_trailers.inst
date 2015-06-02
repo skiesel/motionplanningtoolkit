@@ -1,10 +1,9 @@
-#/Users/skiesel/Desktop/motionplanningtoolkit/vrep/description_files/p3dx.inst
+#/Users/skiesel/Desktop/motionplanningtoolkit/vrep/description_files/p3dx_with_trailers.inst
 
-Scene File ? /Users/skiesel/Desktop/motionplanningtoolkit/vrep/scenes/p3dx_simple.ttt
-#Scene File ? /Users/skiesel/Desktop/motionplanningtoolkit/vrep/scenes/p3dx_very_simple.ttt
+Scene File ? /Users/skiesel/Desktop/motionplanningtoolkit/vrep/scenes/p3dx_with_trailers.ttt
 
 Agent Handle Name ? Pioneer_p3dx
-Agent Collision Group Handle Name ? Pioneer_p3dx_visible
+Agent Collision Group Handle Name ? P3dxAndTrailers
 Environment Collision Group Handle Name ? EverythingButRobot
 
 Controllable Velocity Joint Name List ? Pioneer_p3dx_leftMotor Pioneer_p3dx_rightMotor
