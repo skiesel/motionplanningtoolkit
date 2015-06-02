@@ -84,7 +84,9 @@ public:
 	VREPInterface(const InstanceFileMap &args) : simulatorBarrier(2) {
 		simLoadScene(args.value("Scene File").c_str());
 
-		agentHandle = simGetObjectHandle(args.value("Agent Handle Name").c_str());
+		std::string agentName = args.value("Agent Handle Name");
+		agentHandle = agentName == "EVERYTHING" ? sim_handle_all ? simGetObjectHandle(agentName.c_str());
+
 		agentObjectTree = simGetObjectsInTree(agentHandle, sim_handle_all, 0, &agentObjectCount);
 
 		agentCollisionGroupHandle = simGetCollectionHandle(args.value("Agent Collision Group Handle Name").c_str());
@@ -290,6 +292,7 @@ public:
 	}
 
 	void saveState(State& s) const {
+		// s.poses = simGetConfigurationTree(sim_handle_all);
 		s.poses = simGetConfigurationTree(agentHandle);
 		simFloat target;
 
