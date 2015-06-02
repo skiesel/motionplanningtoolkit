@@ -85,7 +85,7 @@ public:
 		simLoadScene(args.value("Scene File").c_str());
 
 		std::string agentName = args.value("Agent Handle Name");
-		agentHandle = agentName == "EVERYTHING" ? sim_handle_all ? simGetObjectHandle(agentName.c_str());
+		agentHandle = agentName == "EVERYTHING" ? sim_handle_all : simGetObjectHandle(agentName.c_str());
 
 		agentObjectTree = simGetObjectsInTree(agentHandle, sim_handle_all, 0, &agentObjectCount);
 
