@@ -5,7 +5,6 @@
 #include <assimp/postprocess.h>
 
 #include <fcl/collision.h>
-#include <bullet/btBulletDynamicsCommon.h>
 
 class AssimpMeshLoader {
 public:
@@ -56,39 +55,6 @@ public:
 				triangles.back().emplace_back(face.mIndices[0],
 												face.mIndices[1],
 												face.mIndices[2]);
-			}
-		}
-	}
-
-	void get(std::vector<btTriangleMesh*> &meshes) const {
-		struct pt {
-			pt(double x, double y, double z) : x(x), y(y), z(z) {}
-			double x, y, z;
-		};
-
-		for(unsigned int i = 0; i < scene->mNumMeshes; ++i) {
-			
-			meshes.push_back(new btTriangleMesh());
-
-			auto mesh = scene->mMeshes[i];
-
-			for(unsigned int j = 0; j < mesh->mNumVertices; ++j) {
-				auto vertex = mesh->mVertices[j];
-				btVector3 vert(vertex.x, vertex.y, vertex.z);
-				meshes.back()->findOrAddVertex(vert, false);
-			}
-
-			for(unsigned int j = 0; j < mesh->mNumFaces; ++j) {
-				auto face = mesh->mFaces[j];
-
-				if(face.mNumIndices != 3) {
-					fprintf(stderr, "face does not have 3 vertices: %d\n", face.mNumIndices);
-					continue;
-				}
-
-				meshes.back()->addTriangleIndices(face.mIndices[0],
-													face.mIndices[1],
-													face.mIndices[2]);
 			}
 		}
 	}
