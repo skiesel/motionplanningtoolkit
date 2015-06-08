@@ -26,9 +26,9 @@ public:
 
 			space = ompl::base::StateSpacePtr(new ompl::base::SE2StateSpace());
 			space->as<ompl::base::SE2StateSpace>()->setBounds(bounds);
-
+	
 			// create a control space
-			cspace = ompl::control::ControlSpacePtr(new ompl::control::RealVectorControlSpace(space, 2));
+			ompl::control::ControlSpacePtr cspace(new ompl::control::RealVectorControlSpace(space, 2));
 
 			// set the bounds for the control space
 			ompl::base::RealVectorBounds cbounds(2);
@@ -38,13 +38,15 @@ public:
 			cspace->as<ompl::control::RealVectorControlSpace>()->setBounds(cbounds);
 
 			// construct an instance of  space information from this control space
-			si = ompl::control::SpaceInformationPtr(new ompl::control::SpaceInformation(space, cspace));
+			ompl::control::SpaceInformationPtr si(new ompl::control::SpaceInformation(space, cspace));
 
 			// set state validity checking for this space
 			si->setStateValidityChecker(boost::bind(&KPIECE::isStateValid, si.get(),  _1));
 
 			// set the state propagation routine
 			si->setStatePropagator(boost::bind(&KPIECE::propagate, _1, _2, _3, _4));
+
+			si->printSettings(std::cout);
 
 			pdef = ompl::base::ProblemDefinitionPtr(new ompl::base::ProblemDefinition(si));
 
@@ -101,8 +103,6 @@ public:
 
 	    kpiece->setup();
 
-		si->printSettings(std::cout);
-
 		pdef->print(std::cout);
 
 		ompl::base::PlannerTerminationCondition tc = ompl::base::exactSolnPlannerTerminationCondition(pdef);
@@ -124,7 +124,5 @@ private:
 	const Agent &agent;
 	ompl::control::KPIECE1 *kpiece;
 	ompl::base::StateSpacePtr space;
-	ompl::control::ControlSpacePtr cspace;
-	ompl::control::SpaceInformationPtr si;
 	ompl::base::ProblemDefinitionPtr pdef;
 };
