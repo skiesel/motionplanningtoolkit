@@ -75,7 +75,7 @@ public:
 		typename Agent::Control agentControl(controlSpaceDim);
 		typename Agent::Edge edge = workspace.steerWithControl(wrappedState->agentEdge->end, agentControl, duration);
 
-		const typename Agent::StateVars &endStateVars = edge.end.getStateVars();
+		const typename Agent::StateVars &endStateVars = edge.getTreeStateVars();
 
 		WrappedState* resultWrappedState = result->as<WrappedState>();
 
@@ -99,7 +99,7 @@ public:
 		omplStart.agentEdge = new typename Agent::Edge(start);
 		omplStart.valid = true;
 
-		const typename Agent::StateVars &startStateVars = start.getStateVars();
+		const typename Agent::StateVars &startStateVars = omplStart.agentEdge->getTreeStateVars();
 		for(unsigned int i = 0; i < startStateVars.size(); ++i) {
 			omplStart.values[i] = startStateVars[i];
 		}
@@ -110,7 +110,7 @@ public:
 		omplGoal.agentEdge = new typename Agent::Edge(start);
 		omplGoal.valid = true;
 
-		const typename Agent::StateVars &goalStateVars = goal.getStateVars();
+		const typename Agent::StateVars &goalStateVars = omplGoal.agentEdge->getTreeStateVars();;
 		for(unsigned int i = 0; i < goalStateVars.size(); ++i) {
 			omplGoal.values[i] = goalStateVars[i];
 		}
