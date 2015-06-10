@@ -10,6 +10,7 @@ public:
 	typedef std::vector< std::pair<double, double> > StateVarRanges;
 
 	typedef std::vector<double> StateVars;
+	typedef std::vector<double> Control;
 
 	class State {
 	public:
@@ -130,16 +131,26 @@ public:
 		i = 0;
 		simFloat prev;
 		for(const std::string &val : ranges) {
-			if((i % 2) == 0) { prev = std::stod(val);
-			} else { controlVelocityDistributions.emplace_back(prev, std::stod(val)); }
+			if((i % 2) == 0) {
+				prev = std::stod(val);
+			} else {
+				simFloat cur = std::stod(val);
+				controlBounds.emplace_back(prev, cur);
+				controlVelocityDistributions.emplace_back(prev, cur);
+			}
 			i++;
 		}
 
 		ranges = args.valueList("Controllable Position Joint Ranges");
 		i = 0;
 		for(const std::string &val : ranges) {
-			if((i % 2) == 0) { prev = std::stod(val);
-			} else { controlPositionDistributions.emplace_back(prev, std::stod(val)); }
+			if((i % 2) == 0) {
+				prev = std::stod(val);
+			} else {
+				simFloat cur = std::stod(val);
+				controlBounds.emplace_back(prev, cur);
+				controlPositionDistributions.emplace_back(prev, cur);
+			}
 			i++;
 		}
 
@@ -178,12 +189,20 @@ public:
 		return bounds;
 	}
 
+	const std::vector< std::pair<double, double> >& getControlBounds() const {
+		return controlBounds;
+	}
+
 	State buildState(const StateVars &vars) const {
 		return State(vars);
 	}
 
 	Edge steer(const State &start, const State &goal, double dt) const {
 		return randomSteer(start, dt);
+	}
+
+	Edge steerWithControl(const State &start, const Control &control, double dt) const {
+		return Edge(start);
 	}
 
 	Edge randomSteer(const State &start, double dt) const {
@@ -395,7 +414,8 @@ public:
 		simulatorBarrier.count_down_and_wait(); // notify simulator is done
 	}
 
-	std::vector< std::pair<double, double> > bounds;
+	WorkspaceBounds bounds;
+	std::vector< std::pair<double, double> > controlBounds;
 	std::vector<double> goalPositionThresholds, goalOrientationThresholds;
 	int treeStateSize;
 

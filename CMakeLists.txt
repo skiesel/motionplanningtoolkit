@@ -25,13 +25,14 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost 1.57.0 COMPONENTS thread system REQUIRED)
 
 find_package(ASSIMP REQUIRED)
+find_package(OMPL REQUIRED)
 
 include_directories(
 	${Boost_INCLUDE_DIRS}
 	${Boost_LIBRARY_DIRS}
 	${FCL_LIBRARY_DIRS}
 	${ASSIMP_LIBRARY_DIRS}
-	"dependencies/ompl/src"
+	${OMPL_INCLUDE_DIRS}
 	"dependencies/V-REP_PRO_EDU_V3_2_1_Mac/programming/include"
 )
 
@@ -40,6 +41,7 @@ target_link_libraries(Planner
 	${FCL_LIBRARIES}
 	${ASSIMP_LIBRARIES}
 	${CONNEXION_LIBRARIES}
+	${OMPL_LIBRARIES}
 )
 
 if(BUILDGRAPHICS)
@@ -99,4 +101,5 @@ ADD_CUSTOM_COMMAND(
 target_link_libraries(v_repExtskiesel
 	${Boost_LIBRARIES}
 	${FCL_LIBRARIES}
+	${OMPL_LIBRARIES}
 )
