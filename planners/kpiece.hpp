@@ -57,6 +57,11 @@ public:
 
 			pdef = ompl::base::ProblemDefinitionPtr(new ompl::base::ProblemDefinition(spaceInfoPtr));
 
+			spaceInfoPtr->setPropagationStepSize(stod(args.value("Steering Delta t")));
+			spaceInfoPtr->setMinMaxControlDuration(1,1); //I think this is what we want for right now
+
+			spaceInfoPtr->setup();
+
 			kpiece = new ompl::control::KPIECE1(spaceInfoPtr);
 		}
 
@@ -100,6 +105,9 @@ public:
 		omplStart.valid = true;
 
 		const typename Agent::StateVars &startStateVars = omplStart.agentEdge->getTreeStateVars();
+
+		omplStart.values = new double[startStateVars.size()];
+
 		for(unsigned int i = 0; i < startStateVars.size(); ++i) {
 			omplStart.values[i] = startStateVars[i];
 		}
@@ -111,6 +119,9 @@ public:
 		omplGoal.valid = true;
 
 		const typename Agent::StateVars &goalStateVars = omplGoal.agentEdge->getTreeStateVars();;
+
+		omplGoal.values = new double[goalStateVars.size()];
+
 		for(unsigned int i = 0; i < goalStateVars.size(); ++i) {
 			omplGoal.values[i] = goalStateVars[i];
 		}
