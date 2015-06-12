@@ -11,24 +11,60 @@ template<class Workspace, class Agent>
 class KPIECE {
 public:
 
-	class WrappedState : public ompl::base::RealVectorStateSpace::StateType {
+	class StateSpace : public ompl::base::RealVectorStateSpace {
 	public:
-		const typename Agent::Edge *agentEdge;
-		bool valid;
+		class StateType : public ompl::base::RealVectorStateSpace::StateType {
+		public:
+			const typename Agent::Edge *agentEdge;
+			bool valid;
+		};
+
+
+		StateSpace(unsigned int dim) : ompl::base::RealVectorStateSpace(dim), type_(2222) {}
+
+		ompl::base::State* allocState() {
+			fprintf(stderr, "allocState called\n");
+			exit(1);
+			return new StateType();
+		}
+
+		void freeState(ompl::base::State *s) {
+			fprintf(stderr, "freeState called\n");
+			exit(1);
+		}
+
+		void copyState(ompl::base::State *destination, const ompl::base::State *source) const {
+			ompl::base::RealVectorStateSpace::copyState(destination, source);
+
+			const StateType *src = source->as<StateType>();
+			StateType *dest = destination->as<StateType>();
+			
+			dest->valid = src->valid;
+			dest->agentEdge = src->agentEdge;
+		}
+
+		bool equalStates(const ompl::base::State *state1, const ompl::base::State *state2) const {
+			fprintf(stderr, "equalStates called\n");
+			exit(1);
+			return false;
+		}
+
+	protected:
+		int type_;
 	};
 
 	KPIECE(const Workspace &workspace, const Agent &agent, const InstanceFileMap &args) :
 		workspace(workspace), agent(agent), foundGoal(false) {
 			collisionCheckDT = stod(args.value("Collision Check Delta t"));
 
-			const typename Workspace::WorkspaceBounds &workspaceBounds = workspace.getBounds();
-			stateSpaceDim = workspaceBounds.size();
+			const typename Workspace::WorkspaceBounds &agentStateVarRanges = agent.getStateVarRanges(workspace.getBounds());
+			stateSpaceDim = agentStateVarRanges.size();
 
-			ompl::base::RealVectorStateSpace *baseSpace = new ompl::base::RealVectorStateSpace(stateSpaceDim);
+			StateSpace *baseSpace = new StateSpace(stateSpaceDim);
 			ompl::base::RealVectorBounds bounds(stateSpaceDim);
 			for(unsigned int i = 0; i < stateSpaceDim; ++i) {
-				bounds.setLow(i, workspaceBounds[i].first);
-				bounds.setHigh(i, workspaceBounds[i].second);
+				bounds.setLow(i, agentStateVarRanges[i].first);
+				bounds.setHigh(i, agentStateVarRanges[i].second);
 			}
 			baseSpace->setBounds(bounds);
 			ompl::base::StateSpacePtr space = ompl::base::StateSpacePtr(baseSpace);
@@ -70,27 +106,27 @@ public:
 	}
 
 	bool isStateValid(const ompl::control::SpaceInformation *si, const ompl::base::State *state) const {
-		return state->as<WrappedState>()->valid;
+		return state->as<typename StateSpace::StateType>()->valid;
 	}
 
 	void propagate(const ompl::base::State *start, const ompl::control::Control *control, const double duration, ompl::base::State *result) {
-		const WrappedState *wrappedState = start->as<WrappedState>();
+		const typename StateSpace::StateType *state = start->as<typename StateSpace::StateType>();
 		const ompl::control::RealVectorControlSpace::ControlType *realVectorControl = control->as<ompl::control::RealVectorControlSpace::ControlType>();
 
 		typename Agent::Control agentControl(controlSpaceDim);
-		typename Agent::Edge edge = workspace.steerWithControl(wrappedState->agentEdge->end, agentControl, duration);
+		typename Agent::Edge edge = workspace.steerWithControl(state->agentEdge->end, agentControl, duration);
 
 		const typename Agent::StateVars &endStateVars = edge.getTreeStateVars();
 
-		WrappedState* resultWrappedState = result->as<WrappedState>();
+		typename StateSpace::StateType* resultState = result->as<typename StateSpace::StateType>();
 
-		resultWrappedState->agentEdge = new typename Agent::Edge(edge);
+		resultState->agentEdge = new typename Agent::Edge(edge);
 
 		for(unsigned int i = 0; i < endStateVars.size(); ++i) {
-			resultWrappedState->values[i] = endStateVars[i];
+			resultState->values[i] = endStateVars[i];
 		}
 
-		resultWrappedState->valid = workspace.safeEdge(agent, edge, collisionCheckDT);
+		resultState->valid = workspace.safeEdge(agent, edge, collisionCheckDT);
 
 		foundGoal |= workspace.isGoal(edge.end, *agentGoal);
 	}
@@ -100,33 +136,33 @@ public:
 	}
 
 	void query(const typename Agent::State &start, const typename Agent::State &goal, int iterationsAtATime = -1, bool firstInvocation = true) {
-		WrappedState omplStart;
-		omplStart.agentEdge = new typename Agent::Edge(start);
-		omplStart.valid = true;
+		ompl::base::ScopedState<StateSpace> omplStart(spaceInfoPtr);
+		omplStart->agentEdge = new typename Agent::Edge(start);
+		omplStart->valid = true;
 
-		const typename Agent::StateVars &startStateVars = omplStart.agentEdge->getTreeStateVars();
+		const typename Agent::StateVars &startStateVars = omplStart->agentEdge->getTreeStateVars();
 
-		omplStart.values = new double[startStateVars.size()];
+		omplStart->values = new double[startStateVars.size()];
 
 		for(unsigned int i = 0; i < startStateVars.size(); ++i) {
-			omplStart.values[i] = startStateVars[i];
+			omplStart->values[i] = startStateVars[i];
 		}
 
 		agentGoal = new typename Agent::State(goal);
 
-		WrappedState omplGoal;
-		omplGoal.agentEdge = new typename Agent::Edge(start);
-		omplGoal.valid = true;
+		ompl::base::ScopedState<StateSpace> omplGoal(spaceInfoPtr);
+		omplGoal->agentEdge = new typename Agent::Edge(start);
+		omplGoal->valid = true;
 
-		const typename Agent::StateVars &goalStateVars = omplGoal.agentEdge->getTreeStateVars();;
+		const typename Agent::StateVars &goalStateVars = omplGoal->agentEdge->getTreeStateVars();;
 
-		omplGoal.values = new double[goalStateVars.size()];
+		omplGoal->values = new double[goalStateVars.size()];
 
 		for(unsigned int i = 0; i < goalStateVars.size(); ++i) {
-			omplGoal.values[i] = goalStateVars[i];
+			omplGoal->values[i] = goalStateVars[i];
 		}
 
-		pdef->setStartAndGoalStates(&omplStart, &omplGoal);
+		pdef->setStartAndGoalStates(omplStart, omplGoal);
 
 		kpiece->setProblemDefinition(pdef);
 
