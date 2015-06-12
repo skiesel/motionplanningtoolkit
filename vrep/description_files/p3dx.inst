@@ -21,7 +21,7 @@ State Orientation Goal Name ? Pioneer_p3dx
 Goal Position Thresholds ? 1 1 1
 Goal Orientation Thresholds ? -1 -1 -1
 
-Sampling Ranges ? -5 5 -5 5 0 0 0 0 0 0 -3.2 3.2 -1 1 -1 1 -1 1 -1 1 -1 1 -1 1
+Sampling Ranges ? -5 5 -5 5 0 1 0 0 0 0 -3.2 3.2 -1 1 -1 1 -1 1 -1 1 -1 1 -1 1
 
 Collision Checking ? true
 
