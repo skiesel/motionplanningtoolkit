@@ -2,6 +2,7 @@
 
 Scene File ? /Users/skiesel/Desktop/motionplanningtoolkit/vrep/scenes/p3dx_simple.ttt
 #Scene File ? /Users/skiesel/Desktop/motionplanningtoolkit/vrep/scenes/p3dx_very_simple.ttt
+#Scene File ? /Users/skiesel/Desktop/motionplanningtoolkit/vrep/scenes/p3dx_trivial.ttt
 
 Agent Handle Name ? Pioneer_p3dx
 Agent Collision Group Handle Name ? Pioneer_p3dx_visible
