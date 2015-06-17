@@ -99,6 +99,13 @@ public:
 			spaceInfoPtr->setup();
 
 			kpiece = new ompl::control::KPIECE1(spaceInfoPtr);
+
+			kpiece->setGoalBias(stod(args.value("KPIECE Goal Bias")));
+			kpiece->setBorderFraction(stod(args.value("KPIECE Border Fraction")));
+			kpiece->setCellScoreFactor(stod(args.value("KPIECE Cell Score Good")), stod(args.value("KPIECE Cell Score Bad")));
+			kpiece->setMaxCloseSamplesCount(stod(args.value("KPIECE Max Close Samples")));
+
+			//kpiece->setProjectionEvaluator();
 		}
 
 	~KPIECE() {}
