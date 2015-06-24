@@ -2,7 +2,7 @@
 
 #include <random>
 
-template <class Workspace, class Agent>
+template <class Workspace, class Agent, class NN>
 class NormalSampler {
 	typedef typename Agent::State State;
 	typedef typename Agent::StateVars StateVars;
@@ -14,22 +14,31 @@ public:
 		double mean, stdev;
 	};
 
-	NormalSampler(const Workspace &workspace, const Agent &agent, const std::vector<Normal> &normals) : workspace(workspace), agent(agent) {
+	NormalSampler(const Workspace &workspace, const Agent &agent, NN& nn, const std::vector<Normal> &normals) : workspace(workspace), agent(agent), nn(nn) {
 		for(auto normal : normals) {
 			distributions.emplace_back(normal.mean, normal.stdev);
 		}
 	}
 
+	State getTreeSample() const {
+		auto sample = sampleConfiguration();
+		auto sampleEdge = Edge(sample);
+		typename NN::KNNResult result = nn.nearest(&sampleEdge);
+		return result.elements[0]->end;
+	}
+
+private:
 	State sampleConfiguration() const {
 		StateVars vars;
 		for(auto distribution : distributions) {
 			vars.push_back(distribution(generator));
 		}
 		return agent.buildState(vars);
-	};
-private:
+	}
+
 	const Workspace &workspace;
 	const Agent &agent;
+	NN &nn;
 	StateVarRanges stateVarDomains;
 
 	

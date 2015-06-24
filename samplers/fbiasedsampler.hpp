@@ -2,7 +2,7 @@
 
 #include <random>
 
-template <class Workspace, class Agent, class WorkspaceDiscretization>
+template <class Workspace, class Agent, class NN, class WorkspaceDiscretization>
 class FBiasedSampler {
 	typedef typename Agent::State State;
 	typedef typename Agent::StateVars StateVars;
@@ -25,9 +25,9 @@ class FBiasedSampler {
 	};
 
 public:
-	FBiasedSampler(const Workspace &workspace, const Agent &agent, const WorkspaceDiscretization& discretization,
+	FBiasedSampler(const Workspace &workspace, const Agent &agent, NN &nn, const WorkspaceDiscretization& discretization,
 				const State& start, const State& goal, double omega = 4) :
-		workspace(workspace), agent(agent), discretization(discretization), omega(omega) {
+		workspace(workspace), agent(agent), nn(nn), discretization(discretization), omega(omega) {
 
 			unsigned int startIndex = discretization.getContainingCellId(start.getStateVars());
 			unsigned int goalIndex = discretization.getContainingCellId(goal.getStateVars());
@@ -81,6 +81,15 @@ public:
 			}
 		}
 
+	State getTreeSample() const {
+		auto sample = sampleConfiguration();
+		auto sampleEdge = Edge(sample);
+		typename NN::KNNResult result = nn.nearest(&sampleEdge);
+		return result.elements[0]->end;
+	}
+
+private:
+
 	State sampleConfiguration() const {
 		StateVars vars;
 
@@ -106,7 +115,6 @@ public:
 			}
 		}
 	};
-private:
 
 	const Node& getNode(double value) const {
 		unsigned int min = 0;
@@ -160,6 +168,7 @@ private:
 
 	const Workspace &workspace;
 	const Agent &agent;
+	NN &nn;
 	const WorkspaceDiscretization &discretization;
 	StateVarRanges stateVarDomains;
 	std::vector<Node> nodes;

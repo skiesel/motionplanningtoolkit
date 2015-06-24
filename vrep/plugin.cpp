@@ -9,6 +9,7 @@
 #include "../planners/kpiece.hpp"
 #include "../samplers/uniformsampler.hpp"
 #include "../utilities/flannkdtreewrapper.hpp"
+#include "../treeinterface.hpp"
 
 #include <boost/thread/thread.hpp>
 
@@ -75,20 +76,20 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 		for(unsigned int i = 0; i < 3; ++i)
 			goal.goalOrientationVars.push_back(vals[i]);
 
-		UniformSampler<VREPInterface, VREPInterface> sampler(*interface, *interface);
+		typedef flann::KDTreeSingleIndexParams KDTreeType;
+		typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, VREPInterface::Edge> KDTree;
+		typedef UniformSampler<VREPInterface, VREPInterface, KDTree> Sampler;
+		typedef TreeInterface<VREPInterface, KDTree, Sampler> TreeInterface;
+		typedef RRT<VREPInterface, VREPInterface, TreeInterface> Planner;
 
-		flann::KDTreeSingleIndexParams kdtreeType;
-		
-		FLANN_KDTreeWrapper<flann::KDTreeSingleIndexParams,
-							flann::L2<double>,
-							VREPInterface::Edge> kdtree(kdtreeType, interface->getTreeStateSize());
+		KDTreeType kdtreeType;		
+		KDTree kdtree(kdtreeType, interface->getTreeStateSize());
+		Sampler sampler(*interface, *interface, kdtree);
+		TreeInterface treeInterface(kdtree, sampler);
 
-		// RRT<VREPInterface,
-		// 	VREPInterface,
-		// 	UniformSampler<VREPInterface, VREPInterface>,
-		// 	FLANN_KDTreeWrapper<flann::KDTreeSingleIndexParams, flann::L2<double>, VREPInterface::Edge> > planner(*interface, *interface, sampler, kdtree, *args);
+		Planner planner(*interface, *interface, treeInterface, *args);
 
-		KPIECE<VREPInterface, VREPInterface> planner(*interface, *interface, *args);
+		//KPIECE<VREPInterface, VREPInterface> planner(*interface, *interface, *args);
 
 		planner.query(start, goal);
 	});

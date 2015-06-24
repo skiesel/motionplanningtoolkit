@@ -3,15 +3,15 @@
 #include <flann/flann.hpp>
 #include <boost/pool/object_pool.hpp>
 
-template<class Workspace, class Agent, class Sampler, class NN>
+template<class Workspace, class Agent, class TreeInterface>
 class RRT {
 public:
 
 	typedef typename Agent::State State;
 	typedef typename Agent::Edge Edge;
 
-	RRT(const Workspace &workspace, const Agent &agent, const Sampler &sampler, NN &nn, const InstanceFileMap &args) :
-		workspace(workspace), agent(agent), sampler(sampler), nn(nn), solutionCost(-1), poseNumber(-1) {
+	RRT(const Workspace &workspace, const Agent &agent, TreeInterface &treeInterface, const InstanceFileMap &args) :
+		workspace(workspace), agent(agent), treeInterface(treeInterface), solutionCost(-1), poseNumber(-1) {
 			steeringDT = stod(args.value("Steering Delta t"));
 			collisionCheckDT = stod(args.value("Collision Check Delta t"));
 		}
@@ -31,28 +31,16 @@ public:
 
 		if(firstInvocation) {
 			auto root = pool.construct(start);
-			nn.insertPoint(root);
+			treeInterface.insertIntoTree(root);
 		}
 
 		unsigned int iterations = 0;
 
 		while(true && poseNumber == -1) {
 
-			auto sample = sampler.sampleConfiguration();
+			State treeSample = treeInterface.getTreeSample();
 
-#ifdef WITHGRAPHICS
-			samples.push_back(sample);
-#endif
-
-			//intentionally not in the pool
-			auto sampleEdge = Edge(sample);
-
-			typename NN::KNNResult result = nn.nearest(&sampleEdge);
-
-			State nearest = result.elements[0]->end;
-
-			auto edge = agent.steer(nearest, sample, steeringDT);
-			//auto edge = agent.randomSteer(nearest, steeringDT);
+			auto edge = agent.randomSteer(treeSample, steeringDT);
 
 			if(!workspace.safeEdge(agent, edge, collisionCheckDT)) {
 				++iterations;
@@ -64,30 +52,30 @@ public:
 
 			if(agent.isGoal(edge.end, goal)) {
 				fprintf(stderr, "found goal\n");
-				std::vector<const Edge*> newSolution;
-				double newSolutionCost = 0;
-				State cur = edge.start;
-				newSolution.push_back(pool.construct(edge));
-				newSolutionCost += edge.cost;
-				while(!cur.equals(start)) {
-					auto e = Edge(cur);
-					typename NN::KNNResult r = nn.nearest(&e);
-					newSolution.push_back(r.elements[0]);
-					newSolutionCost += r.elements[0]->cost;
-					cur = r.elements[0]->start;
-				}
-				if(solutionCost < 0 || newSolutionCost < solutionCost) {
-					poseNumber = 0;
-					std::reverse(newSolution.begin(), newSolution.end());
-					solution.clear();
-					solution.insert(solution.begin(), newSolution.begin(), newSolution.end());
-				}
+				// std::vector<const Edge*> newSolution;
+				// double newSolutionCost = 0;
+				// State cur = edge.start;
+				// newSolution.push_back(pool.construct(edge));
+				// newSolutionCost += edge.cost;
+				// while(!cur.equals(start)) {
+				// 	auto e = Edge(cur);
+				// 	typename NN::KNNResult r = nn.nearest(&e);
+				// 	newSolution.push_back(r.elements[0]);
+				// 	newSolutionCost += r.elements[0]->cost;
+				// 	cur = r.elements[0]->start;
+				// }
+				// if(solutionCost < 0 || newSolutionCost < solutionCost) {
+				// 	poseNumber = 0;
+				// 	std::reverse(newSolution.begin(), newSolution.end());
+				// 	solution.clear();
+				// 	solution.insert(solution.begin(), newSolution.begin(), newSolution.end());
+				// }
 				
 				break;
 			}
 
 			Edge *e = pool.construct(edge);
-			nn.insertPoint(e);
+			treeInterface.insertIntoTree(e);
 
 #ifdef WITHGRAPHICS
 			treeEdges.push_back(e);
@@ -133,8 +121,7 @@ public:
 private:
 	const Workspace &workspace;
 	const Agent &agent;
-	const Sampler &sampler;
-	NN &nn;
+	TreeInterface &treeInterface;
 	boost::object_pool<Edge> pool;
 	std::vector<const Edge*> solution;
 	std::vector<const Edge*> treeEdges;
