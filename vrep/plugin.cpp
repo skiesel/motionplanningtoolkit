@@ -9,7 +9,9 @@
 #include "../planners/kpiece.hpp"
 #include "../samplers/uniformsampler.hpp"
 #include "../utilities/flannkdtreewrapper.hpp"
-#include "../treeinterface.hpp"
+#include "../tree_interfaces/treeinterface.hpp"
+#include "../tree_interfaces/plakutreeinterface.hpp"
+#include "../discretizations/workspace/prmlite.hpp"
 
 #include <boost/thread/thread.hpp>
 
@@ -69,25 +71,39 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 		
 		simFloat vals[3];
 		simGetObjectPosition(goalHandle, -1, vals);
-		for(unsigned int i = 0; i < 3; ++i)
+		for(unsigned int i = 0; i < 3; ++i) {
+			goal.rootPosition.push_back(vals[i]);
 			goal.goalPositionVars.push_back(vals[i]);
+		}
+
 
 		simGetObjectOrientation(goalHandle, -1, vals);
-		for(unsigned int i = 0; i < 3; ++i)
+		for(unsigned int i = 0; i < 3; ++i) {
+			goal.rootOrientation.push_back(vals[i]);
 			goal.goalOrientationVars.push_back(vals[i]);
+		}
 
 		typedef flann::KDTreeSingleIndexParams KDTreeType;
 		typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, VREPInterface::Edge> KDTree;
-		typedef UniformSampler<VREPInterface, VREPInterface, KDTree> Sampler;
-		typedef TreeInterface<VREPInterface, KDTree, Sampler> TreeInterface;
-		typedef RRT<VREPInterface, VREPInterface, TreeInterface> Planner;
+		// typedef UniformSampler<VREPInterface, VREPInterface, KDTree> Sampler;
+		// typedef TreeInterface<VREPInterface, KDTree, Sampler> TreeInterface;
+
+		typedef PRMLite<VREPInterface, VREPInterface> PRMLite;
+		typedef PlakuTreeInterface<VREPInterface, VREPInterface, PRMLite> PlakuTreeInterface;
+
+		typedef RRT<VREPInterface, VREPInterface, PlakuTreeInterface> Planner;
 
 		KDTreeType kdtreeType;		
 		KDTree kdtree(kdtreeType, interface->getTreeStateSize());
-		Sampler sampler(*interface, *interface, kdtree);
-		TreeInterface treeInterface(kdtree, sampler);
+		// Sampler sampler(*interface, *interface, kdtree);
+		// TreeInterface treeInterface(kdtree, sampler);
 
-		Planner planner(*interface, *interface, treeInterface, *args);
+		
+		PRMLite prmLite(*interface, *interface, start, 100);
+		
+		PlakuTreeInterface plakuTreeInterface(*interface, *interface, prmLite, start, goal, 0.5, 0.85, 10);
+
+		Planner planner(*interface, *interface, plakuTreeInterface, *args);
 
 		//KPIECE<VREPInterface, VREPInterface> planner(*interface, *interface, *args);
 

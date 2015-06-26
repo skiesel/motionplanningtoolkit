@@ -8,6 +8,8 @@ Agent Handle Name ? Pioneer_p3dx
 Agent Collision Group Handle Name ? Pioneer_p3dx_visible
 Environment Collision Group Handle Name ? EverythingButRobot
 
+Workspace Bounds ? -5 5 -5 5 0 0
+
 Controllable Velocity Joint Name List ? Pioneer_p3dx_leftMotor Pioneer_p3dx_rightMotor
 Controllable Velocity Joint Ranges ? 0 1 0 1
 Controllable Position Joint Name List ? 

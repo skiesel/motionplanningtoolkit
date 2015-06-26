@@ -16,7 +16,7 @@
 #include "samplers/normalsampler.hpp"
 #include "samplers/fbiasedsampler.hpp"
 
-#include "treeinterface.hpp"
+#include "tree_interfaces/treeinterface.hpp"
 
 
 #include "discretizations/workspace/griddiscretization.hpp"
