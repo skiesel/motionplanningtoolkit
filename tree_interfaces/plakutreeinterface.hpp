@@ -40,10 +40,17 @@ class PlakuTreeInterface {
 			return weight < r.weight;
 		}
 
-		const unsigned int getRandomRegionAlongPathToGoal(std::uniform_real_distribution<double> &distribution,
+		unsigned int getRandomRegionAlongPathToGoal(std::uniform_real_distribution<double> &distribution,
 			std::default_random_engine &generator) const {
 			unsigned int randomIndex = (unsigned int)(distribution(generator) * regionPath.size());
 			return regionPath[randomIndex];
+		}
+
+		State getNearestStateInRegion(const State& s) const {
+			Edge e(s);
+			auto res = edgesInRegion->nearest(&e);
+			assert(res.elements.size() > 0);
+			return res.elements[0]->end;
 		}
 
 		/* used for initial heuristic computation */
@@ -109,7 +116,8 @@ public:
 			regionHeap.pop_back();
 
 			unsigned int regionAlongPath = activeRegion->getRandomRegionAlongPathToGoal(distribution, generator);
-			return discretization.getRandomStateNearRegionCenter(regionAlongPath, stateRadius);
+			State p = discretization.getRandomStateNearRegionCenter(regionAlongPath, stateRadius);
+			return activeRegion->getNearestStateInRegion(p);
 		} else {
 			return uniformSampler->getTreeSample();
 		}
