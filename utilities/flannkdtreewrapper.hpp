@@ -53,8 +53,8 @@ public:
 		std::vector<double> distances;
 	};
 
-	KNNResult nearest(const Element *elem, double epsilon=0.0) const {
-		return kNearest(elem, 1);
+	KNNResult nearest(const Element *elem, double epsilon=0.0, unsigned int traversals=flann::FLANN_CHECKS_UNLIMITED) const {
+		return kNearest(elem, 1, epsilon, traversals);
 	}
 
 	KNNResult kNearest(const Element *elem, unsigned int k, double epsilon=0.0, unsigned int traversals=flann::FLANN_CHECKS_UNLIMITED) const {
