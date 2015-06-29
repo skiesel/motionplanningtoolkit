@@ -79,8 +79,11 @@ public:
 		for(unsigned int i = 0; i < indices.size(); ++i) {
 			if(indices[i].size() <= 0) continue;
 
-			result.elements.push_back(lookup.at(indices[i][0]).data);
-			result.distances.push_back(distances[i][0]);
+			for(unsigned int j = 0; j < indices[i].size(); ++j) {
+
+				result.elements.push_back(lookup.at(indices[i][j]).data);
+				result.distances.push_back(distances[i][j]);
+			}
 		}
 
 		return result;
@@ -103,8 +106,11 @@ public:
 		for(unsigned int i = 0; i < indices.size(); ++i) {
 			if(indices[i].size() <= 0) continue;
 
-			result.elements.push_back(lookup.at(indices[i][0]).data);
-			result.distances.push_back(distances[i][0]);
+			for(unsigned int j = 0; j < indices[i].size(); ++j) {
+
+				result.elements.push_back(lookup.at(indices[i][j]).data);
+				result.distances.push_back(distances[i][j]);
+			}
 		}
 
 		return result;
