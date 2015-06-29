@@ -3,6 +3,8 @@
 // with creating a datafile easily -- thanks eaburns
 // © 2013 the Search Authors under the MIT license. See AUTHORS for the list of authors.
 
+#pragma once
+
 #include <cstdarg>
 #include <cstdio>
 #include <ctime>
