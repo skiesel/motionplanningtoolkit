@@ -2,6 +2,7 @@
 
 #include <flann/flann.hpp>
 #include <boost/pool/object_pool.hpp>
+#include "../utilities/datafile.hpp"
 
 template<class Workspace, class Agent, class TreeInterface>
 class RRT {
@@ -14,6 +15,9 @@ public:
 		workspace(workspace), agent(agent), treeInterface(treeInterface), solutionCost(-1), poseNumber(-1) {
 			steeringDT = stod(args.value("Steering Delta t"));
 			collisionCheckDT = stod(args.value("Collision Check Delta t"));
+
+			dfpair(stdout, "steering dt", "%g", steeringDT);
+			dfpair(stdout, "collision check dt", "%g", collisionCheckDT);
 		}
 
 
@@ -75,6 +79,7 @@ public:
 			}
 
 			Edge *e = pool.construct(edge);
+
 			treeInterface.insertIntoTree(e);
 
 #ifdef WITHGRAPHICS

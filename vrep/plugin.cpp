@@ -12,6 +12,7 @@
 #include "../tree_interfaces/treeinterface.hpp"
 #include "../tree_interfaces/plakutreeinterface.hpp"
 #include "../discretizations/workspace/prmlite.hpp"
+#include "../utilities/datafile.hpp"
 
 #include <boost/thread/thread.hpp>
 
@@ -63,6 +64,8 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 	simStartSimulation();
 
 	boost::thread workerThread([&](){
+		dfheader(stdout);
+
 		VREPInterface::State start;
 		interface->makeStartState(start);
 
@@ -98,8 +101,9 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 		// Sampler sampler(*interface, *interface, kdtree);
 		// TreeInterface treeInterface(kdtree, sampler);
 
-		
-		PRMLite prmLite(*interface, *interface, start, 100);
+		PRMLite prmLite(*interface, *interface, start, 10000, 10, 0.5);
+
+		prmLite.draw();
 		
 		PlakuTreeInterface plakuTreeInterface(*interface, *interface, prmLite, start, goal, 0.5, 0.85, 10);
 
@@ -108,6 +112,8 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 		//KPIECE<VREPInterface, VREPInterface> planner(*interface, *interface, *args);
 
 		planner.query(start, goal);
+
+		dffooter(stdout);
 	});
 
 	return 1;
