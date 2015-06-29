@@ -111,7 +111,7 @@ public:
 
 	unsigned int getCellId(const typename Agent::State &state) const {
 		Vertex v(state.getTransform(), 0);
-		auto res = kdtree.nearest(&v);
+		auto res = kdtree.nearest(&v, 1, 1);
 
 		assert(res.elements.size() > 0);
 		
