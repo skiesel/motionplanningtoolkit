@@ -1,3 +1,5 @@
+#pragma once
+
 template<class Agent, class InsertionInteface, class QueryInterface>
 class TreeInterface {
 	typedef typename Agent::State State;
