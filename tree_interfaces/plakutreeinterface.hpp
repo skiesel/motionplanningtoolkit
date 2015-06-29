@@ -83,7 +83,6 @@ public:
 		dijkstra(regions[startRegionId]);
 
 		for(const auto region : regions) {
-			fprintf(stderr, "%u\n", region->id);
 			assert(region->regionPath.size() > 0);
 		}
 
