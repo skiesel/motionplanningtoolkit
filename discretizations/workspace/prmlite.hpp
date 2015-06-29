@@ -4,7 +4,10 @@
 #include <unordered_map>
 #include <fcl/math/transform.h>
 
+#include "v_repLib.h"
+
 #include "../utilities/flannkdtreewrapper.hpp"
+#include "../utilities/datafile.hpp"
 
 template <class Workspace, class Agent>
 class PRMLite {
@@ -54,14 +57,40 @@ class PRMLite {
 		double weight;
 	};
 
-	typedef flann::KDTreeSingleIndexParams KDTreeType;
+	typedef flann::KDTreeIndexParams KDTreeType;
 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, Vertex> KDTree;
 
 public:
-	PRMLite(const Workspace &workspace, const Agent &agent, const State &canonicalState, unsigned int numVertices, double collisionCheckDT = 0.1) :
-		agent(agent), kdtree(KDTreeType(), 7), canonicalState(canonicalState) {
+	PRMLite(const Workspace &workspace, const Agent &agent, const State &canonicalState, unsigned int numVertices,
+		unsigned int edgeSetSize, double collisionCheckDT = 0.1) :
+		agent(agent), kdtree(KDTreeType(2), 7), canonicalState(canonicalState) {
+
+		dfpair(stdout, "prm vertex set size", "%lu", numVertices);
+		dfpair(stdout, "prm edge set size", "%lu", edgeSetSize);
+		dfpair(stdout, "prm edge collision check dt", "%g", collisionCheckDT);
+
+		clock_t start = clock();
+		clock_t vertexStart = clock();
+		
 		generateVertices(workspace, agent, numVertices);
-		generateEdges(workspace, agent, collisionCheckDT);
+		
+		clock_t end = clock();
+		double time = (double) (end-vertexStart) / CLOCKS_PER_SEC;
+		dfpair(stdout, "prm vertex build time", "%g", time);
+		clock_t edgeStart = clock();
+
+		generateEdges(workspace, agent, collisionCheckDT, edgeSetSize);
+		
+		end = clock();
+		time = (double) (end-edgeStart) / CLOCKS_PER_SEC;
+		dfpair(stdout, "prm edge build time", "%g", time);
+
+		time = (double) (end-start) / CLOCKS_PER_SEC;
+		dfpair(stdout, "prm build time", "%g", time);
+	}
+
+	void addMoreVertices(unsigned int howManyToAdd) {
+		fatal("PRM addMoreVertices not implemented");
 	}
 
 	unsigned int getCellCount() const {
@@ -113,6 +142,57 @@ public:
 		return agent.transformToState(canonicalState, transform, radius);
 	}
 
+	void draw() const {
+		auto verticesHandle = simAddDrawingObject(sim_drawing_points, 5, 0.0, -1, vertices.size(), NULL, NULL, NULL, NULL);
+		simFloat coords[6];
+		for(const auto vert : vertices) {
+			const auto& trans = vert->transform.getTranslation();
+			for(unsigned int i = 0; i < 3; ++i)
+				coords[i] = trans[i];
+			simAddDrawingObjectItem(verticesHandle, coords);
+		}
+
+		std::vector< std::vector<double> > edgesForVrep;
+		for(const auto& edgeSet : edges) {
+			std::vector<double> edgeForVrep(6);
+			const auto startVertex = vertices[edgeSet.first];
+			
+			const auto& trans = startVertex->transform.getTranslation();
+			for(unsigned int i = 0; i < 3; ++i)
+				edgeForVrep[i] = trans[i];
+
+			for(const auto& edge : edgeSet.second) {
+				const auto endVertex = vertices[edge.second.endpoint];
+				
+				const auto& trans2 = endVertex->transform.getTranslation();
+				for(unsigned int i = 3; i < 6; ++i)
+					edgeForVrep[i] = trans2[i];
+
+				edgesForVrep.push_back(edgeForVrep);
+			}
+		}
+
+		auto edgesHandle = simAddDrawingObject(sim_drawing_lines, 1, 0.0, -1, edgesForVrep.size(), NULL, NULL, NULL, NULL);
+
+		for(const auto &edge : edgesForVrep) {
+			for(unsigned int i = 0; i < 6; ++i)
+				coords[i] = edge[i];
+			simAddDrawingObjectItem(edgesHandle, coords);
+		}
+	}
+
+	bool edgeExists(unsigned int c1, unsigned int c2) const {
+		auto vertexAndEdges = edges.find(c1);
+		if(vertexAndEdges == edges.end()) {
+			return false;
+		}
+
+		const auto &edges = vertexAndEdges->second;
+
+		auto edge = edges.find(c2);
+		return edge != edges.end();
+	}
+
 private:
 	fcl::Vec3f randomPointInSphere(double maxRadius = 1) const {
 		double radius = maxRadius * pow(zeroToOne(generator), 1/3);
@@ -126,6 +206,8 @@ private:
 	}
 
 	void generateVertices(const Workspace &workspace, const Agent &agent, unsigned int numVertices) {
+		vertices.reserve(numVertices);
+
 		auto bounds = workspace.getBounds();
 
 		std::vector< std::uniform_real_distribution<double> > linearDistributions;
@@ -147,17 +229,23 @@ private:
 		}
 	}
 
-	void generateEdges(const Workspace &workspace, const Agent &agent, double collisionCheckDT) {
+	void generateEdges(const Workspace &workspace, const Agent &agent, double collisionCheckDT, double edgeSetSize) {
 		for(unsigned int i = 0; i < vertices.size(); ++i) {
-			for(unsigned int j = i+1; j < vertices.size(); ++j) {
+			auto res = kdtree.kNearest(vertices[i], edgeSetSize, 0, 1);
+
+			for(const auto endVertex : res.elements) {
+
+				if(edgeExists(i, endVertex->id)) {
+					continue;
+				}
 				
-				std::vector<fcl::Transform3f> edgeCandidate = interpolate(vertices[i]->transform, vertices[j]->transform, collisionCheckDT);
+				std::vector<fcl::Transform3f> edgeCandidate = interpolate(vertices[i]->transform, endVertex->transform, collisionCheckDT);
 
 				if(edgeCandidate.size() == 0 || workspace.safePoses(agent, edgeCandidate)) {
-					double cost = evaluateTransformDistance(vertices[i]->transform, vertices[j]->transform);
+					double cost = evaluateTransformDistance(vertices[i]->transform, endVertex->transform);
 
-					edges[i][j] = Edge(j, cost);
-					edges[j][i] = Edge(i, cost); //the reverse interpolation would be symmetric
+					edges[i][endVertex->id] = Edge(endVertex->id, cost);
+					edges[endVertex->id][i] = Edge(i, cost); //the reverse interpolation would be symmetric
 				}
 			}
 		}
