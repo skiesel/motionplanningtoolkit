@@ -28,6 +28,18 @@ Sampling Ranges ? -5 5 -5 5 0 1 0 0 0 0 -3.2 3.2 -1 1 -1 1 -1 1 -1 1 -1 1 -1 1
 
 Collision Checking ? true
 
-Steering Delta t ? 5
+Steering Delta t ? 1
 # this is currently ignored
 Collision Check Delta t ? 0.5
+
+#Planner ? RRT
+
+#Planner ? RRT Connect
+
+Planner ? Plaku IROS 2014
+Number Of PRM Vertices ? 10000
+Nearest Neighbors To Consider In PRM Edge Construction ? 10
+PRM Collision Check DT ? 0.5
+Plaku Alpha Value ? 0.5
+Plaku b Value ? 0.85
+Plaku PRM State Selection Radius ? 5

@@ -3,15 +3,9 @@
 #include "v_repLib.h"
 #include "luaFunctionData.h"
 
-#include "../utilities/instancefilemap.hpp"
 #include "vrepinterface.hpp"
-#include "../planners/rrt.hpp"
-#include "../planners/kpiece.hpp"
-#include "../samplers/uniformsampler.hpp"
-#include "../utilities/flannkdtreewrapper.hpp"
-#include "../tree_interfaces/treeinterface.hpp"
-#include "../tree_interfaces/plakutreeinterface.hpp"
-#include "../discretizations/workspace/prmlite.hpp"
+#include "plannerfunctions.hpp"
+#include "../utilities/instancefilemap.hpp"
 #include "../utilities/datafile.hpp"
 
 #include <boost/thread/thread.hpp>
@@ -86,33 +80,17 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 			goal.goalOrientationVars.push_back(vals[i]);
 		}
 
-		typedef flann::KDTreeSingleIndexParams KDTreeType;
-		typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, VREPInterface::Edge> KDTree;
-		// typedef UniformSampler<VREPInterface, VREPInterface, KDTree> Sampler;
-		// typedef TreeInterface<VREPInterface, KDTree, Sampler> TreeInterface;
-
-		typedef PRMLite<VREPInterface, VREPInterface> PRMLite;
-		typedef PlakuTreeInterface<VREPInterface, VREPInterface, PRMLite> PlakuTreeInterface;
-
-		typedef RRT<VREPInterface, VREPInterface, PlakuTreeInterface> Planner;
-
-		KDTreeType kdtreeType;		
-		KDTree kdtree(kdtreeType, interface->getTreeStateSize());
-		// Sampler sampler(*interface, *interface, kdtree);
-		// TreeInterface treeInterface(kdtree, sampler);
-
-		PRMLite prmLite(*interface, *interface, start, 10000, 10, 0.5);
-
-		prmLite.draw();
+		if(args->value("Planner").compare("RRT") == 0) {
+			solveWithRRT(interface, args, start, goal);	
+		} else if(args->value("Planner").compare("RRT Connect") == 0) {
+			solveWithRRTConnect(interface, args, start, goal);
+		} else if(args->value("Planner").compare("Plaku IROS 2014") == 0) {
+			solveWithPlaku(interface, args, start, goal);
+		} else {
+			fprintf(stderr, "unrecognized planner!");
+			exit(1);
+		}
 		
-		PlakuTreeInterface plakuTreeInterface(*interface, *interface, prmLite, start, goal, 0.5, 0.85, 10);
-
-		Planner planner(*interface, *interface, plakuTreeInterface, *args);
-
-		//KPIECE<VREPInterface, VREPInterface> planner(*interface, *interface, *args);
-
-		planner.query(start, goal);
-
 		dffooter(stdout);
 	});
 
