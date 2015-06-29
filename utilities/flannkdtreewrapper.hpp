@@ -17,7 +17,7 @@ class FLANN_KDTreeWrapper {
 public:
 	typedef flann::Index<DistanceMetric> KDTree;
 
-	FLANN_KDTreeWrapper(const KDTreeType& type, unsigned int dim, double epsilon = 0) : kdtree(type), currentPointIndex(1), epsilon(epsilon) {
+	FLANN_KDTreeWrapper(const KDTreeType& type, unsigned int dim) : kdtree(type), currentPointIndex(1) {
 		flann::Matrix<double> point(new double[dim], 1, dim);
 		kdtree.buildIndex(point);
 		kdtree.removePoint(0);
@@ -53,20 +53,20 @@ public:
 		std::vector<double> distances;
 	};
 
-	KNNResult nearest(const Element *elem)  {
+	KNNResult nearest(const Element *elem, double epsilon=0.0) const {
 		return kNearest(elem, 1);
 	}
 
-	KNNResult kNearest(const Element *elem, unsigned int k) {
+	KNNResult kNearest(const Element *elem, unsigned int k, double epsilon=0.0, unsigned int traversals=flann::FLANN_CHECKS_UNLIMITED) const {
 		assert(k > 0);
 
 		auto stateVars = elem->getTreeStateVars();
-		flann::Matrix<double> point(stateVars.data(), 1, stateVars.size());
+		flann::Matrix<double> point(stateVars.data(), 1, stateVars.size(), epsilon);
 		
 		std::vector< std::vector<int> > indices;
 		std::vector< std::vector<double> > distances;
 
-		flann::SearchParams params(flann::FLANN_CHECKS_UNLIMITED, epsilon, false);
+		flann::SearchParams params(traversals, epsilon, false);
 
 		kdtree.knnSearch(point, indices, distances, k, params);
 
@@ -89,7 +89,7 @@ public:
 		return result;
 	}
 
-	KNNResult kNearestWithin(const Element *elem, double radius, int max_neighbors=-1) const {
+	KNNResult kNearestWithin(const Element *elem, double radius, int max_neighbors=-1, double epsilon=0.0) const {
 		auto stateVars = elem->getTreeStateVars();
 		flann::Matrix<double> point(stateVars.data(), 1, stateVars.size());
 		
@@ -121,5 +121,4 @@ private:
 	flann::Index<DistanceMetric> kdtree;
 	std::unordered_map<int, LookupElement> lookup;
 	int currentPointIndex;
-	double epsilon;
 };
