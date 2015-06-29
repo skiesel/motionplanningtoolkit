@@ -5,6 +5,8 @@
 #include <boost/thread/barrier.hpp>
 #include <fcl/math/transform.h>
 
+#include "../utilities/instancefilemap.hpp"
+
 class VREPInterface {
 public:
 	typedef std::vector< std::pair<double, double> > WorkspaceBounds;
@@ -25,10 +27,23 @@ public:
 		 poses(s.poses),
 		 velocities(s.velocities.begin(), s.velocities.end()),
 		 targetVelocities(s.targetVelocities.begin(), s.targetVelocities.end()),
-		 targetPositions(s.targetPositions.begin(), s.targetPositions.end()) {}
+		 targetPositions(s.targetPositions.begin(), s.targetPositions.end()) {}		 
 
 		State(const StateVars &vars) : stateVars(vars.begin(), vars.end()) {
 			stateVars.resize(fullStateSize);
+		}
+
+		State& operator=(const State& s) {
+			stateVars = s.stateVars;
+			rootPosition = s.rootPosition;
+			rootOrientation = s.rootOrientation;
+			goalPositionVars = s.goalPositionVars;
+			goalOrientationVars = s.goalOrientationVars;
+			poses = s.poses; //This I might be a little worried about... we're sharing this pointer!
+			velocities = s.velocities;
+			targetVelocities = s.targetVelocities;
+			targetPositions = s.targetPositions;
+			return *this;
 		}
 
 		const StateVars &getStateVars() const { return stateVars; }
@@ -75,6 +90,17 @@ public:
 		Edge(const Edge &e) : start(e.start), end(e.end), cost(e.cost), treeIndex(e.treeIndex), 
 			controls(e.controls.begin(), e.controls.end()), duration(e.duration), safe(e.safe) {}
 
+		Edge& operator=(const Edge& e) {
+			start = e.start;
+			end = e.end;
+			cost = e.cost;
+			duration = e.duration;
+			controls = e.controls;
+			treeIndex = e.treeIndex;
+			safe = e.safe;
+			return *this;
+		}
+
 		void print() {
 			start.print();
 			end.print();
@@ -85,7 +111,7 @@ public:
 		int getPointIndex() const { return treeIndex; }
 		void setPointIndex(int ptInd) { treeIndex = ptInd; }
 
-		const State start, end;
+		State start, end;
 		double cost, duration;
 		std::vector<double> controls;
 		int treeIndex;
@@ -255,8 +281,31 @@ public:
 		return randomSteer(start, dt);
 	}
 
-	Edge steerWithControl(const State &start, const Control &control, double dt) const {
-		return Edge(start);
+	Edge steerWithControl(const State &start, const Edge &getControlsFromThisEdge, double dt) const {
+		Edge edge(start);
+		edge.safe = false;
+
+		loadState(start);
+
+		if(collision()) { return edge; }
+
+		unsigned int curControl = 0;
+		for(unsigned int i = 0; i < controllableVelocityJointHandles.size(); ++i) {
+			simSetJointTargetVelocity(controllableVelocityJointHandles[i], getControlsFromThisEdge.controls[curControl++]);
+		}
+
+		for(unsigned int i = 0; i < controllablePositionJointHandles.size(); ++i) {
+			simSetJointTargetPosition(controllablePositionJointHandles[i], getControlsFromThisEdge.controls[curControl++]);
+		}
+
+		std::pair<double, bool> result = startSimulation(dt);
+
+		if(result.second || collision()) { return edge; }
+
+		State end;
+		saveState(end);
+
+		return Edge(start, end, dt, getControlsFromThisEdge.controls, result.first, true);
 	}
 
 	Edge randomSteer(const State &start, double dt) const {
