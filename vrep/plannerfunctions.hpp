@@ -66,6 +66,9 @@ void solveWithPlaku(const VREPInterface *interface, const InstanceFileMap* args,
 	double stateRadius = stod(args->value("Plaku PRM State Selection Radius"));
 
 	PlakuTreeInterface plakuTreeInterface(*interface, *interface, prmLite, start, goal, alpha, b, stateRadius);
+
+	plakuTreeInterface.draw();
+
 	Plaku plaku(*interface, *interface, plakuTreeInterface, *args);
 	plaku.query(start, goal);
 }

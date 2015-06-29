@@ -102,6 +102,24 @@ public:
 		delete uniformSamplerBackingKDTree;
 	}
 
+	void draw() {
+		std::vector<std::vector<double>> colorLookup(regions.size());
+
+		double min = 1000000000;
+		double max = 0;
+		for(unsigned int i = 0; i < regions.size(); ++i) {
+			min = std::min(regions[i]->heuristic, min);
+			if(!isinf(regions[i]->heuristic))
+				max = std::max(regions[i]->heuristic, max);
+		}
+
+		for(unsigned int i = 0; i < regions.size(); ++i) {
+			colorLookup[i] = getColor(min, max, regions[i]->heuristic);
+		}
+
+		discretization.draw(true, true, colorLookup);
+	}
+
 	State getTreeSample() {
 		if(activeRegion != NULL) {
 			activeRegion->selected(alpha);
@@ -136,6 +154,32 @@ public:
 	}
 
 private:
+	std::vector<double> getColor(double min, double max, double value) const {
+		std::vector<double> color(3);
+
+		value = ((value - min) / (max - min)) * 510;
+
+		color[0] = 0;
+		color[1] = 255;
+		color[2] = 0;
+		
+		if(value >= 255) {
+			color[0] = 255;
+			value -= 255;
+			color[1] -= value;
+			if(color[1] < 0) color[1] = 0;
+		}
+		else {
+			color[0] += value;
+		}
+
+		for(unsigned int i = 0; i < 3; ++i) {
+			color[i] /= 255;
+		}
+
+		return color;
+	}
+
 
 	struct DijkstraSearchNode {
 		DijkstraSearchNode(unsigned int id, double cost) : id(id), cost(cost) {
@@ -170,8 +214,7 @@ private:
 				Region *kidPtr = regions[kid];
 
 				if(newHeuristic < kidPtr->heuristic) {
-					kidPtr->heuristic = newHeuristic;
-					kidPtr->setHeuristicAndPath(0, current->regionPath);
+					kidPtr->setHeuristicAndPath(newHeuristic, current->regionPath);
 
 					if(open.inHeap(kidPtr)) {
 						open.siftFromItem(kidPtr);

@@ -119,12 +119,15 @@ public:
 	};
 
 	VREPInterface(const InstanceFileMap &args) : simulatorBarrier(2) {
-		simLoadScene(args.value("Scene File").c_str());
+		assert(simLoadScene(args.value("Scene File").c_str()) != -1);
 
 		std::string agentName = args.value("Agent Handle Name");
 		agentHandle = agentName == "EVERYTHING" ? sim_handle_all : simGetObjectHandle(agentName.c_str());
 
+		assert(agentHandle != -1);
+
 		agentObjectTree = simGetObjectsInTree(agentHandle, sim_handle_all, 0, &agentObjectCount);
+		assert(agentObjectTree != NULL);
 
 		agentCollisionGroupHandle = simGetCollectionHandle(args.value("Agent Collision Group Handle Name").c_str());
 		if(agentCollisionGroupHandle < 0) {

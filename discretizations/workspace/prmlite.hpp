@@ -142,42 +142,62 @@ public:
 		return agent.transformToState(canonicalState, transform, radius);
 	}
 
-	void draw() const {
-		auto verticesHandle = simAddDrawingObject(sim_drawing_points, 5, 0.0, -1, vertices.size(), NULL, NULL, NULL, NULL);
-		simFloat coords[6];
-		for(const auto vert : vertices) {
-			const auto& trans = vert->transform.getTranslation();
-			for(unsigned int i = 0; i < 3; ++i)
-				coords[i] = trans[i];
-			simAddDrawingObjectItem(verticesHandle, coords);
-		}
+	void draw(bool drawPoints=true, bool drawLines=false, std::vector<std::vector<double>> colors = std::vector<std::vector<double>>()) const {
+		simFloat coords[12];
+		for(unsigned int i = 0; i < 6; ++i)
+			coords[i] = 0;
 
-		std::vector< std::vector<double> > edgesForVrep;
-		for(const auto& edgeSet : edges) {
-			std::vector<double> edgeForVrep(6);
-			const auto startVertex = vertices[edgeSet.first];
-			
-			const auto& trans = startVertex->transform.getTranslation();
-			for(unsigned int i = 0; i < 3; ++i)
-				edgeForVrep[i] = trans[i];
+		if(drawPoints) {
+			auto verticesHandle = simAddDrawingObject(sim_drawing_spherepoints | sim_drawing_itemcolors, 0.1, 0.0, -1, vertices.size(), NULL, NULL, NULL, NULL);
+			unsigned int curIndex = 0;
+			for(const auto vert : vertices) {
+				const auto& trans = vert->transform.getTranslation();
 
-			for(const auto& edge : edgeSet.second) {
-				const auto endVertex = vertices[edge.second.endpoint];
 				
-				const auto& trans2 = endVertex->transform.getTranslation();
-				for(unsigned int i = 3; i < 6; ++i)
-					edgeForVrep[i] = trans2[i];
+				for(unsigned int i = 0; i < 3; ++i) {
+					coords[i] = trans[i];
+				}
 
-				edgesForVrep.push_back(edgeForVrep);
+				if(colors.size() > 0) {
+					for(unsigned int i = 0; i < 3; ++i) {
+						coords[3+i] = colors[curIndex][i];
+					}
+				}
+				simAddDrawingObjectItem(verticesHandle, coords);
+				curIndex++;
 			}
 		}
 
-		auto edgesHandle = simAddDrawingObject(sim_drawing_lines, 1, 0.0, -1, edgesForVrep.size(), NULL, NULL, NULL, NULL);
+		if(drawLines) {
+			std::vector< std::vector<double> > edgesForVrep;
+			for(const auto& edgeSet : edges) {
+				std::vector<double> edgeForVrep(6);
+				const auto startVertex = vertices[edgeSet.first];
+				
+				const auto& trans = startVertex->transform.getTranslation();
+				for(unsigned int i = 0; i < 3; ++i) {
+					edgeForVrep[i] = trans[i];
+				}
 
-		for(const auto &edge : edgesForVrep) {
-			for(unsigned int i = 0; i < 6; ++i)
-				coords[i] = edge[i];
-			simAddDrawingObjectItem(edgesHandle, coords);
+				for(const auto& edge : edgeSet.second) {
+					const auto endVertex = vertices[edge.second.endpoint];
+					
+					const auto& trans2 = endVertex->transform.getTranslation();
+					for(unsigned int i = 0; i < 3; ++i) {
+						edgeForVrep[3+i] = trans2[i];
+					}
+
+					edgesForVrep.push_back(edgeForVrep);
+				}
+			}
+
+			auto edgesHandle = simAddDrawingObject(sim_drawing_lines, 1, 0.0, -1, edgesForVrep.size(), NULL, NULL, NULL, NULL);
+
+			for(const auto &edge : edgesForVrep) {
+				for(unsigned int i = 0; i < 6; ++i)
+					coords[i] = edge[i];
+				simAddDrawingObjectItem(edgesHandle, coords);
+			}
 		}
 	}
 
