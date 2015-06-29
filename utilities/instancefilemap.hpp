@@ -22,6 +22,9 @@ public:
 		std::string line;
 		while(!file.eof()) {
 			std::getline(file, line);
+
+			if(line.length() > 0 && line[0] == '#') continue;
+
 			int delimeter = line.find("?");
 			if(delimeter < 0) {
 				map[line] = line;
