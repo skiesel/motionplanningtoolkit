@@ -63,13 +63,13 @@ class PRMLite {
 		double weight;
 	};
 
-	typedef flann::KDTreeSingleIndexParams KDTreeType;
+	typedef flann::KDTreeIndexParams KDTreeType;
 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, VertexZRotationOnly> KDTree;
 
 public:
 	PRMLite(const Workspace &workspace, const Agent &agent, const State &canonicalState, unsigned int numVertices,
 		unsigned int edgeSetSize, double collisionCheckDT = 0.1) :
-		agent(agent), kdtree(KDTreeType(), 4), canonicalState(canonicalState) {
+		agent(agent), kdtree(KDTreeType(2), 4), canonicalState(canonicalState) {
 
 		dfpair(stdout, "prm vertex set size", "%lu", numVertices);
 		dfpair(stdout, "prm edge set size", "%lu", edgeSetSize);
@@ -267,7 +267,7 @@ private:
 
 	void generateEdges(const Workspace &workspace, const Agent &agent, double collisionCheckDT, double edgeSetSize) {
 		for(unsigned int i = 0; i < vertices.size(); ++i) {
-			auto res = kdtree.kNearest(vertices[i], edgeSetSize+1/*, 0, 1*/);
+			auto res = kdtree.kNearest(vertices[i], edgeSetSize+1, 0, 1);
 
 			for(const auto endVertexZRotationOnly : res.elements) {
 
