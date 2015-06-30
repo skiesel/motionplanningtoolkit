@@ -27,7 +27,7 @@ public:
 		 poses(s.poses),
 		 velocities(s.velocities.begin(), s.velocities.end()),
 		 targetVelocities(s.targetVelocities.begin(), s.targetVelocities.end()),
-		 targetPositions(s.targetPositions.begin(), s.targetPositions.end()) {}		 
+		 targetPositions(s.targetPositions.begin(), s.targetPositions.end()) {}
 
 		State(const StateVars &vars) : stateVars(vars.begin(), vars.end()) {
 			stateVars.resize(fullStateSize);
@@ -76,6 +76,8 @@ public:
 		StateVars stateVars, rootPosition, rootOrientation, goalPositionVars, goalOrientationVars;
 		simChar *poses;
 		std::vector<double> velocities, targetVelocities, targetPositions;
+
+		bool valid;
 
 		static unsigned int fullStateSize;
 	};
@@ -351,7 +353,9 @@ public:
 		State end;
 		saveState(end);
 
-		return Edge(start, end, dt, getControlsFromThisEdge.controls, result.first, true);
+		bool inBounds = stateInBounds(end);
+
+		return Edge(start, end, dt, getControlsFromThisEdge.controls, result.first, inBounds);
 	}
 
 	Edge randomSteer(const State &start, double dt) const {
@@ -380,7 +384,9 @@ public:
 		State end;
 		saveState(end);
 
-		return Edge(start, end, dt, controls, result.first, true);
+		bool inBounds = stateInBounds(end);
+
+		return Edge(start, end, dt, controls, result.first, inBounds);
 	}
 
 	bool isGoal(const State &state, const State &goal) const {
@@ -546,6 +552,15 @@ public:
 
 			simResetDynamicObject(handle);
 		}
+	}
+
+	bool stateInBounds(const State& s) const {
+		for(unsigned int i = 0; i < 3; ++i) {
+			if(s.rootPosition[i] < workspaceBounds[i].first || s.rootPosition[i] > workspaceBounds[i].second) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	std::pair<double, bool> startSimulation(simFloat dt) const {
