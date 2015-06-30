@@ -117,7 +117,7 @@ public:
 			colorLookup[i] = getColor(min, max, regions[i]->heuristic);
 		}
 
-		discretization.draw(true, true, colorLookup);
+		discretization.draw(true, false, colorLookup);
 	}
 
 	State getTreeSample() {
