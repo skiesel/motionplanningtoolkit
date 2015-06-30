@@ -87,7 +87,7 @@ public:
 			regions.push_back(new Region(i, agent));
 		}
 
-		dijkstra(regions[startRegionId]);
+		dijkstra(regions[goalRegionId]);
 
 		for(const auto region : regions) {
 			assert(region->regionPath.size() > 0);
