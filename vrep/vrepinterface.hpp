@@ -133,11 +133,14 @@ public:
 		if(agentCollisionGroupHandle < 0) {
 			agentCollisionGroupHandle = simGetObjectHandle(args.value("Agent Collision Group Handle Name").c_str());
 		}
+		assert(agentCollisionGroupHandle != -1);
 
 		collisionCheckAgainstThisGroup = simGetCollectionHandle(args.value("Environment Collision Group Handle Name").c_str());
 		if(collisionCheckAgainstThisGroup < 0) {
 			collisionCheckAgainstThisGroup = simGetObjectHandle(args.value("Environment Collision Group Handle Name").c_str());
 		}
+
+		assert(collisionCheckAgainstThisGroup != -1);
 
 		controllableVelocityJointHandles = getHandleListFromNameList(args.valueList("Controllable Velocity Joint Name List"));
 		controllablePositionJointHandles = getHandleListFromNameList(args.valueList("Controllable Position Joint Name List"));
@@ -232,12 +235,52 @@ public:
 		return edge.safe;
 	}
 
-	bool safePoses(const VREPInterface &agent , const std::vector<fcl::Transform3f> &poses) const {
-		return true;;
+	bool safePoses(const VREPInterface &agent , const std::vector<fcl::Transform3f> &poses, const State& s) const {
+		loadState(s);
+
+		simFloat vals[4];
+		for(const auto &pose : poses) {
+			
+			const fcl::Vec3f &position = pose.getTranslation();
+			const fcl::Quaternion3f &quaternion = pose.getQuatRotation();
+
+			for(unsigned int i = 0; i < 3; ++i)
+				vals[i] = position[i];
+
+			simSetObjectPosition(agentHandle, -1, vals);
+
+			vals[0] = quaternion.getX();
+			vals[1] = quaternion.getY();
+			vals[2] = quaternion.getZ();
+			vals[3] = quaternion.getW();
+
+			simSetObjectQuaternion(agentHandle, -1, vals);
+
+			if(collision()) return false;
+		}
+		return true;
 	}
 
-	bool safePose(const VREPInterface &agent , const fcl::Transform3f &pose) const {
-		return true;;
+	bool safePose(const VREPInterface &agent, const fcl::Transform3f &pose, const State& s) const {
+		loadState(s);
+
+		simFloat vals[4];
+		const fcl::Vec3f &position = pose.getTranslation();
+		const fcl::Quaternion3f &quaternion = pose.getQuatRotation();
+
+		for(unsigned int i = 0; i < 3; ++i)
+			vals[i] = position[i];
+
+		simSetObjectPosition(agentHandle, -1, vals);
+
+		vals[0] = quaternion.getX();
+		vals[1] = quaternion.getY();
+		vals[2] = quaternion.getZ();
+		vals[3] = quaternion.getW();
+
+		simSetObjectQuaternion(agentHandle, -1, vals);
+
+		return !collision();
 	}
 
 

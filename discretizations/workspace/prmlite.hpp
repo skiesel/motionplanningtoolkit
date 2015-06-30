@@ -13,8 +13,8 @@ template <class Workspace, class Agent>
 class PRMLite {
 	typedef typename Agent::State State;
 
-	struct Vertex {
-		Vertex(const fcl::Transform3f &transform, unsigned int id) : transform(transform), id(id), treeStateVars(7) {
+	struct VertexZRotationOnly {
+		VertexZRotationOnly(const fcl::Transform3f &transform, unsigned int id) : transform(transform), id(id), treeStateVars(3) {
 			const fcl::Vec3f &translation = transform.getTranslation();
 			const fcl::Quaternion3f &quaternion = transform.getQuatRotation();
 			for(unsigned int i = 0; i < 3; ++i)
@@ -57,17 +57,18 @@ class PRMLite {
 		double weight;
 	};
 
-	typedef flann::KDTreeIndexParams KDTreeType;
-	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, Vertex> KDTree;
+	typedef flann::KDTreeSingleIndexParams KDTreeType;
+	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, VertexZRotationOnly> KDTree;
 
 public:
 	PRMLite(const Workspace &workspace, const Agent &agent, const State &canonicalState, unsigned int numVertices,
 		unsigned int edgeSetSize, double collisionCheckDT = 0.1) :
-		agent(agent), kdtree(KDTreeType(2), 7), canonicalState(canonicalState) {
+		agent(agent), kdtree(KDTreeType(), 3), canonicalState(canonicalState) {
 
 		dfpair(stdout, "prm vertex set size", "%lu", numVertices);
 		dfpair(stdout, "prm edge set size", "%lu", edgeSetSize);
 		dfpair(stdout, "prm edge collision check dt", "%g", collisionCheckDT);
+		dfpair(stdout, "prm random quaternion z only", "%s", "true");
 
 		clock_t start = clock();
 		clock_t vertexStart = clock();
@@ -97,6 +98,10 @@ public:
 		return vertices.size();
 	}
 
+	const fcl::Transform3f& getTransform(unsigned int i) const {
+		return vertices[i]->transform;
+	}
+
 	double getEdgeCostBetweenCells(unsigned int c1, unsigned int c2) const {
 		auto vertexAndEdges = edges.find(c1);
 		assert(vertexAndEdges != edges.end());
@@ -110,7 +115,7 @@ public:
 	}
 
 	unsigned int getCellId(const typename Agent::State &state) const {
-		Vertex v(state.getTransform(), 0);
+		VertexZRotationOnly v(state.getTransform(), 0);
 		auto res = kdtree.nearest(&v, 1, 1);
 
 		assert(res.elements.size() > 0);
@@ -134,7 +139,8 @@ public:
 
 	typename Agent::State getRandomStateNearRegionCenter(unsigned int index, double radius) const {
 		fcl::Vec3f point = randomPointInSphere(radius);
-		fcl::Quaternion3f rot = getRandomQuaternion();
+		fcl::Quaternion3f rot = getRandomZOnlyQuaternion();
+		// fcl::Quaternion3f rot = getRandomQuaternion();
 
 		fcl::Transform3f transform(rot, point);
 		transform = vertices[index]->transform * transform; 
@@ -148,7 +154,7 @@ public:
 			coords[i] = 0;
 
 		if(drawPoints) {
-			auto verticesHandle = simAddDrawingObject(sim_drawing_spherepoints | sim_drawing_itemcolors, 0.1, 0.0, -1, vertices.size(), NULL, NULL, NULL, NULL);
+			auto verticesHandle = simAddDrawingObject(sim_drawing_spherepoints | sim_drawing_itemcolors, 0.01, 0.0, -1, vertices.size(), NULL, NULL, NULL, NULL);
 			unsigned int curIndex = 0;
 			for(const auto vert : vertices) {
 				const auto& trans = vert->transform.getTranslation();
@@ -172,17 +178,17 @@ public:
 			std::vector< std::vector<double> > edgesForVrep;
 			for(const auto& edgeSet : edges) {
 				std::vector<double> edgeForVrep(6);
-				const auto startVertex = vertices[edgeSet.first];
+				const auto startVertexZRotationOnly = vertices[edgeSet.first];
 				
-				const auto& trans = startVertex->transform.getTranslation();
+				const auto& trans = startVertexZRotationOnly->transform.getTranslation();
 				for(unsigned int i = 0; i < 3; ++i) {
 					edgeForVrep[i] = trans[i];
 				}
 
 				for(const auto& edge : edgeSet.second) {
-					const auto endVertex = vertices[edge.second.endpoint];
+					const auto endVertexZRotationOnly = vertices[edge.second.endpoint];
 					
-					const auto& trans2 = endVertex->transform.getTranslation();
+					const auto& trans2 = endVertexZRotationOnly->transform.getTranslation();
 					for(unsigned int i = 0; i < 3; ++i) {
 						edgeForVrep[3+i] = trans2[i];
 					}
@@ -238,34 +244,42 @@ private:
 
 		while(vertices.size() < numVertices) {
 			fcl::Vec3f translation = getRandomVector(linearDistributions, generator);
-			fcl::Quaternion3f rotation = getRandomQuaternion();
+
+			fcl::Quaternion3f rotation = getRandomZOnlyQuaternion();
+			// fcl::Quaternion3f rotation = getRandomQuaternion();
 			fcl::Transform3f transform(rotation, translation);
 
-			if(workspace.safePose(agent, transform)) {
-				auto newVert = new Vertex(transform, vertices.size());
+			if(workspace.safePose(agent, transform, canonicalState)) {
+				auto newVert = new VertexZRotationOnly(transform, vertices.size());
 				vertices.push_back(newVert);
 				kdtree.insertPoint(newVert);
+			} else {
+				fprintf(stderr, "vertex collision!\n");
 			}
 		}
 	}
 
 	void generateEdges(const Workspace &workspace, const Agent &agent, double collisionCheckDT, double edgeSetSize) {
 		for(unsigned int i = 0; i < vertices.size(); ++i) {
-			auto res = kdtree.kNearest(vertices[i], edgeSetSize, 0, 1);
+			auto res = kdtree.kNearest(vertices[i], edgeSetSize+1/*, 0, 1*/);
 
-			for(const auto endVertex : res.elements) {
+			for(const auto endVertexZRotationOnly : res.elements) {
 
-				if(edgeExists(i, endVertex->id)) {
+				if(edgeExists(i, endVertexZRotationOnly->id)) {
 					continue;
 				}
 				
-				std::vector<fcl::Transform3f> edgeCandidate = interpolate(vertices[i]->transform, endVertex->transform, collisionCheckDT);
+				std::vector<fcl::Transform3f> edgeCandidate = interpolate(vertices[i]->transform, endVertexZRotationOnly->transform, collisionCheckDT);
 
-				if(edgeCandidate.size() == 0 || workspace.safePoses(agent, edgeCandidate)) {
-					double cost = evaluateTransformDistance(vertices[i]->transform, endVertex->transform);
+				bool safe = workspace.safePoses(agent, edgeCandidate, canonicalState);
 
-					edges[i][endVertex->id] = Edge(endVertex->id, cost);
-					edges[endVertex->id][i] = Edge(i, cost); //the reverse interpolation would be symmetric
+				if(edgeCandidate.size() == 0 || safe) {
+					double cost = evaluateTransformDistance(vertices[i]->transform, endVertexZRotationOnly->transform);
+
+					edges[i][endVertexZRotationOnly->id] = Edge(endVertexZRotationOnly->id, cost);
+					edges[endVertexZRotationOnly->id][i] = Edge(i, cost); //the reverse interpolation would be symmetric
+				} if(!safe) {
+					fprintf(stderr, "skipping edge, collision!\n");
 				}
 			}
 		}
@@ -296,6 +310,12 @@ private:
 		const fcl::Vec3f &v2 = t2.getTranslation();
 
 		unsigned int steps = vectorDistance(v1, v2) / linearStepSize;
+
+		// if(steps == 0) {
+		// 	fprintf(stderr, "\t%g %g %g  :: %g %g %g\n", v1[0], v1[1], v1[2], v2[0], v2[1], v2[2]);
+		// }
+		// else
+		// 	fprintf(stderr, "%g\n", vectorDistance(v1, v2));
 
 		fcl::Vec3f vecStep = (v2 - v1) / steps;
 
@@ -351,20 +371,28 @@ private:
 		return normalize(q1 * coeff1 + q1 * coeff2);
 	}
 
-	fcl::Quaternion3f getRandomQuaternion() const {
-		double u1 = zeroToOne(generator);
-		double u2 = zeroToOne(generator);
-		double u3 = zeroToOne(generator);
-
-		return fcl::Quaternion3f(sqrt(1-u1)*sin(2*M_PI*u2),
-								 sqrt(1-u1)*cos(2*M_PI*u2),
-								 sqrt(u1)*sin(2*M_PI*u3),
-								 sqrt(u1)*cos(2*M_PI*u3));
+	fcl::Quaternion3f getRandomZOnlyQuaternion() const {
+		double rad = zeroToOne(generator) * 2 * M_PI;
+		fcl::Quaternion3f quaternion;
+		fcl::Vec3f axis(0,0,1);
+		quaternion.fromAxisAngle(axis, rad);
+		return quaternion;
 	}
+
+	// fcl::Quaternion3f getRandomQuaternion() const {
+	// 	double u1 = zeroToOne(generator);
+	// 	double u2 = zeroToOne(generator);
+	// 	double u3 = zeroToOne(generator);
+
+	// 	return fcl::Quaternion3f(sqrt(1-u1)*sin(2*M_PI*u2),
+	// 							 sqrt(1-u1)*cos(2*M_PI*u2),
+	// 							 sqrt(u1)*sin(2*M_PI*u3),
+	// 							 sqrt(u1)*cos(2*M_PI*u3));
+	// }
 
 	const Agent &agent;
 	const State &canonicalState;
-	std::vector<Vertex*> vertices;
+	std::vector<VertexZRotationOnly*> vertices;
 	std::unordered_map<unsigned int, std::unordered_map<unsigned int, Edge>> edges;
 	mutable KDTree kdtree;
 	mutable std::default_random_engine generator;
