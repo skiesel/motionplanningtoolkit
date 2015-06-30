@@ -23,7 +23,7 @@ class PRMLite {
 			fcl::Vec3f axis;
 			double yaw;
 			quaternion.toAxisAngle(axis, yaw);
-			treeStateVars[3] = yaw;			
+			treeStateVars[3] = yaw;
 
 			// treeStateVars[3] = quaternion.getX();
 			// treeStateVars[4] = quaternion.getY();
@@ -160,7 +160,7 @@ public:
 			coords[i] = 0;
 
 		if(drawPoints) {
-			auto verticesHandle = simAddDrawingObject(sim_drawing_spherepoints | sim_drawing_itemcolors, 0.01, 0.0, -1, vertices.size(), NULL, NULL, NULL, NULL);
+			auto verticesHandle = simAddDrawingObject(sim_drawing_spherepoints | sim_drawing_itemcolors, 0.05, 0.0, -1, vertices.size(), NULL, NULL, NULL, NULL);
 			unsigned int curIndex = 0;
 			for(const auto vert : vertices) {
 				const auto& trans = vert->transform.getTranslation();
