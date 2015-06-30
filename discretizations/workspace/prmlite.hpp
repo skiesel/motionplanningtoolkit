@@ -14,15 +14,21 @@ class PRMLite {
 	typedef typename Agent::State State;
 
 	struct VertexZRotationOnly {
-		VertexZRotationOnly(const fcl::Transform3f &transform, unsigned int id) : transform(transform), id(id), treeStateVars(3) {
+		VertexZRotationOnly(const fcl::Transform3f &transform, unsigned int id) : transform(transform), id(id), treeStateVars(4) {
 			const fcl::Vec3f &translation = transform.getTranslation();
 			const fcl::Quaternion3f &quaternion = transform.getQuatRotation();
 			for(unsigned int i = 0; i < 3; ++i)
 				treeStateVars[i] = translation[i];
-			treeStateVars[3] = quaternion.getX();
-			treeStateVars[4] = quaternion.getY();
-			treeStateVars[5] = quaternion.getZ();
-			treeStateVars[6] = quaternion.getW();
+
+			fcl::Vec3f axis;
+			double yaw;
+			quaternion.toAxisAngle(axis, yaw);
+			treeStateVars[3] = yaw;			
+
+			// treeStateVars[3] = quaternion.getX();
+			// treeStateVars[4] = quaternion.getY();
+			// treeStateVars[5] = quaternion.getZ();
+			// treeStateVars[6] = quaternion.getW();
 		}
 
 		const std::vector<double>& getTreeStateVars() const {
@@ -63,7 +69,7 @@ class PRMLite {
 public:
 	PRMLite(const Workspace &workspace, const Agent &agent, const State &canonicalState, unsigned int numVertices,
 		unsigned int edgeSetSize, double collisionCheckDT = 0.1) :
-		agent(agent), kdtree(KDTreeType(), 3), canonicalState(canonicalState) {
+		agent(agent), kdtree(KDTreeType(), 4), canonicalState(canonicalState) {
 
 		dfpair(stdout, "prm vertex set size", "%lu", numVertices);
 		dfpair(stdout, "prm edge set size", "%lu", edgeSetSize);
