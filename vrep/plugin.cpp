@@ -12,6 +12,8 @@
 
 #define VREP_DLLEXPORT extern "C"
 
+bool pluginActive = true;
+
 LIBRARY vrepLib;
 VREPInterface *interface;
 InstanceFileMap *args;
@@ -50,6 +52,12 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 	}
 
 	simChar* instanceFile = simGetStringParameter(sim_stringparam_app_arg1);
+
+	if(instanceFile == NULL || strlen(instanceFile) == 0) {
+		fprintf(stderr, "...libv_repExtskiesel.dylib not running\n");
+		pluginActive = false;
+		return 1;
+	}
 
 	args = new InstanceFileMap(instanceFile);
 
@@ -107,16 +115,18 @@ VREP_DLLEXPORT void* v_repMessage(int message,int* auxiliaryData,void* customDat
 	// This function should not generate any error messages:
 	void* retVal=NULL;
 
-	if(start < 0) {	
-		start = simGetSimulationTime();
-		dt = interface->simulatorReady();
-	}
-	
-	simFloat curDT = simGetSimulationTime() - start;
-	bool collision = interface->collision();
-	if(collision || dt <= curDT) {
-		interface->simulatorDone(curDT, collision);
-		start = -1;
+	if(pluginActive) {
+		if(start < 0) {	
+			start = simGetSimulationTime();
+			dt = interface->simulatorReady();
+		}
+		
+		simFloat curDT = simGetSimulationTime() - start;
+		bool collision = interface->collision();
+		if(collision || dt <= curDT) {
+			interface->simulatorDone(curDT, collision);
+			start = -1;
+		}
 	}
 
 	return retVal;
