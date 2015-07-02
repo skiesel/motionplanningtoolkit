@@ -94,6 +94,8 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 			solveWithRRTConnect(interface, args, start, goal);
 		} else if(args->value("Planner").compare("Plaku IROS 2014") == 0) {
 			solveWithPlaku(interface, args, start, goal);
+		} else if(args->value("Planner").compare("KPIECE") == 0) {
+			solveWithKPIECE(interface, args, start, goal);
 		} else {
 			fprintf(stderr, "unrecognized planner!");
 			exit(1);

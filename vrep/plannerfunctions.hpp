@@ -67,8 +67,15 @@ void solveWithPlaku(const VREPInterface *interface, const InstanceFileMap* args,
 
 	PlakuTreeInterface plakuTreeInterface(*interface, *interface, prmLite, start, goal, alpha, b, stateRadius);
 
-	plakuTreeInterface.draw();
+	// plakuTreeInterface.draw();
 
 	Plaku plaku(*interface, *interface, plakuTreeInterface, *args);
 	plaku.query(start, goal);
+}
+
+void solveWithKPIECE(const VREPInterface *interface, const InstanceFileMap* args, const VREPInterface::State &start, const VREPInterface::State &goal) {
+	dfpair(stdout, "planner", "%s", "KPIECE");
+
+	KPIECE<VREPInterface, VREPInterface> kpiece(*interface, *interface, *args);
+	kpiece.query(start, goal);
 }

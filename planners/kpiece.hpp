@@ -118,7 +118,13 @@ public:
 		const typename StateSpace::StateType *state = start->as<typename StateSpace::StateType>();
 		const ompl::control::RealVectorControlSpace::ControlType *realVectorControl = control->as<ompl::control::RealVectorControlSpace::ControlType>();
 
-		typename Agent::Control agentControl(controlSpaceDim);
+		std::vector<double> controls(controlSpaceDim);
+		for(unsigned int i = 0; i < controlSpaceDim; i++) {
+			controls[i] = (*realVectorControl)[i];
+		}
+
+		typename Agent::Control agentControl = agent.controlFromVector(controls);
+
 		typename Agent::Edge edge = workspace.steerWithControl(state->agentEdge->end, agentControl, duration);
 
 		const typename Agent::StateVars &endStateVars = edge.getTreeStateVars();
