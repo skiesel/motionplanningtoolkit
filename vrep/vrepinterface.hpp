@@ -299,12 +299,14 @@ public:
 		return State(vars);
 	}
 
-	State transformToState(const State& s, const fcl::Transform3f& transform, double radius) const {
+	State transformToState(const State& s, const fcl::Transform3f& transform) const {
 		loadState(s);
 
 		simFloat vals[4];
 		const fcl::Vec3f &position = transform.getTranslation();
 		const fcl::Quaternion3f &quaternion = transform.getQuatRotation();
+
+
 
 		for(unsigned int i = 0; i < 3; ++i)
 			vals[i] = position[i];

@@ -149,9 +149,9 @@ public:
 		// fcl::Quaternion3f rot = getRandomQuaternion();
 
 		fcl::Transform3f transform(rot, point);
-		transform = vertices[index]->transform * transform; 
+		transform = vertices[index]->transform * transform;
 
-		return agent.transformToState(canonicalState, transform, radius);
+		return agent.transformToState(canonicalState, transform);
 	}
 
 	void draw(bool drawPoints=true, bool drawLines=false, std::vector<std::vector<double>> colors = std::vector<std::vector<double>>()) const {
