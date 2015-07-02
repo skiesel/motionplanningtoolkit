@@ -87,10 +87,24 @@ public:
 			regions.push_back(new Region(i, agent));
 		}
 
+		clock_t startT = clock();
+
 		dijkstra(regions[goalRegionId]);
 
-		for(const auto region : regions) {
-			assert(region->regionPath.size() > 0);
+		double endT = clock();
+
+		dfpair(stdout, "dijkstra search time", "%g", (endT-startT) / CLOCKS_PER_SEC);
+
+		bool connected = false;
+		while(!connected) {
+			connected = true;
+			for(const auto region : regions) {
+				if(region->regionPath.size() == 0) {
+					connected = false;
+					discretization.grow(5000);
+					break;
+				}
+			}
 		}
 
 		regionHeap.push_back(regions[startRegionId]);
@@ -117,7 +131,7 @@ public:
 			colorLookup[i] = getColor(min, max, regions[i]->heuristic);
 		}
 
-		discretization.draw(true, false, colorLookup);
+		discretization.draw(true, true, colorLookup);
 	}
 
 	State getTreeSample() {
