@@ -96,7 +96,7 @@ public:
 		dfpair(stdout, "prm build time", "%g", time);
 	}
 
-	void addMoreVertices(unsigned int howManyToAdd) {
+	void grow(unsigned int howManyToAdd) {
 		fatal("PRM addMoreVertices not implemented");
 	}
 
@@ -259,9 +259,9 @@ private:
 				auto newVert = new VertexZRotationOnly(transform, vertices.size());
 				vertices.push_back(newVert);
 				kdtree.insertPoint(newVert);
-			} else {
+			}/* else {
 				fprintf(stderr, "vertex collision!\n");
-			}
+			}*/
 		}
 	}
 
@@ -284,9 +284,9 @@ private:
 
 					edges[i][endVertexZRotationOnly->id] = Edge(endVertexZRotationOnly->id, cost);
 					edges[endVertexZRotationOnly->id][i] = Edge(i, cost); //the reverse interpolation would be symmetric
-				} if(!safe) {
+				}/* else if(!safe) {
 					fprintf(stderr, "skipping edge, collision!\n");
-				}
+				}*/
 			}
 		}
 	}
@@ -385,16 +385,16 @@ private:
 		return quaternion;
 	}
 
-	// fcl::Quaternion3f getRandomQuaternion() const {
-	// 	double u1 = zeroToOne(generator);
-	// 	double u2 = zeroToOne(generator);
-	// 	double u3 = zeroToOne(generator);
+	fcl::Quaternion3f getRandomQuaternion() const {
+		double u1 = zeroToOne(generator);
+		double u2 = zeroToOne(generator);
+		double u3 = zeroToOne(generator);
 
-	// 	return fcl::Quaternion3f(sqrt(1-u1)*sin(2*M_PI*u2),
-	// 							 sqrt(1-u1)*cos(2*M_PI*u2),
-	// 							 sqrt(u1)*sin(2*M_PI*u3),
-	// 							 sqrt(u1)*cos(2*M_PI*u3));
-	// }
+		return fcl::Quaternion3f(sqrt(1-u1)*sin(2*M_PI*u2),
+								 sqrt(1-u1)*cos(2*M_PI*u2),
+								 sqrt(u1)*sin(2*M_PI*u3),
+								 sqrt(u1)*cos(2*M_PI*u3));
+	}
 
 	const Agent &agent;
 	const State &canonicalState;
