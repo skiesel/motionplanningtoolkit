@@ -84,12 +84,12 @@ public:
 
 	class Edge {
 	public:
-		Edge(const State &s) : start(s), end(s), controls(0), duration(0), safe(false) {}
+		Edge(const State &s) : start(s), end(s), parent(NULL), controls(0), duration(0), safe(false) {}
 
 		Edge(const State &start, const State &end, double cost, const std::vector<double> &controls, double duration, bool safe) : start(start),
 			end(end), cost(cost), treeIndex(0), controls(controls.begin(), controls.end()), duration(duration), safe(safe) {}
 
-		Edge(const Edge &e) : start(e.start), end(e.end), cost(e.cost), treeIndex(e.treeIndex), 
+		Edge(const Edge &e) : start(e.start), end(e.end), parent(e.parent), cost(e.cost), treeIndex(e.treeIndex), 
 			controls(e.controls.begin(), e.controls.end()), duration(e.duration), safe(e.safe) {}
 
 		Edge& operator=(const Edge& e) {
@@ -100,6 +100,7 @@ public:
 			controls = e.controls;
 			treeIndex = e.treeIndex;
 			safe = e.safe;
+			parent = e.parent;
 			return *this;
 		}
 
@@ -114,6 +115,7 @@ public:
 		void setPointIndex(int ptInd) { treeIndex = ptInd; }
 
 		State start, end;
+		const Edge* parent;
 		double cost, duration;
 		std::vector<double> controls;
 		int treeIndex;
