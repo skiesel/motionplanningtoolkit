@@ -114,8 +114,6 @@ public:
 	}
 
 	void propagate(const ompl::base::State *start, const ompl::control::Control *control, const double duration, ompl::base::State *result) {
-		fprintf(stderr, "propagate\n");
-
 		const typename StateSpace::StateType *state = start->as<typename StateSpace::StateType>();
 		const ompl::control::RealVectorControlSpace::ControlType *realVectorControl = control->as<ompl::control::RealVectorControlSpace::ControlType>();
 		
