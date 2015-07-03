@@ -26,5 +26,5 @@ Collision Checking ? true
 
 Steering Delta t ? 1
 
-# this is currently ignored by vrep
+# this is currently ignored
 Collision Check Delta t ? 0.5
