@@ -121,6 +121,8 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 			goal.goalOrientationVars.push_back(vals[i]);
 		}
 
+		clock_t startT = clock();
+
 		if(args->value("Planner").compare("RRT") == 0) {
 			solveWithRRT(interface, args, start, goal);	
 		} else if(args->value("Planner").compare("RRT Connect") == 0) {
@@ -134,7 +136,11 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 			exit(1);
 		}
 		
+		clock_t endT = clock();
+		dfpair(stdout, "total time solving time", "%g", (double) (endT-startT) / CLOCKS_PER_SEC);
+
 		dffooter(stdout);
+		exit(0);
 	});
 
 	return 1;
