@@ -374,16 +374,12 @@ public:
 
 		unsigned int curControl = 0;
 		for(unsigned int i = 0; i < controllableVelocityJointHandles.size(); ++i) {
-			fprintf(stderr, "%g ", controls[curControl]);
 			simSetJointTargetVelocity(controllableVelocityJointHandles[i], controls[curControl++]);
 		}
 
 		for(unsigned int i = 0; i < controllablePositionJointHandles.size(); ++i) {
-			fprintf(stderr, "%g ", controls[curControl]);
 			simSetJointTargetPosition(controllablePositionJointHandles[i], controls[curControl++]);
 		}
-
-		fprintf(stderr, "\n");
 
 		std::pair<double, bool> result = startSimulation(dt);
 
