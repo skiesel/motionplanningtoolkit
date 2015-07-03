@@ -1,0 +1,30 @@
+Scene File ? /Users/skiesel/gopath/src/github.com/skiesel/motionplanningtoolkit/vrep/scenes/pprm_snake.ttt
+
+Agent Handle Name ? snake_body
+Agent Collision Group Handle Name ? SnakeBodySegments
+Environment Collision Group Handle Name ? EverythingButRobot
+
+Workspace Bounds ? -2.5 2.5 -2.5 2.5 0.0183 0.0183
+
+Controllable Velocity Joint Name List ?
+Controllable Velocity Joint Ranges ?
+Controllable Position Joint Name List ? snake_activeJoint1 
+Controllable Position Joint Ranges ? -0.5 0.5
+
+State Position Name List ? snake_body
+State Orientation Name List ? snake_body
+State Velocity Name List ? snake_body
+
+State Position Goal Name ? snake_body
+State Orientation Goal Name ? snake_body
+Goal Position Thresholds ? 1 1 1
+Goal Orientation Thresholds ? -1 -1 -1
+
+Sampling Ranges ? -5 5 -5 5 0.0183 0.0183 0 0 0 0 -3.2 3.2 -1 1 -1 1 -1 1 -1 1 -1 1 -1 1
+
+Collision Checking ? true
+
+Steering Delta t ? 1
+
+# this is currently ignored
+Collision Check Delta t ? 0.5
