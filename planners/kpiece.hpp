@@ -20,17 +20,8 @@ public:
 		};
 
 
-		StateSpace(unsigned int dim) : ompl::base::RealVectorStateSpace(dim), type_(2222) {}
-
-		ompl::base::State* allocState() {
-			fprintf(stderr, "allocState called\n");
-			exit(1);
-			return new StateType();
-		}
-
-		void freeState(ompl::base::State *s) {
-			fprintf(stderr, "freeState called\n");
-			exit(1);
+		StateSpace(unsigned int dim) : ompl::base::RealVectorStateSpace(dim) {
+			ompl::base::StateSpace::type_ = 2222222;
 		}
 
 		void copyState(ompl::base::State *destination, const ompl::base::State *source) const {
@@ -43,14 +34,22 @@ public:
 			dest->agentEdge = src->agentEdge;
 		}
 
+		ompl::base::State* allocState() const {
+			auto state = new StateType();
+			state->values = new double[dimension_];
+			return state;
+		}
+
+		void freeState(ompl::base::State *s) const {
+			fprintf(stderr, "freeState called... doing nothing...\n");
+		}
+
 		bool equalStates(const ompl::base::State *state1, const ompl::base::State *state2) const {
 			fprintf(stderr, "equalStates called\n");
-			exit(1);
+			// exit(1);
 			return false;
 		}
 
-	protected:
-		int type_;
 	};
 
 	KPIECE(const Workspace &workspace, const Agent &agent, const InstanceFileMap &args) :
@@ -94,7 +93,7 @@ public:
 			pdef = ompl::base::ProblemDefinitionPtr(new ompl::base::ProblemDefinition(spaceInfoPtr));
 
 			spaceInfoPtr->setPropagationStepSize(stod(args.value("Steering Delta t")));
-			spaceInfoPtr->setMinMaxControlDuration(1,1); //I think this is what we want for right now
+			spaceInfoPtr->setMinMaxControlDuration(stol(args.value("KPIECE Min Control Steps")),stol(args.value("KPIECE Max Control Steps")));
 
 			spaceInfoPtr->setup();
 
@@ -103,7 +102,7 @@ public:
 			kpiece->setGoalBias(stod(args.value("KPIECE Goal Bias")));
 			kpiece->setBorderFraction(stod(args.value("KPIECE Border Fraction")));
 			kpiece->setCellScoreFactor(stod(args.value("KPIECE Cell Score Good")), stod(args.value("KPIECE Cell Score Bad")));
-			kpiece->setMaxCloseSamplesCount(stod(args.value("KPIECE Max Close Samples")));
+			kpiece->setMaxCloseSamplesCount(stol(args.value("KPIECE Max Close Samples")));
 
 			//kpiece->setProjectionEvaluator();
 		}
@@ -115,12 +114,14 @@ public:
 	}
 
 	void propagate(const ompl::base::State *start, const ompl::control::Control *control, const double duration, ompl::base::State *result) {
+		fprintf(stderr, "propagate\n");
+
 		const typename StateSpace::StateType *state = start->as<typename StateSpace::StateType>();
 		const ompl::control::RealVectorControlSpace::ControlType *realVectorControl = control->as<ompl::control::RealVectorControlSpace::ControlType>();
-
+		
 		std::vector<double> controls(controlSpaceDim);
 		for(unsigned int i = 0; i < controlSpaceDim; i++) {
-			controls[i] = (*realVectorControl)[i];
+			controls[i] = realVectorControl->values[i];
 		}
 
 		typename Agent::Control agentControl = agent.controlFromVector(controls);
@@ -133,7 +134,7 @@ public:
 
 		resultState->agentEdge = new typename Agent::Edge(edge);
 
-		for(unsigned int i = 0; i < endStateVars.size(); ++i) {
+		for(unsigned int i = 0; i < stateSpaceDim; ++i) {
 			resultState->values[i] = endStateVars[i];
 		}
 
@@ -154,8 +155,6 @@ public:
 		omplStart->valid = true;
 
 		const typename Agent::StateVars &startStateVars = omplStart->agentEdge->getTreeStateVars();
-
-		omplStart->values = new double[startStateVars.size()];
 
 		for(unsigned int i = 0; i < startStateVars.size(); ++i) {
 			omplStart->values[i] = startStateVars[i];
