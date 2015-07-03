@@ -4,7 +4,7 @@ Agent Handle Name ? snake_body
 Agent Collision Group Handle Name ? SnakeBodySegments
 Environment Collision Group Handle Name ? EverythingButRobot
 
-Workspace Bounds ? -2.5 2.5 -2.5 2.5 0.0183 0.0183
+Workspace Bounds ? -2.5 2.5 -2.5 2.5 0.017 0.019
 
 Controllable Velocity Joint Name List ?
 Controllable Velocity Joint Ranges ?

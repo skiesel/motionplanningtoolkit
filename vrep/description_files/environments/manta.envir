@@ -4,7 +4,7 @@ Agent Handle Name ? Manta
 Agent Collision Group Handle Name ? STL_Imported19
 Environment Collision Group Handle Name ? EverythingButRobot
 
-Workspace Bounds ? -2.5 2.5 -2.5 2.5 0.0183 0.0183
+Workspace Bounds ? -2.5 2.5 -2.5 2.5 0 1
 
 Controllable Velocity Joint Name List ? motor_joint
 Controllable Velocity Joint Ranges ? 0 15
