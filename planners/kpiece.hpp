@@ -15,7 +15,7 @@ public:
 	public:
 		class StateType : public ompl::base::RealVectorStateSpace::StateType {
 		public:
-			const typename Agent::Edge *agentEdge;
+			typename Agent::Edge *agentEdge;
 			bool valid;
 		};
 
@@ -41,7 +41,7 @@ public:
 		}
 
 		void freeState(ompl::base::State *s) const {
-			fprintf(stderr, "freeState called... doing nothing...\n");
+			// fprintf(stderr, "freeState called... doing nothing...\n");
 		}
 
 		bool equalStates(const ompl::base::State *state1, const ompl::base::State *state2) const {
@@ -137,6 +137,7 @@ public:
 		}
 
 		resultState->valid = workspace.safeEdge(agent, edge, collisionCheckDT);
+		resultState->agentEdge->parent = state->agentEdge;
 
 		if(workspace.isGoal(edge.end, *agentGoal)) {
 			goalEdge = new typename Agent::Edge(edge);
@@ -178,9 +179,10 @@ public:
 
 		kpiece->setup();
 
-		ompl::base::PlannerTerminationCondition tc =  ompl::base::plannerOrTerminationCondition(
+		ompl::base::PlannerTerminationCondition tc = ompl::base::PlannerTerminationCondition(boost::bind(&KPIECE::didFindGoal, this));
+														/*ompl::base::plannerOrTerminationCondition(
 														ompl::base::timedPlannerTerminationCondition(300),
-														ompl::base::PlannerTerminationCondition(boost::bind(&KPIECE::didFindGoal, this)));
+														ompl::base::PlannerTerminationCondition(boost::bind(&KPIECE::didFindGoal, this))); */
 
 		ompl::base::PlannerStatus solved = kpiece->solve(tc);
 
