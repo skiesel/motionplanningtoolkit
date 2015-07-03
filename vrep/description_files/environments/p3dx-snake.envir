@@ -1,10 +1,10 @@
 Scene File ? /Users/skiesel/gopath/src/github.com/skiesel/motionplanningtoolkit/vrep/scenes/pprm_snake_p3dx_10_trailer.ttt
 
 Agent Handle Name ? Pioneer_p3dx
-Agent Collision Group Handle Name ? Pioneer_p3dx
+Agent Collision Group Handle Name ? RobotAndTrailers
 Environment Collision Group Handle Name ? EverythingButRobot
 
-Workspace Bounds ? -2.5 2.5 -2.5 2.5 0.0388 0.0388
+Workspace Bounds ? -2.5 2.5 -2.5 2.5 0.0345 0.0345
 
 Controllable Velocity Joint Name List ? Pioneer_p3dx_leftMotor Pioneer_p3dx_rightMotor
 Controllable Velocity Joint Ranges ? -1 2 -1 2
@@ -20,7 +20,7 @@ State Orientation Goal Name ? Pioneer_p3dx
 Goal Position Thresholds ? 1 1 1
 Goal Orientation Thresholds ? -1 -1 -1
 
-Sampling Ranges ? -5 5 -5 5 0 0 0 0 0 0 -3.2 3.2 -1 1 -1 1 -1 1 -1 1 -1 1 -1 1
+Sampling Ranges ? -5 5 -5 5 0.0345 0.0345 0 0 0 0 -3.2 3.2 -1 1 -1 1 -1 1 -1 1 -1 1 -1 1
 
 Collision Checking ? true
 
