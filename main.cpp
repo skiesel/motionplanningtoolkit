@@ -47,8 +47,8 @@ void omnidirectional(const InstanceFileMap& args) {
 	Agent agent(args);
 	Workspace workspace(args);
 
-	Agent::State start(parseDoubles(args.value("Agent Start Location")));
-	auto goalVars = parseDoubles(args.value("Agent Goal Location"));
+	Agent::State start(args.doubleList("Agent Start Location"));
+	auto goalVars = args.doubleList("Agent Goal Location");
 	Agent::State goal(goalVars);
 
 	KDTreeType kdtreeType;

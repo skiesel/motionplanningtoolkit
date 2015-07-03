@@ -19,6 +19,38 @@ VREPInterface *interface;
 InstanceFileMap *args;
 simFloat start = -1, dt = 1;
 
+void setupInstanceFromInstanceFile(const InstanceFileMap *args) {
+	std::string agentName = args->value("Agent Handle Name");
+	simInt agentHandle = (agentName == "EVERYTHING") ? sim_handle_all : simGetObjectHandle(agentName.c_str());
+	auto startLocation = args->doubleList("Agent Start Location");
+	auto startOrientation = args->doubleList("Agent Start Orientation");
+
+	simFloat vals[3];
+	for(unsigned int i = 0; i < 3; ++i) {
+		vals[i] = startLocation[i];
+	}
+	simSetObjectPosition(agentHandle, -1, vals);
+
+	for(unsigned int i = 0; i < 3; ++i) {
+		vals[i] = startOrientation[i];
+	}
+	simSetObjectOrientation(agentHandle, -1, vals);
+
+	simInt goalHandle = simGetObjectHandle("Goal");
+	auto goalLocation = args->doubleList("Agent Goal Location");
+	auto goalOrientation = args->doubleList("Agent Goal Orientation");
+
+	for(unsigned int i = 0; i < 3; ++i) {
+		vals[i] = goalLocation[i];
+	}
+	simSetObjectPosition(goalHandle, -1, vals);
+
+	for(unsigned int i = 0; i < 3; ++i) {
+		vals[i] = goalOrientation[i];
+	}
+	simSetObjectOrientation(goalHandle, -1, vals);
+}
+
 VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 	char curDirAndFile[1024];
 	getcwd(curDirAndFile, sizeof(curDirAndFile));
@@ -68,6 +100,8 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 	boost::thread workerThread([&](){
 		dfheader(stdout);
 
+		setupInstanceFromInstanceFile(args);
+
 		VREPInterface::State start;
 		interface->makeStartState(start);
 
@@ -80,7 +114,6 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 			goal.rootPosition.push_back(vals[i]);
 			goal.goalPositionVars.push_back(vals[i]);
 		}
-
 
 		simGetObjectOrientation(goalHandle, -1, vals);
 		for(unsigned int i = 0; i < 3; ++i) {

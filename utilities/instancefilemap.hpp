@@ -66,6 +66,21 @@ public:
 		return list;
 	}
 
+	std::vector<double> doubleList(const std::string &key, const std::string delim = " ") const {
+		if(!exists(key)) {
+			fprintf(stderr, "Key \"%s\" not bound\n", key.c_str());
+			exit(1);
+		}
+
+		std::vector<double> values;
+		boost::char_separator<char> sep(delim.c_str());
+		boost::tokenizer< boost::char_separator<char> > tokens(map.at(key), sep);
+		for(auto token : tokens) {
+			values.push_back(std::stod(token));
+		}
+		return values;
+	}
+
 private:
 
 	inline std::string &ltrim(std::string &s) {

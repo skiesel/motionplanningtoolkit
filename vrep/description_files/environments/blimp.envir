@@ -28,24 +28,3 @@ Steering Delta t ? 1
 
 # this is currently ignored by vrep
 Collision Check Delta t ? 0.5
-
-#Planner ? RRT
-#Planner ? RRT Connect
-
-
-#Planner ? Plaku IROS 2014
-#Number Of PRM Vertices ? 3000
-#Nearest Neighbors To Consider In PRM Edge Construction ? 10
-#PRM Collision Check DT ? 0.1
-#Plaku Alpha Value ? 0.5
-#Plaku b Value ? 0.85
-#Plaku PRM State Selection Radius ? 5
-
-Planner ? KPIECE
-KPIECE Min Control Steps ? 1
-KPIECE Max Control Steps ? 1
-KPIECE Goal Bias ? 0.25
-KPIECE Border Fraction ? 0.9
-KPIECE Cell Score Good ? 0.75
-KPIECE Cell Score Bad ? 0.25
-KPIECE Max Close Samples ? 100
