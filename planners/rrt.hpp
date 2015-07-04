@@ -12,7 +12,8 @@ public:
 	typedef typename Agent::Edge Edge;
 
 	RRT(const Workspace &workspace, const Agent &agent, TreeInterface &treeInterface, const InstanceFileMap &args) :
-		workspace(workspace), agent(agent), treeInterface(treeInterface), solutionCost(-1), poseNumber(-1) {
+		workspace(workspace), agent(agent), treeInterface(treeInterface), solutionCost(-1), poseNumber(-1),
+		samplesGenerated(0), edgesAdded(0), edgesRejected(0) {
 			steeringDT = stod(args.value("Steering Delta t"));
 			collisionCheckDT = stod(args.value("Collision Check Delta t"));
 
@@ -38,16 +39,20 @@ public:
 		while(true) {
 
 			State treeSample = treeInterface.getTreeSample();
+			samplesGenerated++;
 
 			auto edge = agent.randomSteer(treeSample, steeringDT);
 
 			if(!workspace.safeEdge(agent, edge, collisionCheckDT)) {
 				++iterations;
-				
+				edgesRejected++;
+
 				if(iterationsAtATime > 0 && ++iterations > iterationsAtATime) break;
 
 				continue;
 			}
+
+			edgesAdded++;
 
 			if(agent.isGoal(edge.end, goal)) {
 				fprintf(stderr, "found goal\n");
@@ -71,8 +76,14 @@ public:
 	// 	agent.animateSolution(solution);
 	// }
 #endif
-
 	}
+
+	void dfpairs() const {
+		dfpair(stdout, "samples generated", "%u", samplesGenerated);
+		dfpair(stdout, "edges added", "%u", edgesAdded);
+		dfpair(stdout, "edges rejected", "%u", edgesRejected);
+	}
+
 private:
 	const Workspace &workspace;
 	const Agent &agent;
@@ -84,4 +95,6 @@ private:
 	double solutionCost;
 	double steeringDT, collisionCheckDT;
 	int poseNumber;
+
+	unsigned int samplesGenerated, edgesAdded, edgesRejected;
 };

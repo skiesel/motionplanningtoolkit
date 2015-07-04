@@ -53,59 +53,72 @@ public:
 	};
 
 	KPIECE(const Workspace &workspace, const Agent &agent, const InstanceFileMap &args) :
-		workspace(workspace), agent(agent), goalEdge(NULL) {
-			collisionCheckDT = stod(args.value("Collision Check Delta t"));
+		workspace(workspace), agent(agent), goalEdge(NULL), samplesGenerated(0), edgesAdded(0), edgesRejected(0) {
 
-			const typename Workspace::WorkspaceBounds &agentStateVarRanges = agent.getStateVarRanges(workspace.getBounds());
-			stateSpaceDim = agentStateVarRanges.size();
+		collisionCheckDT = stod(args.value("Collision Check Delta t"));
+		dfpair(stdout, "collision check dt", "%g", collisionCheckDT);
 
-			StateSpace *baseSpace = new StateSpace(stateSpaceDim);
-			ompl::base::RealVectorBounds bounds(stateSpaceDim);
-			for(unsigned int i = 0; i < stateSpaceDim; ++i) {
-				bounds.setLow(i, agentStateVarRanges[i].first);
-				bounds.setHigh(i, agentStateVarRanges[i].second);
-			}
-			baseSpace->setBounds(bounds);
-			ompl::base::StateSpacePtr space = ompl::base::StateSpacePtr(baseSpace);
+		const typename Workspace::WorkspaceBounds &agentStateVarRanges = agent.getStateVarRanges(workspace.getBounds());
+		stateSpaceDim = agentStateVarRanges.size();
 
-			const std::vector< std::pair<double, double> > &controlBounds = workspace.getControlBounds();
-			controlSpaceDim = controlBounds.size();
-
-			ompl::control::RealVectorControlSpace *baseCSpace = new ompl::control::RealVectorControlSpace(space, controlSpaceDim);
-			ompl::base::RealVectorBounds cbounds(controlSpaceDim);
-			for(unsigned int i = 0; i < controlSpaceDim; ++i) {
-				cbounds.setLow(i, controlBounds[i].first);
-				cbounds.setHigh(i, controlBounds[i].second);
-			}
-
-			baseCSpace->setBounds(cbounds);
-			ompl::control::ControlSpacePtr cspace(baseCSpace);
-
-			// construct an instance of  space information from this control space
-			spaceInfoPtr = ompl::control::SpaceInformationPtr(new ompl::control::SpaceInformation(space, cspace));
-
-			// set state validity checking for this space
-			spaceInfoPtr->setStateValidityChecker(boost::bind(&KPIECE::isStateValid, this, spaceInfoPtr.get(), _1));
-
-			// set the state propagation routine
-			spaceInfoPtr->setStatePropagator(boost::bind(&KPIECE::propagate, this, _1, _2, _3, _4));
-
-			pdef = ompl::base::ProblemDefinitionPtr(new ompl::base::ProblemDefinition(spaceInfoPtr));
-
-			spaceInfoPtr->setPropagationStepSize(stod(args.value("Steering Delta t")));
-			spaceInfoPtr->setMinMaxControlDuration(stol(args.value("KPIECE Min Control Steps")),stol(args.value("KPIECE Max Control Steps")));
-
-			spaceInfoPtr->setup();
-
-			kpiece = new ompl::control::KPIECE1(spaceInfoPtr);
-
-			kpiece->setGoalBias(stod(args.value("KPIECE Goal Bias")));
-			kpiece->setBorderFraction(stod(args.value("KPIECE Border Fraction")));
-			kpiece->setCellScoreFactor(stod(args.value("KPIECE Cell Score Good")), stod(args.value("KPIECE Cell Score Bad")));
-			kpiece->setMaxCloseSamplesCount(stol(args.value("KPIECE Max Close Samples")));
-
-			//kpiece->setProjectionEvaluator();
+		StateSpace *baseSpace = new StateSpace(stateSpaceDim);
+		ompl::base::RealVectorBounds bounds(stateSpaceDim);
+		for(unsigned int i = 0; i < stateSpaceDim; ++i) {
+			bounds.setLow(i, agentStateVarRanges[i].first);
+			bounds.setHigh(i, agentStateVarRanges[i].second);
 		}
+		baseSpace->setBounds(bounds);
+		ompl::base::StateSpacePtr space = ompl::base::StateSpacePtr(baseSpace);
+
+		const std::vector< std::pair<double, double> > &controlBounds = workspace.getControlBounds();
+		controlSpaceDim = controlBounds.size();
+
+		ompl::control::RealVectorControlSpace *baseCSpace = new ompl::control::RealVectorControlSpace(space, controlSpaceDim);
+		ompl::base::RealVectorBounds cbounds(controlSpaceDim);
+		for(unsigned int i = 0; i < controlSpaceDim; ++i) {
+			cbounds.setLow(i, controlBounds[i].first);
+			cbounds.setHigh(i, controlBounds[i].second);
+		}
+
+		baseCSpace->setBounds(cbounds);
+		ompl::control::ControlSpacePtr cspace(baseCSpace);
+
+		// construct an instance of  space information from this control space
+		spaceInfoPtr = ompl::control::SpaceInformationPtr(new ompl::control::SpaceInformation(space, cspace));
+
+		// set state validity checking for this space
+		spaceInfoPtr->setStateValidityChecker(boost::bind(&KPIECE::isStateValid, this, spaceInfoPtr.get(), _1));
+
+		// set the state propagation routine
+		spaceInfoPtr->setStatePropagator(boost::bind(&KPIECE::propagate, this, _1, _2, _3, _4));
+
+		pdef = ompl::base::ProblemDefinitionPtr(new ompl::base::ProblemDefinition(spaceInfoPtr));
+
+		spaceInfoPtr->setPropagationStepSize(stod(args.value("Steering Delta t")));
+		dfpair(stdout, "steering dt", "%g", stod(args.value("Steering Delta t")));
+		spaceInfoPtr->setMinMaxControlDuration(stol(args.value("KPIECE Min Control Steps")),stol(args.value("KPIECE Max Control Steps")));
+		dfpair(stdout, "min control duration", "%u", stol(args.value("KPIECE Min Control Steps")));
+		dfpair(stdout, "max control duration", "%u", stol(args.value("KPIECE Max Control Steps")));
+
+		spaceInfoPtr->setup();
+
+		kpiece = new ompl::control::KPIECE1(spaceInfoPtr);
+
+		kpiece->setGoalBias(stod(args.value("KPIECE Goal Bias")));
+		dfpair(stdout, "goal bias", "%g", stod(args.value("KPIECE Goal Bias")));
+		
+		kpiece->setBorderFraction(stod(args.value("KPIECE Border Fraction")));
+		dfpair(stdout, "border fraction", "%g", stod(args.value("KPIECE Border Fraction")));
+		
+		kpiece->setCellScoreFactor(stod(args.value("KPIECE Cell Score Good")), stod(args.value("KPIECE Cell Score Bad")));
+		dfpair(stdout, "cell score good", "%g", stod(args.value("KPIECE Cell Score Good")));
+		dfpair(stdout, "cell score bad", "%g", stod(args.value("KPIECE Cell Score Bad")));
+		
+		kpiece->setMaxCloseSamplesCount(stol(args.value("KPIECE Max Close Samples")));
+		dfpair(stdout, "max closed samples", "%u", stol(args.value("KPIECE Max Close Samples")));
+
+		//kpiece->setProjectionEvaluator();
+	}
 
 	~KPIECE() {}
 
@@ -114,6 +127,8 @@ public:
 	}
 
 	void propagate(const ompl::base::State *start, const ompl::control::Control *control, const double duration, ompl::base::State *result) {
+		samplesGenerated++;
+
 		const typename StateSpace::StateType *state = start->as<typename StateSpace::StateType>();
 		const ompl::control::RealVectorControlSpace::ControlType *realVectorControl = control->as<ompl::control::RealVectorControlSpace::ControlType>();
 		
@@ -137,6 +152,13 @@ public:
 		}
 
 		resultState->valid = workspace.safeEdge(agent, edge, collisionCheckDT);
+
+		if(resultState->valid) {
+			edgesAdded++;
+		} else {
+			edgesRejected++;
+		}
+
 		resultState->agentEdge->parent = state->agentEdge;
 
 		if(workspace.isGoal(edge.end, *agentGoal)) {
@@ -199,6 +221,13 @@ public:
 		}
 	}
 
+	void dfpairs() const {
+		dfpair(stdout, "samples generated", "%u", samplesGenerated);
+		dfpair(stdout, "edges added", "%u", edgesAdded);
+		dfpair(stdout, "edges rejected", "%u", edgesRejected);
+	}
+
+
 private:
 	const Workspace &workspace;
 	const Agent &agent;
@@ -209,4 +238,6 @@ private:
 	ompl::base::ProblemDefinitionPtr pdef;
 	unsigned int stateSpaceDim, controlSpaceDim;
 	double collisionCheckDT;
+
+	unsigned int samplesGenerated, edgesAdded, edgesRejected;
 };
