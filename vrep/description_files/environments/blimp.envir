@@ -1,4 +1,4 @@
-Scene File ? /Users/skiesel/gopath/src/github.com/skiesel/motionplanningtoolkit/vrep/scenes/pprm_blimp.ttt
+Scene File ? /Users/skiesel/gopath/src/github.com/skiesel/motionplanningtoolkit/vrep/scenes/pprm_blimp_backup.ttt
 
 Agent Handle Name ? blimp_body
 Agent Collision Group Handle Name ? blimp_body
@@ -7,17 +7,17 @@ Environment Collision Group Handle Name ? EverythingButRobot
 Workspace Bounds ? -2.5 2.5 -2.5 2.5 0 1
 
 Controllable Velocity Joint Name List ? fake_throttle fake_lift
-Controllable Velocity Joint Ranges ? -0.25 0.25 -0.1 0.1
+Controllable Velocity Joint Ranges ? -0.1 0.1 -0.1 0.1
 Controllable Position Joint Name List ? fake_rudder
-Controllable Position Joint Ranges ? -0.001 0.001
+Controllable Position Joint Ranges ? -.0001 .0001
 
 State Position Name List ? blimp_body
-State Orientation Name List ? blimp_body
-State Velocity Name List ? blimp_body
+State Orientation Name List ? 
+State Velocity Name List ? 
 
 State Position Goal Name ? blimp_body
 State Orientation Goal Name ? blimp_body
-Goal Position Thresholds ? 1 1 1
+Goal Position Thresholds ? 0.25 0.25 0.25
 Goal Orientation Thresholds ? -1 -1 -1
 
 Sampling Ranges ? -5 5 -5 5 0 1 0 0 -3.2 3.2 0 0 -1 1 -1 1 -1 1 -1 1 -1 1 -1 1
