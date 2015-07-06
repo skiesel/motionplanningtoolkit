@@ -75,119 +75,127 @@ void omnidirectional(const InstanceFileMap& args) {
 	#endif
 }
 
-// void dubins(const InstanceFileMap& args) {
-// 	typedef Dubins Agent;
-// 	typedef Map3D<Agent> Workspace;
-// 	typedef GridDiscretization<Workspace, Agent> Discretization;
-// 	typedef UniformSampler<Workspace, Agent> Sampler;
-// 	typedef flann::KDTreeSingleIndexParams KDTreeType;
-// 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, Agent::Edge> KDTree;
-// 	typedef RRT<Workspace, Agent, Sampler, KDTree> Planner;
+void dubins(const InstanceFileMap& args) {
+	typedef Dubins Agent;
+	typedef Map3D<Agent> Workspace;
+	typedef flann::KDTreeSingleIndexParams KDTreeType;
+	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, Agent::Edge> KDTree;
+	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
+	typedef TreeInterface<Agent, KDTree, Sampler> TreeInterface;
+	typedef RRT<Workspace, Agent, TreeInterface> Planner;
 
-// 	Agent agent(args);
-// 	Workspace workspace(args);
+	Agent agent(args);
+	Workspace workspace(args);
 
-// 	Agent::State start(parseDoubles(args.value("Agent Start Location")));
-// 	auto goalVars = parseDoubles(args.value("Agent Goal Location"));
-// 	Agent::State goal(goalVars);
+	agent.updateBounds(workspace.getBounds());
 
-// 	Sampler sampler(workspace, agent);
+	Agent::State start(args.doubleList("Agent Start Location"));
+	auto goalVars = args.doubleList("Agent Goal Location");
+	Agent::State goal(goalVars);
 
-// 	KDTreeType kdtreeType;
-// 	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
+	KDTreeType kdtreeType;
+	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
 
-// 	Planner planner(workspace, agent, sampler, kdtree, args);
+	Sampler sampler(workspace, agent, kdtree);
 
-// 	#ifdef WITHGRAPHICS
-// 		bool firstInvocation = true;
-// 		unsigned int i = 0; 
-// 		auto lambda = [&](){
-// 			agent.draw();
-// 			workspace.draw();
-// 			planner.query(start, goal, 100, firstInvocation);
-// 			firstInvocation = false;
-// 		};
-// 		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda);
-// 	#else
-// 		planner.query(start, goal);
-// 	#endif
-// }
+	TreeInterface treeInterface(kdtree, sampler);
 
-// void snake(const InstanceFileMap& args) {
-// 	typedef SnakeTrailers Agent;
-// 	typedef Map3D<Agent> Workspace;
-// 	typedef GridDiscretization<Workspace, Agent> Discretization;
-// 	typedef UniformSampler<Workspace, Agent> Sampler;
-// 	typedef flann::KDTreeIndexParams KDTreeType;
-// 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, Agent::Edge> KDTree;
-// 	typedef RRT<Workspace, Agent, Sampler, KDTree> Planner;
+	Planner planner(workspace, agent, treeInterface, args);
 
-// 	Agent agent(args);
-// 	Workspace workspace(args);
+	#ifdef WITHGRAPHICS
+		bool firstInvocation = true;
+		unsigned int i = 0; 
+		auto lambda = [&](){
+			agent.draw();
+			workspace.draw();
+			planner.query(start, goal, 100, firstInvocation);
+			firstInvocation = false;
+		};
+		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda);
+	#else
+		planner.query(start, goal);
+	#endif
+}
 
-// 	Agent::State start(parseDoubles(args.value("Agent Start Location")));
-// 	auto goalVars = parseDoubles(args.value("Agent Goal Location"));
-// 	Agent::State goal(goalVars);
+void snake(const InstanceFileMap& args) {
+	typedef SnakeTrailers Agent;
+	typedef Map3D<Agent> Workspace;
+	typedef flann::KDTreeSingleIndexParams KDTreeType;
+	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, Agent::Edge> KDTree;
+	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
+	typedef TreeInterface<Agent, KDTree, Sampler> TreeInterface;
+	typedef RRT<Workspace, Agent, TreeInterface> Planner;
 
-// 	Sampler sampler(workspace, agent);
+	Agent agent(args);
+	Workspace workspace(args);
 
-// 	KDTreeType kdtreeType;
-// 	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
+	Agent::State start(args.doubleList("Agent Start Location"));
+	auto goalVars = args.doubleList("Agent Goal Location");
+	Agent::State goal(goalVars);
 
-// 	Planner planner(workspace, agent, sampler, kdtree, args);
+	KDTreeType kdtreeType;
+	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
 
-// 	#ifdef WITHGRAPHICS
-// 		bool firstInvocation = true;
-// 		unsigned int i = 0; 
-// 		auto lambda = [&](){
-// 			// agent.draw();
-// 			// workspace.draw();
-// 			planner.query(start, goal, 100, firstInvocation);
-// 			firstInvocation = false;
-// 		};
-// 		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda);
-// 	#else
-// 		planner.query(start, goal);
-// 	#endif
-// }
+	Sampler sampler(workspace, agent, kdtree);
 
-// void blimp(const InstanceFileMap& args) {
-// 	typedef Blimp Agent;
-// 	typedef Map3D<Agent> Workspace;
-// 	typedef GridDiscretization<Workspace, Agent> Discretization;
-// 	typedef UniformSampler<Workspace, Agent> Sampler;
-// 	typedef flann::KDTreeSingleIndexParams KDTreeType;
-// 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, Agent::Edge> KDTree;
-// 	typedef RRT<Workspace, Agent, Sampler, KDTree> Planner;
+	TreeInterface treeInterface(kdtree, sampler);
 
-// 	Agent agent(args);
-// 	Workspace workspace(args);
+	Planner planner(workspace, agent, treeInterface, args);
 
-// 	Agent::State start(parseDoubles(args.value("Agent Start Location")));
-// 	auto goalVars = parseDoubles(args.value("Agent Goal Location"));
-// 	Agent::State goal(goalVars);
+	#ifdef WITHGRAPHICS
+		bool firstInvocation = true;
+		unsigned int i = 0; 
+		auto lambda = [&](){
+			// agent.draw();
+			// workspace.draw();
+			planner.query(start, goal, 100, firstInvocation);
+			firstInvocation = false;
+		};
+		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda);
+	#else
+		planner.query(start, goal);
+	#endif
+}
 
-// 	Sampler sampler(workspace, agent);
+void blimp(const InstanceFileMap& args) {
+	typedef Blimp Agent;
+	typedef Map3D<Agent> Workspace;
+	typedef flann::KDTreeSingleIndexParams KDTreeType;
+	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, Agent::Edge> KDTree;
+	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
+	typedef TreeInterface<Agent, KDTree, Sampler> TreeInterface;
+	typedef RRT<Workspace, Agent, TreeInterface> Planner;
 
-// 	KDTreeType kdtreeType;
-// 	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
+	Agent agent(args);
+	Workspace workspace(args);
 
-// 	Planner planner(workspace, agent, sampler, kdtree, args);
+	Agent::State start(args.doubleList("Agent Start Location"));
+	auto goalVars = args.doubleList("Agent Goal Location");
+	Agent::State goal(goalVars);
 
-// 	#ifdef WITHGRAPHICS
-// 		bool firstInvocation = true;
-// 		unsigned int i = 0; 
-// 		auto lambda = [&](){
-// 			agent.draw();
-// 			workspace.draw();
-// 			planner.query(start, goal, 100, firstInvocation);
-// 			firstInvocation = false;
-// 		};
-// 		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda);
-// 	#else
-// 		planner.query(start, goal);
-// 	#endif
-// }
+	KDTreeType kdtreeType;
+	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
+
+	Sampler sampler(workspace, agent, kdtree);
+
+	TreeInterface treeInterface(kdtree, sampler);
+
+	Planner planner(workspace, agent, treeInterface, args);
+
+	#ifdef WITHGRAPHICS
+		bool firstInvocation = true;
+		unsigned int i = 0; 
+		auto lambda = [&](){
+			agent.draw();
+			workspace.draw();
+			planner.query(start, goal, 100, firstInvocation);
+			firstInvocation = false;
+		};
+		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda);
+	#else
+		planner.query(start, goal);
+	#endif
+}
 
 int main(int argc, char *argv[]) {
 	if(argc < 2) {
@@ -199,12 +207,12 @@ int main(int argc, char *argv[]) {
 
 	if(args.value("Agent Type").compare("Omnidirectional") == 0)
 		omnidirectional(args);
-	// else if(args.value("Agent Type").compare("Dubins") == 0)
-	// 	dubins(args);
-	// else if(args.value("Agent Type").compare("Snake") == 0)
-	// 	snake(args);
-	// else if(args.value("Agent Type").compare("Blimp") == 0)
-	// 	blimp(args);
+	else if(args.value("Agent Type").compare("Dubins") == 0)
+		dubins(args);
+	else if(args.value("Agent Type").compare("Snake") == 0)
+		snake(args);
+	else if(args.value("Agent Type").compare("Blimp") == 0)
+		blimp(args);
 	else
 		fprintf(stderr, "unrecognized Agent Type\n");
 
