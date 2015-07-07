@@ -12,7 +12,7 @@ class PlakuTreeInterface {
 	typedef typename Agent::Edge Edge;
 
 	typedef flann::KDTreeSingleIndexParams KDTreeType;
-	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, VREPInterface::Edge> KDTree;
+	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
 	typedef UniformSampler<Workspace, Agent, KDTree> UniformSampler;
 
 	struct Region {
@@ -165,6 +165,11 @@ public:
 
 		regions[newCellId]->edgesInRegion->insertPoint(edge);
 		uniformSamplerBackingKDTree->insertPoint(edge);
+	}
+
+	Edge* getTreeEdge(const State& s) const {
+		fatal("Not implemented: PlakuTreeInterface::getTreeEdge");
+		return NULL;
 	}
 
 private:
