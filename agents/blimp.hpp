@@ -92,6 +92,18 @@ public:
 			end(end), cost(cost), dt(cost), a(a), w(w), z(z), treeIndex(0) {}
 		Edge(const Edge& e) : start(e.start), end(e.end), cost(e.cost), dt(e.dt), a(e.a), w(e.w), z(e.z), treeIndex(e.treeIndex) {}
 
+		Edge& operator=(const Edge &e) {
+			this->start = e.start;
+			this->start = e.end;
+			this->cost = e.cost;
+			this->dt = e.dt;
+			this->a = e.a;
+			this->w = e.w;
+			this->z = e.z;
+			this->parent = e.parent;
+			return *this;
+		}
+
 		/* needed for being inserted into NN datastructure */
 		const StateVars& getTreeStateVars() const { return end.getStateVars(); }
 		int getPointIndex() const { return treeIndex; }
@@ -123,7 +135,7 @@ public:
 #endif
 
 		Edge *parent;
-		const State start, end;
+		State start, end;
 		double cost, dt, a, w, z;
 		int treeIndex;
 	};
@@ -178,6 +190,19 @@ public:
 		return fabs(s[X] - g[X]) < goalThresholds[X] &&
 		       fabs(s[Y] - g[Y]) < goalThresholds[Y] &&
 		       fabs(s[Z] - g[Z]) < goalThresholds[Z];
+	}
+
+	Edge steerWithControl(const State &start, const Edge &getControlsFromThisEdge, double dt) const {
+		double a = getControlsFromThisEdge.a;
+		double w = getControlsFromThisEdge.w;
+		double z = getControlsFromThisEdge.z;
+
+		State end = doStep(start, a, w, z, dt / 10);
+		for(unsigned int i = 0; i < 9; i++) {
+			end = doStep(end, a, w, z, dt / 10);
+		}
+
+		return Edge(start, end, dt, a, w, z);
 	}
 
 	Edge steer(const State &start, const State &goal, double dt) const {
