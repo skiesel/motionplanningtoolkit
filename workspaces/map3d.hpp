@@ -12,7 +12,7 @@ public:
 
 	typedef typename Agent::Edge Edge;
 
-	Map3D(const InstanceFileMap &args) :
+	Map3D(const InstanceFileMap &args, const fcl::Transform3f &transform = fcl::Transform3f()) :
 		mesh(args.value("Environment Mesh"), args.value("Environment Location")), bounds(3) {
 		boost::char_separator<char> sep(" ");
 		boost::tokenizer< boost::char_separator<char> > tokens(args.value("Environment Bounding Box"), sep);
@@ -33,7 +33,19 @@ public:
 	bool safeEdge(const Agent &agent, const Edge &edge, double dt, bool checkSelfCollision = false) const {
 		auto agentMeshes = agent.getMeshes();
 		auto agentPoses = agent.getPoses(edge, dt);
-		return !MeshHandler::isInCollision(mesh, agentMeshes, agentPoses, checkSelfCollision);
+
+		for(const auto &poses : agentPoses) {
+			for(const auto &pose : poses) {
+				const auto &position = pose.getTranslation();
+				for(unsigned int i = 0; i < 3; ++i) {
+					if(position[i] < bounds[i].first || position[i] > bounds[i].second) {
+						return false;
+					}
+				}
+			}
+		}
+
+		return !MeshHandler::isInCollision(mesh, agentMeshes, agentPoses, checkSelfCollision);;
 	}
 
 	bool safePoses(const Agent &agent, const std::vector<fcl::Transform3f> &poses) const {
@@ -46,6 +58,7 @@ public:
 #endif
 
 private:
+
 	StaticEnvironmentMeshHandler mesh;
 	WorkspaceBounds bounds;
 };

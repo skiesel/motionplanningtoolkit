@@ -33,7 +33,6 @@ class OpenGLWrapper {
 	GENBUFFERS glGenBuffers = (GENBUFFERS)glXGetProcAddress((const GLubyte *) "glGenBuffers");
 #endif
 
-
 	// Shader sources
 	const GLchar *vertexSource = "../utilities/shaders/shader.vert";
 	const GLchar *fragmentSource = "../utilities/shaders/shader.frag";
@@ -124,6 +123,10 @@ public:
 
 		Connexion3DMouse::createConnexion3DMouse();
 
+		zoom(1, 30);
+		rotate(0, 9);
+		rotate(1, 9);
+
 		while(!glfwWindowShouldClose(window)) {
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClearDepthf(1.0f);
@@ -151,11 +154,17 @@ public:
 			buildTransform();
 			glUniformMatrix4fv(transformInt, 1, true, transformMatrix);
 
+			drawAxes();
+
 			callback();
 
 			glfwSwapBuffers(window);
 			glfwPollEvents();
 			handle3DMouseEvents();
+
+			// std::cout << "waiting\n";
+			// std::string garbage;
+			// std::getline(std::cin, garbage);
 		}
 
 		Connexion3DMouse::destroyConnexion3DMouse();
@@ -215,6 +224,41 @@ public:
 		if(wrapper.isMouseClicked()) {
 			wrapper.setMousePosition(x, y);
 		}
+	}
+
+	void drawAxes() const {
+		drawLine(0,0,0,1,0,0,Color::Red());
+		drawLine(0,0,0,0,1,0,Color::Blue());
+		drawLine(0,0,0,0,0,1,Color::Green());
+	}
+
+	void drawLine(double x1, double y1, double z1, double x2, double y2, double z2, const Color &color) const {
+		const auto &identity = getIdentity();
+		std::vector<double> line;
+		line.push_back(x1);
+		line.push_back(y1);
+		line.push_back(z1);
+		line.push_back(1);
+		line.push_back(0);
+		line.push_back(0);
+		line.push_back(1);
+		line.push_back(1);
+		line.insert(line.end(), color.getColor().begin(), color.getColor().end());
+		line.insert(line.end(), identity.begin(), identity.end());
+
+		
+		line.push_back(x2);
+		line.push_back(y2);
+		line.push_back(z2);
+		line.push_back(1);
+		line.push_back(0);
+		line.push_back(0);
+		line.push_back(1);
+		line.push_back(1);
+		line.insert(line.end(), color.getColor().begin(), color.getColor().end());
+		line.insert(line.end(), identity.begin(), identity.end());
+
+		drawLines(line);
 	}
 
 	void translate(int axis, double direction, double magnitude = 1) {

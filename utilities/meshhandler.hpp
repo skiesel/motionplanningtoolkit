@@ -30,13 +30,20 @@ public:
 			if((i%4) == (i/4)) transform[i] = 1;
 		}
 
-		const Vec3f &translation = tf.getTranslation();
-		transform[12] = translation[0];
-		transform[13] = translation[1];
-		transform[14] = translation[2];
+		// const Vec3f &translation = tf.getTranslation();
+		// transform[12] = translation[0];
+		// transform[13] = translation[1];
+		// transform[14] = translation[2];
 
 		for(unsigned int i = 0; i < vertices.size(); i++) {
-			const std::vector<fcl::Vec3f> &verts = vertices[i];
+			std::vector<fcl::Vec3f> &verts = vertices[i];
+			for(unsigned int j = 0; j < verts.size(); ++j) {
+				auto v = tf.transform(verts[j]);
+				for(unsigned int k = 0; k < 3; ++k) {
+					verts[j][k] = v[k];
+				}
+			}
+
 			const std::vector<fcl::Triangle> &tris = triangles[i];
 
 			if(verts.size() == 0 || tris.size() == 0) continue;
@@ -198,8 +205,10 @@ public:
 
 			for(unsigned int j = 0; j < pose.size(); ++j) {
 				fcl::CollisionObject *agentPose = agent[j]->getMeshPose(pose[j]);
-				selfCollisionObjects.push_back(agentPose);
 				agentPoses.push_back(agentPose);
+				if(checkSelfCollision) {
+					selfCollisionObjects.push_back(agentPose);
+				}
 			}
 
 			if(checkSelfCollision) {
@@ -229,6 +238,8 @@ public:
 		worldCollisionModel->collide(agentCollisionModel, &collisionData, fcl_helpers::defaultCollisionFunction);
 
 		if(debug) {
+			fprintf(stderr, "checking %lu meshes\n", agentPoses.size());
+
 			for(unsigned int c = 0; c < collisionData.result.numContacts(); ++c) {
 				auto vec = collisionData.result.getContact(c).pos;
 				fprintf(stderr, "%g %g %g\n", vec[0], vec[1], vec[2]);

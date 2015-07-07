@@ -29,6 +29,13 @@ public:
 	class State {
 	public:
 		State() : stateVars(7) {}
+
+		State(double x, double y, double z, double theta) : stateVars(7) {
+			stateVars[X] = x;
+			stateVars[Y] = y;
+			stateVars[Z] = z;
+			stateVars[THETA] = theta;
+		}
 		
 		State(const State &s) : stateVars(s.stateVars.begin(), s.stateVars.end()) {}
 
@@ -74,7 +81,7 @@ public:
 		}
 #endif
 
-	private:
+	// private:
 		StateVars stateVars;
 	};
 
@@ -115,6 +122,7 @@ public:
 		}
 #endif
 
+		Edge *parent;
 		const State start, end;
 		double cost, dt, a, w, z;
 		int treeIndex;
@@ -181,7 +189,10 @@ public:
 		double w = angularAccelerations(generator);
 		double z = zLinearAccelerations(generator);
 
-		State end = doStep(start, a, w, z, dt);
+		State end = doStep(start, a, w, z, dt / 10);
+		for(unsigned int i = 0; i < 9; i++) {
+			end = doStep(end, a, w, z, dt / 10);
+		}
 
 		return Edge(start, end, dt, a, w, z);
 	}
@@ -217,8 +228,29 @@ public:
 	}
 
 	std::vector<std::vector<fcl::Transform3f> > getPoses(const Edge &edge, double dt) const {
-		std::vector<std::vector<fcl::Transform3f> > retPoses(1);
-		std::vector<fcl::Transform3f>& poses = retPoses[0];
+		std::vector<std::vector<fcl::Transform3f> > retPoses;
+
+		unsigned int steps = std::isinf(dt) ? 0 : edge.dt / dt;
+		
+		State state = edge.start;
+
+		retPoses.emplace_back();
+		retPoses.back().push_back(stateToFCLTransform(state));
+
+		for(unsigned int step = 0; step < steps; ++step) {
+			auto transform = stateToOpenGLTransform(state);
+			state = doStep(state, edge.a, edge.w, edge.z, dt);
+
+			// mesh.draw(color, stateToOpenGLTransform(state));
+			// state.draw();
+
+			retPoses.emplace_back();
+			retPoses.back().push_back(stateToFCLTransform(state));
+		}
+
+		retPoses.emplace_back();
+		retPoses.back().push_back(stateToFCLTransform(edge.end));
+
 		return retPoses;
 	}
 
@@ -264,15 +296,24 @@ public:
 		mesh.draw(color, transform);
 	}
 
+	void drawMesh(const State &s) const {
+		auto transform = stateToOpenGLTransform(s);
+		mesh.draw(color, transform);
+	}
+
 	void drawSolution(const std::vector<const Edge*> &solution, double dt = std::numeric_limits<double>::infinity()) const {
 		for(const Edge* edge : solution) {
 			unsigned int steps = std::isinf(dt) ? 1 : edge->dt / dt;
 		
 			State state = edge->start;
 
+			edge->draw(OpenGLWrapper::Color::Green());
+
 			for(unsigned int step = 0; step < steps; ++step) {
 				auto transform = stateToOpenGLTransform(state);
 				mesh.draw(color, transform);
+				state.draw(OpenGLWrapper::Color::Green());
+
 				state = doStep(state, edge->a, edge->w, edge->z, dt);
 			}
 		}
@@ -289,7 +330,7 @@ public:
 
 #endif
 
-private:
+// private:
 	State doStep(const State& s, double a, double w, double z, double dt) const {
 		const StateVars& vars = s.getStateVars();
 		StateVars newState(7);
@@ -325,13 +366,13 @@ private:
 		double cosVal = cos(vars[THETA]);
 
 		transform[0] = cosVal;
-		transform[2] = -sinVal;
-		transform[8] = sinVal;
-		transform[10] = cosVal;
+		transform[1] = -sinVal;
+		transform[4] = sinVal;
+		transform[5] = cosVal;
 
 		transform[12] = vars[X];
-		transform[13] = -vars[Z];
-		transform[14] = vars[Y];
+		transform[13] = vars[Y];
+		transform[14] = vars[Z];
 
 		return transform;
 	}

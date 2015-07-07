@@ -9,7 +9,7 @@
 class AssimpMeshLoader {
 public:
 	AssimpMeshLoader(const std::string &pFile) : error(false) {
-		scene = importer.ReadFile(pFile, 0);
+		scene = importer.ReadFile(pFile, aiProcess_FixInfacingNormals | aiProcess_GenNormals);
 
 		if(!scene) {
 			fprintf(stderr, "%s\n", importer.GetErrorString());
