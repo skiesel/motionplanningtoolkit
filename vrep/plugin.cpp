@@ -24,6 +24,7 @@ simFloat start = -1, dt = 1;
 
 void setupInstanceFromInstanceFile(const InstanceFileMap *args) {
 	GlobalRandomGenerator.seed(stod(args->value("Seed")));
+	ompl::RNG::setSeed(stod(args->value("Seed")));
 
 	std::string agentName = args->value("Agent Handle Name");
 	simInt agentHandle = (agentName == "EVERYTHING") ? sim_handle_all : simGetObjectHandle(agentName.c_str());

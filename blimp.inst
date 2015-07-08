@@ -1,3 +1,5 @@
+Seed ? 222
+
 Agent Type ? Blimp
 Agent Mesh ? ../mesh_models/agent_models/simple_blimp2.dxf
 Agent Start Location ? -0.0500 -2.0 0.85 0.7071067811865476 0 0 0.7071067811865476
@@ -11,10 +13,38 @@ Minimum Turning ? -0.785398
 Maximum Turning ? 0.785398
 Minimum Velocity Z ? -1
 Maximum Velocity Z ? 1
+Minimum Forward Acceleration ? -1
+Maximum Forward Acceleration ? 1
+Minimum Z Acceleration ? -1
+Maximum Z Acceleration ? 1
+Minimum Angular Acceleration ? -0.1745
+Maximum Angular Acceleration ? 0.1745
 
 Environment Mesh ? ../mesh_models/environment_models/blimp_world.dxf
 Environment Location ? 0 0 0 1 0 0 0
 Environment Bounding Box ? -2.5 2.5 -2.5 2.5 0 1
 
-Steering Delta t ? 0.1
-Collision Check Delta t ? 0.01
+Steering Delta t ? 0.25
+Collision Check Delta t ? 0.1
+
+#Planner ? RRT
+
+#Planner ? RRT Connect
+#RRTConnect Max Extensions ? 1000
+
+#Planner ? PPRM
+#Number Of PRM Vertices ? 5000
+#Nearest Neighbors To Consider In PRM Edge Construction ? 10
+#PRM Collision Check DT ? 0.1
+#Plaku Alpha Value ? 0.5
+#Plaku b Value ? 0.85
+#Plaku PRM State Selection Radius ? 0.01
+
+Planner ? KPIECE
+KPIECE Min Control Steps ? 1
+KPIECE Max Control Steps ? 1
+KPIECE Goal Bias ? 0.25
+KPIECE Border Fraction ? 0.9
+KPIECE Cell Score Good ? 0.75
+KPIECE Cell Score Bad ? 0.25
+KPIECE Max Close Samples ? 100
