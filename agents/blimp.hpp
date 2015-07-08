@@ -386,6 +386,18 @@ public:
 		std::vector<double> glTransform = OpenGLWrapper::getOpenGLWrapper().getIdentity();
 
 		const fcl::Vec3f &translation = transform.getTranslation();
+		const fcl::Matrix3f &orientation = transform.getRotation();
+
+		glTransform[0] = orientation(0,0);
+		glTransform[1] = orientation(0,1);
+		glTransform[2] = orientation(0,2);
+		glTransform[4] = orientation(1,0);
+		glTransform[5] = orientation(1,1);
+		glTransform[6] = orientation(1,2);
+		glTransform[8] = orientation(2,0);
+		glTransform[9] = orientation(2,1);
+		glTransform[10] = orientation(2,2);
+
 
 		glTransform[12] = translation[0];
 		glTransform[13] = translation[1];
