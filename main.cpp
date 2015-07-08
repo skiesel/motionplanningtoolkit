@@ -10,6 +10,7 @@
 #include "agents/blimp.hpp"
 
 #include "planners/rrt.hpp"
+#include "planners/rrtconnect.hpp"
 #include "planners/kpiece.hpp"
 
 #include "samplers/uniformsampler.hpp"
@@ -17,13 +18,16 @@
 #include "samplers/fbiasedsampler.hpp"
 
 #include "tree_interfaces/treeinterface.hpp"
-
+#include "tree_interfaces/plakutreeinterface.hpp"
 
 #include "discretizations/workspace/griddiscretization.hpp"
+#include "discretizations/workspace/prmlite.hpp"
 
 #include "utilities/flannkdtreewrapper.hpp"
 #include "utilities/instancefilemap.hpp"
 #include "utilities/fcl_helpers.hpp"
+
+#include "blimpplanners.hpp"
 
 std::vector<double> parseDoubles(const std::string &str) {
 	std::vector<double> values;
@@ -157,63 +161,6 @@ std::vector<double> parseDoubles(const std::string &str) {
 // 		planner.query(start, goal);
 // 	#endif
 // }
-
-void blimp(const InstanceFileMap& args) {
-	typedef Blimp Agent;
-	typedef Map3D<Agent> Workspace;
-	// typedef flann::KDTreeSingleIndexParams KDTreeType;
-	typedef flann::KDTreeIndexParams KDTreeType;
-	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, Agent::Edge> KDTree;
-	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
-	typedef TreeInterface<Agent, KDTree, Sampler> TreeInterface;
-	typedef RRT<Workspace, Agent, TreeInterface> Planner;
-
-	Agent agent(args);
-	Workspace workspace(args);
-
-	auto startVars = args.doubleList("Agent Start Location");
-	fcl::Vec3f axis;
-	double theta;
-	fcl::Quaternion3f startOrientation(startVars[3], startVars[4], startVars[5], startVars[6]);
-	startOrientation.toAxisAngle(axis, theta);
-	theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
-
-	fprintf(stderr, "%g %g %g @ %g\n", axis[0], axis[1], axis[2], theta);
-
-	
-	Agent::State start(startVars[0], startVars[1], startVars[2], theta);
-
-	
-	auto goalVars = args.doubleList("Agent Goal Location");
-	fcl::Quaternion3f goalOrientation(goalVars[3], goalVars[4], goalVars[5], goalVars[6]);
-	goalOrientation.toAxisAngle(axis, theta);
-	theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
-
-	Agent::State goal(goalVars[0], goalVars[1], goalVars[2], theta);
-
-	KDTreeType kdtreeType(4);
-	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
-
-	Sampler sampler(workspace, agent, kdtree);
-
-	TreeInterface treeInterface(kdtree, sampler);
-
-	Planner planner(workspace, agent, treeInterface, args);
-
-	#ifdef WITHGRAPHICS
-		bool firstInvocation = true;
-		auto lambda = [&](){
-			workspace.draw();
-			agent.drawMesh(start);
-			agent.drawMesh(goal);
-			planner.query(start, goal, 100, firstInvocation);
-			firstInvocation = false;
-		};
-		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda);
-	#else
-		planner.query(start, goal);
-	#endif
-}
 
 int main(int argc, char *argv[]) {
 	if(argc < 2) {

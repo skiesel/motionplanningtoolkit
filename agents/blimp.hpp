@@ -64,6 +64,45 @@ public:
 			fprintf(stderr, "\n");
 		}
 
+		std::vector<double> toOpenGLTransform() const {
+			std::vector<double> transform = OpenGLWrapper::getOpenGLWrapper().getIdentity();
+
+			double sinVal = sin(stateVars[THETA]);
+			double cosVal = cos(stateVars[THETA]);
+
+			transform[0] = cosVal;
+			transform[1] = -sinVal;
+			transform[4] = sinVal;
+			transform[5] = cosVal;
+
+			transform[12] = stateVars[X];
+			transform[13] = stateVars[Y];
+			transform[14] = stateVars[Z];
+
+			return transform;
+		}
+
+		fcl::Transform3f toFCLTransform() const {
+			fcl::Vec3f pose(stateVars[X], stateVars[Y], stateVars[Z]);
+			
+			fcl::Matrix3f rotation;
+			rotation.setIdentity();
+
+			double sinVal = sin(stateVars[THETA]);
+			double cosVal = cos(stateVars[THETA]);
+
+			rotation(0,0) = cosVal;
+			rotation(1,0) = -sinVal;
+			rotation(0,1) = sinVal;
+			rotation(1,1) = cosVal;
+
+			return fcl::Transform3f(rotation, pose);
+		}
+
+		fcl::Transform3f getTransform() const {
+			return toFCLTransform();
+		}
+
 #ifdef WITHGRAPHICS
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
 			const auto &identity = OpenGLWrapper::getOpenGLWrapper().getIdentity();
@@ -94,7 +133,7 @@ public:
 
 		Edge& operator=(const Edge &e) {
 			this->start = e.start;
-			this->start = e.end;
+			this->end = e.end;
 			this->cost = e.cost;
 			this->dt = e.dt;
 			this->a = e.a;
@@ -183,6 +222,18 @@ public:
 		return State(stateVars);
 	}
 
+	State transformToState(const State &s, const fcl::Transform3f &transform) const {
+		fcl::Quaternion3f orientation = transform.getQuatRotation();
+		fcl::Vec3f axis;
+		double theta;
+		orientation.toAxisAngle(axis, theta);
+		theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
+
+		fcl::Vec3f position = transform.getTranslation();
+
+		return State(position[0], position[1], position[2], theta);
+	}
+
 	bool isGoal(const State &state, const State &goal) const {
 		const StateVars &s = state.getStateVars();
 		const StateVars &g = goal.getStateVars();
@@ -260,21 +311,21 @@ public:
 		State state = edge.start;
 
 		retPoses.emplace_back();
-		retPoses.back().push_back(stateToFCLTransform(state));
+		retPoses.back().push_back(state.toFCLTransform());
 
 		for(unsigned int step = 0; step < steps; ++step) {
-			auto transform = stateToOpenGLTransform(state);
+			auto transform = state.toOpenGLTransform();
 			state = doStep(state, edge.a, edge.w, edge.z, dt);
 
 			// mesh.draw(color, stateToOpenGLTransform(state));
 			// state.draw();
 
 			retPoses.emplace_back();
-			retPoses.back().push_back(stateToFCLTransform(state));
+			retPoses.back().push_back(state.toFCLTransform());
 		}
 
 		retPoses.emplace_back();
-		retPoses.back().push_back(stateToFCLTransform(edge.end));
+		retPoses.back().push_back(edge.end.toFCLTransform());
 
 		return retPoses;
 	}
@@ -316,13 +367,13 @@ public:
 
 		state = doStep(state, 0, 0, 0, dt);
 
-		auto transform = stateToOpenGLTransform(state);
+		auto transform = state.toOpenGLTransform();
 
 		mesh.draw(color, transform);
 	}
 
 	void drawMesh(const State &s) const {
-		auto transform = stateToOpenGLTransform(s);
+		auto transform = s.toOpenGLTransform();
 		mesh.draw(color, transform);
 	}
 
@@ -335,7 +386,7 @@ public:
 			edge->draw(OpenGLWrapper::Color::Green());
 
 			for(unsigned int step = 0; step < steps; ++step) {
-				auto transform = stateToOpenGLTransform(state);
+				auto transform = state.toOpenGLTransform();
 				mesh.draw(color, transform);
 				state.draw(OpenGLWrapper::Color::Green());
 
@@ -349,7 +400,7 @@ public:
 		unsigned int endpoint = poseNumber % 2;
 		const Edge *edge = solution[edgeNumber];
 
-		auto transform = stateToOpenGLTransform(endpoint == 0 ? edge->start : edge->end);
+		auto transform = (endpoint == 0 ? edge->start : edge->end).toOpenGLTransform();
 		mesh.draw(color, transform);
 	}
 
@@ -380,45 +431,6 @@ public:
 		else if(newState[VZ] < minimumVelocityZ ) { newState[VZ] = minimumVelocityZ; }
 
 		return State(newState);
-	}
-
-	std::vector<double> stateToOpenGLTransform(const State& s) const {
-		std::vector<double> transform = OpenGLWrapper::getOpenGLWrapper().getIdentity();
-
-		const StateVars &vars = s.getStateVars();
-
-		double sinVal = sin(vars[THETA]);
-		double cosVal = cos(vars[THETA]);
-
-		transform[0] = cosVal;
-		transform[1] = -sinVal;
-		transform[4] = sinVal;
-		transform[5] = cosVal;
-
-		transform[12] = vars[X];
-		transform[13] = vars[Y];
-		transform[14] = vars[Z];
-
-		return transform;
-	}
-
-	fcl::Transform3f stateToFCLTransform(const State& s) const {
-		const StateVars &vars = s.getStateVars();
-
-		fcl::Vec3f pose(vars[X], vars[Y], vars[Z]);
-		
-		fcl::Matrix3f rotation;
-		rotation.setIdentity();
-
-		double sinVal = sin(vars[THETA]);
-		double cosVal = cos(vars[THETA]);
-
-		rotation(0,0) = cosVal;
-		rotation(1,0) = -sinVal;
-		rotation(0,1) = sinVal;
-		rotation(1,1) = cosVal;
-
-		return fcl::Transform3f(rotation, pose);
 	}
 
 	double normalizeTheta(double t) const {

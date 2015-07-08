@@ -16,6 +16,10 @@ public:
 		insertionInterface.insertPoint(edge);
 	}
 
+	Edge* getTreeEdge(const State& s) const {
+		return queryInterface.getTreeEdge(s);
+	}
+
 private:
 	InsertionInteface &insertionInterface;
 	QueryInterface &queryInterface;

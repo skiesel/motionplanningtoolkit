@@ -118,8 +118,6 @@ public:
 			// if(poseNumber >= 0)
 			// 	agent.animateSolution(solution, poseNumber++);
 		}
-
-
 #endif
 
 #ifdef VREPPLUGIN

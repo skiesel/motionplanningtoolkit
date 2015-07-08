@@ -11,6 +11,7 @@ public:
 	typedef std::vector< std::pair<double, double> > WorkspaceBounds;
 
 	typedef typename Agent::Edge Edge;
+	typedef typename Agent::State State;
 
 	Map3D(const InstanceFileMap &args, const fcl::Transform3f &transform = fcl::Transform3f()) :
 		mesh(args.value("Environment Mesh"), args.value("Environment Location")), bounds(3) {
@@ -48,9 +49,22 @@ public:
 		return !MeshHandler::isInCollision(mesh, agentMeshes, agentPoses, checkSelfCollision);;
 	}
 
-	bool safePoses(const Agent &agent, const std::vector<fcl::Transform3f> &poses) const {
+	bool safePoses(const Agent &agent, const std::vector<fcl::Transform3f> &poses, const State &state=State()) const {
 		auto agentMeshes = agent.getMeshes();
-		return !MeshHandler::isInCollision(mesh, agentMeshes, poses);
+
+		std::vector<std::vector<fcl::Transform3f>> wrapper(poses.size());
+		for(unsigned int i = 0; i < poses.size(); ++i) {
+			wrapper[i].emplace_back(poses[i]);
+		}
+
+		return !MeshHandler::isInCollision(mesh, agentMeshes, wrapper);
+	}
+
+	bool safePose(const Agent &agent, const fcl::Transform3f &pose, const State &state=State()) const {
+		auto agentMeshes = agent.getMeshes();
+		std::vector<std::vector<fcl::Transform3f>> poseWrapper(1);
+		poseWrapper.back().push_back(pose);
+		return !MeshHandler::isInCollision(mesh, agentMeshes, poseWrapper);
 	}
 
 #ifdef WITHGRAPHICS

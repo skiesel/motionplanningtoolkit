@@ -28,6 +28,7 @@ void solveWithRRT(const VREPInterface *interface, const InstanceFileMap* args, c
 
 	RRT rrt(*interface, *interface, treeInterface, *args);
 	rrt.query(start, goal);
+	rrt.dfpairs();
 }
 
 void solveWithRRTConnect(const VREPInterface *interface, const InstanceFileMap* args, const VREPInterface::State &start, const VREPInterface::State &goal) {
@@ -46,6 +47,7 @@ void solveWithRRTConnect(const VREPInterface *interface, const InstanceFileMap* 
 
 	RRTConnect rrtconnect(*interface, *interface, treeInterface, *args);
 	rrtconnect.query(start, goal);
+	rrtconnect.dfpairs();
 }
 
 void solveWithPlaku(const VREPInterface *interface, const InstanceFileMap* args, const VREPInterface::State &start, const VREPInterface::State &goal) {
@@ -78,4 +80,5 @@ void solveWithKPIECE(const VREPInterface *interface, const InstanceFileMap* args
 
 	KPIECE<VREPInterface, VREPInterface> kpiece(*interface, *interface, *args);
 	kpiece.query(start, goal);
+	kpiece.dfpairs();
 }
