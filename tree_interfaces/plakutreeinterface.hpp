@@ -36,10 +36,6 @@ class PlakuTreeInterface {
 			weight = pow(alpha, numSelections) / (std::numeric_limits<double>::epsilon() + heuristic);
 		}
 
-		bool operator<(const Region &r) const {
-			return weight < r.weight;
-		}
-
 		unsigned int getRandomRegionAlongPathToGoal(std::uniform_real_distribution<double> &distribution) const {
 			unsigned int randomIndex = (unsigned int)(distribution(GlobalRandomGenerator) * regionPath.size());
 			return regionPath[randomIndex];
@@ -59,6 +55,9 @@ class PlakuTreeInterface {
 		void setHeapIndex(unsigned int i) { heapIndex = i; }
 		void updateRegionPath(const std::vector<unsigned int> &rp) { regionPath = rp; }
 
+		static bool HeapCompare(const Region *r1, const Region *r2) {
+			return r1->weight < r2->weight;
+		}
 
 		unsigned int id, numSelections;
 		double heuristic, weight;
@@ -136,7 +135,7 @@ public:
 
 			if(!activeRegion->onOpen) {
 				regionHeap.push_back(activeRegion);
-				std::push_heap(regionHeap.begin(), regionHeap.end());
+				std::push_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
 				activeRegion->onOpen = true;
 			}
 		}
@@ -145,7 +144,7 @@ public:
 			assert(!regionHeap.empty());
 
 			activeRegion = regionHeap.front();
-			std::pop_heap(regionHeap.begin(), regionHeap.end());
+			std::pop_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
 			regionHeap.pop_back();
 
 			activeRegion->onOpen = false;
@@ -164,7 +163,7 @@ public:
 
 		if(!regions[newCellId]->onOpen) {
 			regionHeap.push_back(regions[newCellId]);
-			std::push_heap(regionHeap.begin(), regionHeap.end());
+			std::push_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
 			regions[newCellId]->onOpen = true;
 		}
 

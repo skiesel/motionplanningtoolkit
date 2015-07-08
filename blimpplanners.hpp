@@ -118,10 +118,10 @@ void blimp_PPRM(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &workspa
 			workspace.draw();
 			agent.drawMesh(start);
 			agent.drawMesh(goal);
-			plakuTreeInterface.draw();
+			// plakuTreeInterface.draw();
 
-			// planner.query(start, goal, 100, firstInvocation);
-			// firstInvocation = false;
+			planner.query(start, goal, 100, firstInvocation);
+			firstInvocation = false;
 		};
 		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda);
 	#else
