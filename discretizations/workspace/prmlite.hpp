@@ -177,9 +177,9 @@ public:
 
 private:
 	fcl::Vec3f randomPointInSphere(double maxRadius = 1) const {
-		double radius = maxRadius * pow(zeroToOne(generator), 1/3);
-		double theta = 2 * M_PI * zeroToOne(generator);
-		double phi = acos(2 * zeroToOne(generator) - 1);
+		double radius = maxRadius * pow(zeroToOne(GlobalRandomGenerator), 1/3);
+		double theta = 2 * M_PI * zeroToOne(GlobalRandomGenerator);
+		double phi = acos(2 * zeroToOne(GlobalRandomGenerator) - 1);
 		double u = cos(phi);
 
 		double t1 = sqrt(1 - u * u);
@@ -199,7 +199,7 @@ private:
 		}
 
 		while(vertices.size() < numVertices) {
-			fcl::Vec3f translation = getRandomVector(linearDistributions, generator);
+			fcl::Vec3f translation = getRandomVector(linearDistributions);
 
 			fcl::Quaternion3f rotation = getRandomZOnlyQuaternion();
 			// fcl::Quaternion3f rotation = getRandomQuaternion();
@@ -209,9 +209,7 @@ private:
 				auto newVert = new VertexZRotationOnly(transform, vertices.size());
 				vertices.push_back(newVert);
 				kdtree.insertPoint(newVert);
-			}/* else {
-				fprintf(stderr, "vertex collision!\n");
-			}*/
+			}
 		}
 	}
 
@@ -233,9 +231,7 @@ private:
 				if(edgeCandidate.size() == 0 || workspace.safePoses(agent, edgeCandidate, canonicalState)) {
 					edges[i][endVertexZRotationOnly->id] = Edge(endVertexZRotationOnly->id, cost);
 					edges[endVertexZRotationOnly->id][i] = Edge(i, cost); //the reverse interpolation would be symmetric
-				}/* else if(!safe) {
-					fprintf(stderr, "skipping edge, collision!\n");
-				}*/
+				}
 			}
 		}
 	}
@@ -250,10 +246,10 @@ private:
 		return sqrt(dx*dx + dy*dy + dz*dz);
 	}
 
-	fcl::Vec3f getRandomVector(std::vector< std::uniform_real_distribution<double> > &distributions, std::default_random_engine &generator) const {
+	fcl::Vec3f getRandomVector(std::vector< std::uniform_real_distribution<double> > &distributions) const {
 		fcl::Vec3f vector;
 		for(unsigned int i = 0; i < distributions.size(); ++i) {
-			vector[i] = distributions[i](generator);
+			vector[i] = distributions[i](GlobalRandomGenerator);
 		}
 		return vector;
 	}
@@ -266,17 +262,10 @@ private:
 
 		unsigned int steps = vectorDistance(v1, v2) / linearStepSize;
 
-		// if(steps == 0) {
-		// 	fprintf(stderr, "\t%g %g %g  :: %g %g %g\n", v1[0], v1[1], v1[2], v2[0], v2[1], v2[2]);
-		// }
-		// else
-		// 	fprintf(stderr, "%g\n", vectorDistance(v1, v2));
-
 		fcl::Vec3f vecStep = (v2 - v1) / steps;
 
 		const fcl::Quaternion3f &q1 = t1.getQuatRotation();
 		const fcl::Quaternion3f &q2 = t2.getQuatRotation();
-
 
 		// don't bother including the endpoints because this function is only used to check interpolation between points
 		// already known to be "safe"
@@ -327,7 +316,7 @@ private:
 	}
 
 	fcl::Quaternion3f getRandomZOnlyQuaternion() const {
-		double rad = zeroToOne(generator) * 2 * M_PI;
+		double rad = zeroToOne(GlobalRandomGenerator) * 2 * M_PI;
 		fcl::Quaternion3f quaternion;
 		fcl::Vec3f axis(0,0,1);
 		quaternion.fromAxisAngle(axis, rad);
@@ -335,9 +324,9 @@ private:
 	}
 
 	fcl::Quaternion3f getRandomQuaternion() const {
-		double u1 = zeroToOne(generator);
-		double u2 = zeroToOne(generator);
-		double u3 = zeroToOne(generator);
+		double u1 = zeroToOne(GlobalRandomGenerator);
+		double u2 = zeroToOne(GlobalRandomGenerator);
+		double u3 = zeroToOne(GlobalRandomGenerator);
 
 		return fcl::Quaternion3f(sqrt(1-u1)*sin(2*M_PI*u2),
 								 sqrt(1-u1)*cos(2*M_PI*u2),
@@ -353,12 +342,12 @@ private:
 			for(const auto vert : vertices) {
 
 				if(colors.size() == 0) {
-					drawOpenGLPoint(vert->transform.getTranslation(), white);
-					// agent.drawMesh(vert->transform);
+					// drawOpenGLPoint(vert->transform.getTranslation(), white);
+					agent.drawMesh(vert->transform);
 				} else {
-					drawOpenGLPoint(vert->transform.getTranslation(), colors[curIndex]);
-					// OpenGLWrapper::Color color(colors[curIndex][0], colors[curIndex][1], colors[curIndex][2]);
-					// agent.drawMesh(vert->transform, color);
+					// drawOpenGLPoint(vert->transform.getTranslation(), colors[curIndex]);
+					OpenGLWrapper::Color color(colors[curIndex][0], colors[curIndex][1], colors[curIndex][2]);
+					agent.drawMesh(vert->transform, color);
 					curIndex++;
 				}
 			}
@@ -468,6 +457,5 @@ private:
 	std::vector<VertexZRotationOnly*> vertices;
 	std::unordered_map<unsigned int, std::unordered_map<unsigned int, Edge>> edges;
 	mutable KDTree kdtree;
-	mutable std::default_random_engine generator;
 	mutable std::uniform_real_distribution<double> zeroToOne;
 };

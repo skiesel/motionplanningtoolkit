@@ -25,6 +25,7 @@ public:
 	typedef std::vector< std::pair<double, double> > StateVarRanges;
 
 	typedef std::vector<double> StateVars;
+	typedef std::vector<double> Control;
 
 	class State {
 	public:
@@ -179,7 +180,7 @@ public:
 		int treeIndex;
 	};
 
-	Blimp(const InstanceFileMap &args) : mesh(args.value("Agent Mesh")), linearAccelerations(-1, 1), zLinearAccelerations(-1, 1), angularAccelerations(-0.1745, 0.1745) {
+	Blimp(const InstanceFileMap &args) : mesh(args.value("Agent Mesh")) {
 		blimpLength = stod(args.value("Blimp Length"));
 		
 		minimumVelocity = stod(args.value("Minimum Velocity"));
@@ -190,6 +191,15 @@ public:
 
 		minimumVelocityZ = stod(args.value("Minimum Velocity Z"));
 		maximumVelocityZ = stod(args.value("Maximum Velocity Z"));
+
+
+		linearAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Velocity")), stod(args.value("Maximum Velocity")));
+		zLinearAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Z Acceleration")), stod(args.value("Maximum Z Acceleration")));
+		angularAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Angular Acceleration")), stod(args.value("Maximum Angular Acceleration")));
+
+		controlBounds.emplace_back(stod(args.value("Minimum Velocity")), stod(args.value("Maximum Velocity")));
+		controlBounds.emplace_back(stod(args.value("Minimum Z Acceleration")), stod(args.value("Maximum Z Acceleration")));
+		controlBounds.emplace_back(stod(args.value("Minimum Angular Acceleration")), stod(args.value("Maximum Angular Acceleration")));
 
 		boost::char_separator<char> sep(" ");
 		boost::tokenizer< boost::char_separator<char> > tokens(args.value("Goal Thresholds"), sep);
@@ -220,6 +230,14 @@ public:
 
 	State buildState(const StateVars& stateVars) const {
 		return State(stateVars);
+	}
+
+	Control controlFromVector(const std::vector<double> &controls) const {
+		return controls;
+	}
+
+	const std::vector< std::pair<double, double> >& getControlBounds() const {
+		return controlBounds;
 	}
 
 	State transformToState(const State &s, const fcl::Transform3f &transform) const {
@@ -256,14 +274,29 @@ public:
 		return Edge(start, end, dt, a, w, z);
 	}
 
+	Edge steerWithControl(const State &start, const std::vector<double> controls, double dt) const {
+		/* Be careful about the order these are being passed in */
+
+		double a = controls[0];
+		double z = controls[1];
+		double w = controls[2];
+
+		State end = doStep(start, a, w, z, dt / 10);
+		for(unsigned int i = 0; i < 9; i++) {
+			end = doStep(end, a, w, z, dt / 10);
+		}
+
+		return Edge(start, end, dt, a, w, z);
+	}
+
 	Edge steer(const State &start, const State &goal, double dt) const {
 		return randomSteer(start, dt);
 	}
 
 	Edge randomSteer(const State &start, double dt) const {
-		double a = linearAccelerations(generator);
-		double w = angularAccelerations(generator);
-		double z = zLinearAccelerations(generator);
+		double a = linearAccelerations(GlobalRandomGenerator);
+		double w = angularAccelerations(GlobalRandomGenerator);
+		double z = zLinearAccelerations(GlobalRandomGenerator);
 
 		State end = doStep(start, a, w, z, dt / 10);
 		for(unsigned int i = 0; i < 9; i++) {
@@ -469,7 +502,8 @@ public:
 	SimpleAgentMeshHandler mesh;
 	double blimpLength, minimumVelocity, maximumVelocity, minimumTurning, maximumTurning, minimumVelocityZ, maximumVelocityZ;
 	mutable std::uniform_real_distribution<double> linearAccelerations, zLinearAccelerations, angularAccelerations;
-	mutable std::default_random_engine generator;
+
+	std::vector< std::pair<double, double> > controlBounds;
 
 	std::vector<double> goalThresholds;
 

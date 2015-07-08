@@ -73,6 +73,19 @@ void blimp_RRTConnect(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &w
 	#endif
 }
 
+void blimp_KPIECE(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &workspace,
+		typename Blimp::State &start, typename Blimp::State &goal) {
+	dfpair(stdout, "planner", "%s", "KPIECE");
+
+	typedef Blimp Agent;
+	typedef Map3D<Agent> Workspace;
+	typedef KPIECE<Workspace, Agent> Planner;
+
+	Planner planner(workspace, agent, args);
+	planner.query(start, goal);
+	planner.dfpairs();
+}
+
 void blimp_PPRM(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &workspace,
 		typename Blimp::State &start, typename Blimp::State &goal) {
 	dfpair(stdout, "planner", "%s", "PPRM");
@@ -105,10 +118,10 @@ void blimp_PPRM(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &workspa
 			workspace.draw();
 			agent.drawMesh(start);
 			agent.drawMesh(goal);
-			// plakuTreeInterface.draw();
+			plakuTreeInterface.draw();
 
-			planner.query(start, goal, 100, firstInvocation);
-			firstInvocation = false;
+			// planner.query(start, goal, 100, firstInvocation);
+			// firstInvocation = false;
 		};
 		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda);
 	#else
@@ -145,15 +158,21 @@ void blimp(const InstanceFileMap& args) {
 
 	std::string planner = args.value("Planner");
 
+	clock_t startT = clock();
+
 	if(planner.compare("RRT") == 0) {
 		blimp_RRT(args, agent, workspace, start, goal);
 	} else if(planner.compare("RRT Connect") == 0) {
 		blimp_RRTConnect(args, agent, workspace, start, goal);
 	} else if(planner.compare("PPRM") == 0) {
 		blimp_PPRM(args, agent, workspace, start, goal);
+	} else if(planner.compare("KPIECE") == 0) {
+		blimp_KPIECE(args, agent, workspace, start, goal);
 	} else {
 		fprintf(stderr, "unreocognized planner: %s\n", planner.c_str());
 	}
 
+	clock_t endT = clock();
+	dfpair(stdout, "total time solving time", "%g", (double) (endT-startT) / CLOCKS_PER_SEC);
 	
 }

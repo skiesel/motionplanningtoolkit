@@ -93,7 +93,7 @@ private:
 	State sampleConfiguration() const {
 		StateVars vars;
 
-		const Node &n = getNode(distribution(generator));
+		const Node &n = getNode(distribution(GlobalRandomGenerator));
 
 		std::vector< std::vector<double> > cellBounds = discretization.getCellBoundingHyperRect(n.id);
 
@@ -107,7 +107,7 @@ private:
 
 		while(true) {
 			for(unsigned int i = 0; i < distributions.size(); ++i) {
-				vars[i] = distributions[i](generator);
+				vars[i] = distributions[i](GlobalRandomGenerator);
 			}
 
 			if(discretization.getContainingCellId(vars) == n.id) {
@@ -173,6 +173,5 @@ private:
 	StateVarRanges stateVarDomains;
 	std::vector<Node> nodes;
 	mutable std::uniform_real_distribution<double> distribution;
-	mutable std::default_random_engine generator;
 	double omega;
 };

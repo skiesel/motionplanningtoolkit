@@ -25,7 +25,7 @@ public:
 
 
 	void query(const State &start, const State &goal, int iterationsAtATime = -1, bool firstInvocation = true) {
-
+		bool foundGoal = false;
 #ifdef WITHGRAPHICS
 		auto green = OpenGLWrapper::Color::Green();
 		start.draw(green);
@@ -45,7 +45,7 @@ public:
 
 		unsigned int iterations = 0;
 
-		while(true) {
+		while(!foundGoal) {
 
 			auto treeSample = treeInterface.getTreeSample();
 			samplesGenerated++;
@@ -59,7 +59,6 @@ public:
 			unsigned int added = 0;
 
 			while(added < maxExtensions && workspace.safeEdge(agent, edge, collisionCheckDT)) {
-				fprintf(stderr, "adding\n");
 				added++;
 				edgesAdded++;
 				Edge *e = pool.construct(edge);
@@ -71,19 +70,18 @@ public:
 
 				if(agent.isGoal(edge.end, goal)) {
 					fprintf(stderr, "found goal\n");
+					foundGoal = true;
 					break;
 				}
 
 				edge = agent.steerWithControl(edge.end, edge, steeringDT);
 			}
 
-fprintf(stderr, "done\n");
 			edgesRejected++;
 
 			++iterations;
 			if(iterationsAtATime > 0 && ++iterations > iterationsAtATime) break;
 		}
-
 
 #ifdef WITHGRAPHICS
 		for(const Edge* edge : treeEdges) {

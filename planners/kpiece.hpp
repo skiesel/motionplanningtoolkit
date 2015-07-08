@@ -70,7 +70,7 @@ public:
 		baseSpace->setBounds(bounds);
 		ompl::base::StateSpacePtr space = ompl::base::StateSpacePtr(baseSpace);
 
-		const std::vector< std::pair<double, double> > &controlBounds = workspace.getControlBounds();
+		const std::vector< std::pair<double, double> > &controlBounds = agent.getControlBounds();
 		controlSpaceDim = controlBounds.size();
 
 		ompl::control::RealVectorControlSpace *baseCSpace = new ompl::control::RealVectorControlSpace(space, controlSpaceDim);
@@ -139,7 +139,7 @@ public:
 
 		typename Agent::Control agentControl = agent.controlFromVector(controls);
 
-		typename Agent::Edge edge = workspace.steerWithControl(state->agentEdge->end, agentControl, duration);
+		typename Agent::Edge edge = agent.steerWithControl(state->agentEdge->end, agentControl, duration);
 
 		const typename Agent::StateVars &endStateVars = edge.getTreeStateVars();
 
@@ -161,7 +161,7 @@ public:
 
 		resultState->agentEdge->parent = state->agentEdge;
 
-		if(workspace.isGoal(edge.end, *agentGoal)) {
+		if(agent.isGoal(edge.end, *agentGoal)) {
 			goalEdge = new typename Agent::Edge(edge);
 		}
 	}

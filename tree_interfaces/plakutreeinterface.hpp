@@ -40,9 +40,8 @@ class PlakuTreeInterface {
 			return weight < r.weight;
 		}
 
-		unsigned int getRandomRegionAlongPathToGoal(std::uniform_real_distribution<double> &distribution,
-			std::default_random_engine &generator) const {
-			unsigned int randomIndex = (unsigned int)(distribution(generator) * regionPath.size());
+		unsigned int getRandomRegionAlongPathToGoal(std::uniform_real_distribution<double> &distribution) const {
+			unsigned int randomIndex = (unsigned int)(distribution(GlobalRandomGenerator) * regionPath.size());
 			return regionPath[randomIndex];
 		}
 
@@ -128,7 +127,7 @@ public:
 			colorLookup[i] = getColor(min, max, regions[i]->heuristic);
 		}
 
-		discretization.draw(true, true, colorLookup);
+		discretization.draw(true, false, colorLookup);
 	}
 
 	State getTreeSample() {
@@ -142,7 +141,7 @@ public:
 			}
 		}
 
-		if(distribution(generator) < b) {
+		if(distribution(GlobalRandomGenerator) < b) {
 			assert(!regionHeap.empty());
 
 			activeRegion = regionHeap.front();
@@ -151,7 +150,7 @@ public:
 
 			activeRegion->onOpen = false;
 
-			unsigned int regionAlongPath = activeRegion->getRandomRegionAlongPathToGoal(distribution, generator);
+			unsigned int regionAlongPath = activeRegion->getRandomRegionAlongPathToGoal(distribution);
 			State p = discretization.getRandomStateNearRegionCenter(regionAlongPath, stateRadius);
 
 			return activeRegion->getNearestStateInRegion(p);
@@ -264,5 +263,4 @@ private:
 
 	double alpha, b, stateRadius;
 	std::uniform_real_distribution<double> distribution;
-	mutable std::default_random_engine generator;
 };

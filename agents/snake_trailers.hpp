@@ -195,8 +195,8 @@ public:
 	}
 
 	Edge steer(const State &start, const State &goal, double dt) const {
-		double a = linearAccelerations(generator);
-		double w = angularAccelerations(generator);
+		double a = linearAccelerations(GlobalRandomGenerator);
+		double w = angularAccelerations(GlobalRandomGenerator);
 
 		State end = doStep(start, a, w, dt);
 
@@ -204,8 +204,8 @@ public:
 	}
 
 	Edge randomSteer(const State &start, double dt) const {
-		double a = linearAccelerations(generator);
-		double w = angularAccelerations(generator);
+		double a = linearAccelerations(GlobalRandomGenerator);
+		double w = angularAccelerations(GlobalRandomGenerator);
 
 		State end = doStep(start, a, w, dt);
 
@@ -483,7 +483,6 @@ private:
 	unsigned int trailerCount;
 	double trailerLength, hitchLength, minimumVelocity, maximumVelocity, minimumTurning, maximumTurning;
 	mutable std::uniform_real_distribution<double> linearAccelerations, angularAccelerations;
-	mutable std::default_random_engine generator;
 
 	std::vector<double> goalThresholds;
 

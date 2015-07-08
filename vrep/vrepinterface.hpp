@@ -405,12 +405,12 @@ public:
 
 		std::vector<double> controls;
 		for(unsigned int i = 0; i < controllableVelocityJointHandles.size(); ++i) {
-			controls.push_back(controlVelocityDistributions[i](generator));
+			controls.push_back(controlVelocityDistributions[i](GlobalRandomGenerator));
 			simSetJointTargetVelocity(controllableVelocityJointHandles[i], controls.back());
 		}
 
 		for(unsigned int i = 0; i < controllablePositionJointHandles.size(); ++i) {
-			controls.push_back(controlPositionDistributions[i](generator));
+			controls.push_back(controlPositionDistributions[i](GlobalRandomGenerator));
 			simSetJointTargetPosition(controllablePositionJointHandles[i], controls.back());
 		}
 
@@ -636,7 +636,6 @@ public:
 	
 	std::vector<simInt> controllableVelocityJointHandles, controllablePositionJointHandles, statePositionHandles, stateOrientationHandles, stateVelocityHandles;
 	mutable std::vector< std::uniform_real_distribution<double> > controlVelocityDistributions, controlPositionDistributions;
-	mutable std::default_random_engine generator;
 
 	mutable simFloat simulationDesiredRuntime, simulationActualRuntime;
 	mutable boost::barrier simulatorBarrier;

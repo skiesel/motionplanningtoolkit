@@ -31,7 +31,7 @@ private:
 	State sampleConfiguration() const {
 		StateVars vars;
 		for(auto distribution : distributions) {
-			vars.push_back(distribution(generator));
+			vars.push_back(distribution(GlobalRandomGenerator));
 		}
 		return agent.buildState(vars);
 	}
@@ -43,5 +43,4 @@ private:
 
 	
 	std::vector< std::normal_distribution<double> > distributions;
-	mutable std::default_random_engine generator;
 };

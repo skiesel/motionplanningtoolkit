@@ -1,3 +1,6 @@
+#include <random>
+std::default_random_engine GlobalRandomGenerator;
+
 #include <iostream>
 #include <unistd.h>
 #include "v_repLib.h"
@@ -20,6 +23,8 @@ InstanceFileMap *args;
 simFloat start = -1, dt = 1;
 
 void setupInstanceFromInstanceFile(const InstanceFileMap *args) {
+	GlobalRandomGenerator.seed(stod(args->value("Seed")));
+
 	std::string agentName = args->value("Agent Handle Name");
 	simInt agentHandle = (agentName == "EVERYTHING") ? sim_handle_all : simGetObjectHandle(agentName.c_str());
 	auto startLocation = args->doubleList("Agent Start Location");

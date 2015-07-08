@@ -1,3 +1,6 @@
+#include <random>
+std::default_random_engine GlobalRandomGenerator;
+
 #ifdef WITHGRAPHICS
 	#include "utilities/openglwrapper.hpp"
 #endif
@@ -169,6 +172,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	InstanceFileMap args(argv[1]);
+
+	GlobalRandomGenerator.seed(stod(args.value("Seed")));
 
 	dfheader(stdout);
 
