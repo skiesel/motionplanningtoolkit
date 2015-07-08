@@ -16,7 +16,7 @@ class PlakuTreeInterface {
 	typedef UniformSampler<Workspace, Agent, KDTree> UniformSampler;
 
 	struct Region {
-		Region(unsigned int id, const Agent& agent) : heapIndex(std::numeric_limits<unsigned int>::max()), id(id), numSelections(0), heuristic(std::numeric_limits<double>::infinity()), weight(0), onOpen(false), expanded(false) {
+		Region(unsigned int id, const Agent& agent) : heapIndex(std::numeric_limits<unsigned int>::max()), id(id), numSelections(0), heuristic(std::numeric_limits<double>::infinity()), weight(0), onOpen(false){
 			KDTreeType kdtreeType;
 			edgesInRegion = new KDTree(kdtreeType, agent.getTreeStateSize());
 		}
@@ -65,7 +65,6 @@ class PlakuTreeInterface {
 		std::vector<unsigned int> regionPath;
 		bool onOpen;
 		KDTree *edgesInRegion;
-		bool expanded;
 	};
 
 public:
@@ -209,14 +208,9 @@ private:
 		InPlaceBinaryHeap<Region> open;
 		region->setHeuristicAndPath(0, std::vector<unsigned int>());
 		open.push(region);
-unsigned int i = 0;
+
 		while(!open.isEmpty()) {
 			Region *current = open.pop();
-			assert(!current->expanded);
-			current->expanded = true;
-
-
-			fprintf(stderr, "%u\n", i++);
 
 			std::vector<unsigned int> kids = discretization.getNeighboringCells(current->id);
 			for(unsigned int kid : kids) {
