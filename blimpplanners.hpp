@@ -98,9 +98,21 @@ void blimp_PPRM(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &workspa
 
 	// plakuTreeInterface.draw();
 
-	Plaku plaku(workspace, agent, plakuTreeInterface, args);
-	plaku.query(start, goal);
-	plaku.dfpairs();
+	Plaku planner(workspace, agent, plakuTreeInterface, args);
+	#ifdef WITHGRAPHICS
+		bool firstInvocation = true;
+		auto lambda = [&](){
+			workspace.draw();
+			agent.drawMesh(start);
+			agent.drawMesh(goal);
+			planner.query(start, goal, 100, firstInvocation);
+			firstInvocation = false;
+		};
+		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda);
+	#else
+		planner.query(start, goal);
+		planner.dfpairs();
+	#endif
 }
 
 void blimp(const InstanceFileMap& args) {
