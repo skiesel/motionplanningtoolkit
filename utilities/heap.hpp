@@ -58,7 +58,7 @@ template <class T> class InPlaceBinaryHeap {
 		unsigned int index = data->getHeapIndex();
 		if(index < fill) {
 			int parent_index = parent(index);
-			if(heap[parent_index]->sort(heap[index]) < 0)
+			if(index > 0 && heap[parent_index]->sort(heap[index]) < 0)
 				siftUp(index);
 			else
 				siftDown(index);
@@ -115,6 +115,8 @@ private:
 	}
 
 	void siftUp(unsigned int index) {
+		if(index == 0) return;
+
 		unsigned int parent_index = parent(index);
 		if(heap[index]->sort(heap[parent_index]) > 0) {
 			swap(index, parent_index);

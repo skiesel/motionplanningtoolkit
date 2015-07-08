@@ -16,7 +16,7 @@ class PlakuTreeInterface {
 	typedef UniformSampler<Workspace, Agent, KDTree> UniformSampler;
 
 	struct Region {
-		Region(unsigned int id, const Agent& agent) : heapIndex(std::numeric_limits<unsigned int>::max()), id(id), numSelections(0), heuristic(std::numeric_limits<double>::infinity()), weight(0), onOpen(false) {
+		Region(unsigned int id, const Agent& agent) : heapIndex(std::numeric_limits<unsigned int>::max()), id(id), numSelections(0), heuristic(std::numeric_limits<double>::infinity()), weight(0), onOpen(false), expanded(false) {
 			KDTreeType kdtreeType;
 			edgesInRegion = new KDTree(kdtreeType, agent.getTreeStateSize());
 		}
@@ -54,7 +54,7 @@ class PlakuTreeInterface {
 
 		/* used for initial heuristic computation */
 		unsigned int heapIndex;
-		int sort(const Region* r) const { return heuristic - r->heuristic; }
+		int sort(const Region* r) const { return (heuristic - r->heuristic) > 0 ? -1 : 1; }
 		unsigned int getHeapIndex() const { return heapIndex; }
 		void setHeapIndex(unsigned int i) { heapIndex = i; }
 		void updateRegionPath(const std::vector<unsigned int> &rp) { regionPath = rp; }
@@ -65,6 +65,7 @@ class PlakuTreeInterface {
 		std::vector<unsigned int> regionPath;
 		bool onOpen;
 		KDTree *edgesInRegion;
+		bool expanded;
 	};
 
 public:
@@ -204,33 +205,18 @@ private:
 		return color;
 	}
 
-
-	struct DijkstraSearchNode {
-		DijkstraSearchNode(unsigned int id, double cost) : id(id), cost(cost) {
-			path.push_back(id);
-		}
-
-		DijkstraSearchNode(unsigned int id, double cost, const std::vector<unsigned int> &p) :
-			id(id), cost(cost), path(p.begin(), p.end()) {
-			path.push_back(id);
-		}
-
-		bool operator<(const DijkstraSearchNode &dsn) const {
-			return cost > dsn.cost;
-		}
-
-		unsigned int id;
-		double cost;
-		std::vector<unsigned int> path;
-	};
-
 	void dijkstra(Region *region) {
 		InPlaceBinaryHeap<Region> open;
 		region->setHeuristicAndPath(0, std::vector<unsigned int>());
 		open.push(region);
-
+unsigned int i = 0;
 		while(!open.isEmpty()) {
 			Region *current = open.pop();
+			assert(!current->expanded);
+			current->expanded = true;
+
+
+			fprintf(stderr, "%u\n", i++);
 
 			std::vector<unsigned int> kids = discretization.getNeighboringCells(current->id);
 			for(unsigned int kid : kids) {
