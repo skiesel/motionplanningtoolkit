@@ -274,14 +274,13 @@ private:
 				if(edgeExists(i, endVertexZRotationOnly->id)) {
 					continue;
 				}
+
+				double cost = evaluateTransformDistance(vertices[i]->transform, endVertexZRotationOnly->transform);
+				if(cost == 0) continue;
 				
 				std::vector<fcl::Transform3f> edgeCandidate = interpolate(vertices[i]->transform, endVertexZRotationOnly->transform, collisionCheckDT);
 
-				bool safe = workspace.safePoses(agent, edgeCandidate, canonicalState);
-
-				if(edgeCandidate.size() == 0 || safe) {
-					double cost = evaluateTransformDistance(vertices[i]->transform, endVertexZRotationOnly->transform);
-
+				if(edgeCandidate.size() == 0 || workspace.safePoses(agent, edgeCandidate, canonicalState)) {
 					edges[i][endVertexZRotationOnly->id] = Edge(endVertexZRotationOnly->id, cost);
 					edges[endVertexZRotationOnly->id][i] = Edge(i, cost); //the reverse interpolation would be symmetric
 				}/* else if(!safe) {
