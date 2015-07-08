@@ -69,7 +69,7 @@ class PRMLite {
 public:
 	PRMLite(const Workspace &workspace, const Agent &agent, const State &canonicalState, unsigned int numVertices,
 		unsigned int edgeSetSize, double collisionCheckDT = 0.1) :
-		agent(agent), kdtree(KDTreeType(2), 4), canonicalState(canonicalState) {
+		agent(agent), kdtree(KDTreeType(4), 4), canonicalState(canonicalState) {
 
 		dfpair(stdout, "prm vertex set size", "%lu", numVertices);
 		dfpair(stdout, "prm edge set size", "%lu", edgeSetSize);
@@ -155,62 +155,12 @@ public:
 	}
 
 	void draw(bool drawPoints=true, bool drawLines=false, std::vector<std::vector<double>> colors = std::vector<std::vector<double>>()) const {
-		simFloat coords[12];
-		for(unsigned int i = 0; i < 6; ++i)
-			coords[i] = 0;
-
-		if(drawPoints) {
-			auto verticesHandle = simAddDrawingObject(sim_drawing_spherepoints | sim_drawing_itemcolors, 0.05, 0.0, -1, vertices.size(), NULL, NULL, NULL, NULL);
-			unsigned int curIndex = 0;
-			for(const auto vert : vertices) {
-				const auto& trans = vert->transform.getTranslation();
-
-				
-				for(unsigned int i = 0; i < 3; ++i) {
-					coords[i] = trans[i];
-				}
-
-				if(colors.size() > 0) {
-					for(unsigned int i = 0; i < 3; ++i) {
-						coords[3+i] = colors[curIndex][i];
-					}
-				}
-				simAddDrawingObjectItem(verticesHandle, coords);
-				curIndex++;
-			}
-		}
-
-		if(drawLines) {
-			std::vector< std::vector<double> > edgesForVrep;
-			for(const auto& edgeSet : edges) {
-				std::vector<double> edgeForVrep(6);
-				const auto startVertexZRotationOnly = vertices[edgeSet.first];
-				
-				const auto& trans = startVertexZRotationOnly->transform.getTranslation();
-				for(unsigned int i = 0; i < 3; ++i) {
-					edgeForVrep[i] = trans[i];
-				}
-
-				for(const auto& edge : edgeSet.second) {
-					const auto endVertexZRotationOnly = vertices[edge.second.endpoint];
-					
-					const auto& trans2 = endVertexZRotationOnly->transform.getTranslation();
-					for(unsigned int i = 0; i < 3; ++i) {
-						edgeForVrep[3+i] = trans2[i];
-					}
-
-					edgesForVrep.push_back(edgeForVrep);
-				}
-			}
-
-			auto edgesHandle = simAddDrawingObject(sim_drawing_lines, 1, 0.0, -1, edgesForVrep.size(), NULL, NULL, NULL, NULL);
-
-			for(const auto &edge : edgesForVrep) {
-				for(unsigned int i = 0; i < 6; ++i)
-					coords[i] = edge[i];
-				simAddDrawingObjectItem(edgesHandle, coords);
-			}
-		}
+#ifdef WITHGRAPHICS
+		drawOpenGL(drawPoints, drawLines, colors);
+#endif
+#ifdef VREPPLUGIN
+		drawVREP(drawPoints, drawLines, colors);
+#endif
 	}
 
 	bool edgeExists(unsigned int c1, unsigned int c2) const {
@@ -394,7 +344,125 @@ private:
 								 sqrt(u1)*sin(2*M_PI*u3),
 								 sqrt(u1)*cos(2*M_PI*u3));
 	}
+#ifdef WITHGRAPHICS
+	void drawOpenGL(bool drawPoints, bool drawLines, const std::vector<std::vector<double>> &colors) const {
+		if(drawPoints) {
+			glPointSize(5);
+			unsigned int curIndex = 0;
+			std::vector<double> white(3,1);
+			for(const auto vert : vertices) {
 
+				if(colors.size() == 0) {
+					drawOpenGLPoint(vert->transform.getTranslation(), white);
+					// agent.drawMesh(vert->transform);
+				} else {
+					drawOpenGLPoint(vert->transform.getTranslation(), colors[curIndex]);
+					// OpenGLWrapper::Color color(colors[curIndex][0], colors[curIndex][1], colors[curIndex][2]);
+					// agent.drawMesh(vert->transform, color);
+					curIndex++;
+				}
+			}
+			glPointSize(1);
+		}
+
+		if(drawLines) {
+			OpenGLWrapper::Color color;
+
+			for(const auto& edgeSet : edges) {
+				std::vector<double> edgeForVrep(6);
+				const auto startVertex = vertices[edgeSet.first];
+				
+				const auto& trans = startVertex->transform.getTranslation();
+
+				for(const auto& edge : edgeSet.second) {
+					const auto endVertex = vertices[edge.second.endpoint];
+					const auto& trans2 = endVertex->transform.getTranslation();
+
+					OpenGLWrapper::getOpenGLWrapper().drawLine(trans[0], trans[1], trans[2], trans2[0], trans2[1], trans2[2], color);
+				}
+			}
+		}
+	}
+
+	void drawOpenGLPoint(const fcl::Vec3f &point, const std::vector<double> &color) const {
+		const auto &identity = OpenGLWrapper::getOpenGLWrapper().getIdentity();
+
+		std::vector<double> pt;
+		pt.push_back(point[0]);
+		pt.push_back(point[1]);
+		pt.push_back(point[2]);
+		pt.push_back(1);
+		pt.push_back(0);
+		pt.push_back(0);
+		pt.push_back(1);
+		pt.push_back(1);
+		pt.insert(pt.end(), color.begin(), color.end());
+		pt.push_back(1); //the above color is a 3 vector, and we need alpha!
+		pt.insert(pt.end(), identity.begin(), identity.end());
+
+		OpenGLWrapper::getOpenGLWrapper().drawPoints(pt);
+	}
+#endif
+#ifdef VREPPLUGIN	
+	void drawVREP(bool drawPoints, bool drawLines, const std::vector<std::vector<double>> &colors) const {
+		simFloat coords[12];
+		for(unsigned int i = 0; i < 6; ++i)
+			coords[i] = 0;
+
+		if(drawPoints) {
+			auto verticesHandle = simAddDrawingObject(sim_drawing_spherepoints | sim_drawing_itemcolors, 0.05, 0.0, -1, vertices.size(), NULL, NULL, NULL, NULL);
+			unsigned int curIndex = 0;
+			for(const auto vert : vertices) {
+				const auto& trans = vert->transform.getTranslation();
+
+				
+				for(unsigned int i = 0; i < 3; ++i) {
+					coords[i] = trans[i];
+				}
+
+				if(colors.size() > 0) {
+					for(unsigned int i = 0; i < 3; ++i) {
+						coords[3+i] = colors[curIndex][i];
+					}
+				}
+				simAddDrawingObjectItem(verticesHandle, coords);
+				curIndex++;
+			}
+		}
+
+		if(drawLines) {
+			std::vector< std::vector<double> > edgesForVrep;
+			for(const auto& edgeSet : edges) {
+				std::vector<double> edgeForVrep(6);
+				const auto startVertex = vertices[edgeSet.first];
+				
+				const auto& trans = startVertex->transform.getTranslation();
+				for(unsigned int i = 0; i < 3; ++i) {
+					edgeForVrep[i] = trans[i];
+				}
+
+				for(const auto& edge : edgeSet.second) {
+					const auto endVertex = vertices[edge.second.endpoint];
+					
+					const auto& trans2 = endVertex->transform.getTranslation();
+					for(unsigned int i = 0; i < 3; ++i) {
+						edgeForVrep[3+i] = trans2[i];
+					}
+
+					edgesForVrep.push_back(edgeForVrep);
+				}
+			}
+
+			auto edgesHandle = simAddDrawingObject(sim_drawing_lines, 1, 0.0, -1, edgesForVrep.size(), NULL, NULL, NULL, NULL);
+
+			for(const auto &edge : edgesForVrep) {
+				for(unsigned int i = 0; i < 6; ++i)
+					coords[i] = edge[i];
+				simAddDrawingObjectItem(edgesHandle, coords);
+			}
+		}
+	}
+#endif
 	const Agent &agent;
 	const State &canonicalState;
 	std::vector<VertexZRotationOnly*> vertices;

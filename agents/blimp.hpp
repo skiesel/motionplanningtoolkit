@@ -377,6 +377,23 @@ public:
 		mesh.draw(color, transform);
 	}
 
+
+	void drawMesh(const fcl::Transform3f &transform) const {
+		drawMesh(transform, color);
+
+	}
+	void drawMesh(const fcl::Transform3f &transform, const OpenGLWrapper::Color& color) const {
+		std::vector<double> glTransform = OpenGLWrapper::getOpenGLWrapper().getIdentity();
+
+		const fcl::Vec3f &translation = transform.getTranslation();
+
+		glTransform[12] = translation[0];
+		glTransform[13] = translation[1];
+		glTransform[14] = translation[2];
+
+		mesh.draw(color, glTransform);
+	}
+
 	void drawSolution(const std::vector<const Edge*> &solution, double dt = std::numeric_limits<double>::infinity()) const {
 		for(const Edge* edge : solution) {
 			unsigned int steps = std::isinf(dt) ? 1 : edge->dt / dt;

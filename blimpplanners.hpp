@@ -105,6 +105,8 @@ void blimp_PPRM(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &workspa
 			workspace.draw();
 			agent.drawMesh(start);
 			agent.drawMesh(goal);
+			// plakuTreeInterface.draw();
+
 			planner.query(start, goal, 100, firstInvocation);
 			firstInvocation = false;
 		};

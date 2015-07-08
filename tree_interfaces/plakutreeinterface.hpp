@@ -48,7 +48,7 @@ class PlakuTreeInterface {
 
 		State getNearestStateInRegion(const State& s) const {
 			Edge e(s);
-			auto res = edgesInRegion->nearest(&e);
+			auto res = edgesInRegion->nearest(&e, 0, 1);
 			assert(res.elements.size() > 0);
 			return res.elements[0]->end;
 		}
