@@ -72,7 +72,7 @@ public:
 	PlakuTreeInterface(const Workspace &workspace, const Agent &agent, Discretization& discretization,
 		const State& start, const State& goal, double alpha, double b, double stateRadius) : agent(agent), workspace(workspace),
 		discretization(discretization), startRegionId(discretization.getCellId(start)),
-		goalRegionId(discretization.getCellId(goal)), alpha(alpha), b(b), stateRadius(stateRadius) {
+		goalRegionId(discretization.getCellId(goal)), activeRegion(NULL), alpha(alpha), b(b), stateRadius(stateRadius) {
 
 		assert(alpha > 0 && alpha < 1);
 
@@ -106,9 +106,6 @@ public:
 				}
 			}
 		}
-
-		regionHeap.push_back(regions[startRegionId]);
-		regions[startRegionId]->onOpen = true;
 	}
 
 	~PlakuTreeInterface() {
@@ -138,17 +135,25 @@ public:
 		if(activeRegion != NULL) {
 			activeRegion->selected(alpha);
 
-			regionHeap.push_back(activeRegion);
-			std::push_heap(regionHeap.begin(), regionHeap.end());
+			if(!activeRegion->onOpen) {
+				regionHeap.push_back(activeRegion);
+				std::push_heap(regionHeap.begin(), regionHeap.end());
+				activeRegion->onOpen = true;
+			}
 		}
 
 		if(distribution(generator) < b) {
+			assert(!regionHeap.empty());
+
 			activeRegion = regionHeap.front();
 			std::pop_heap(regionHeap.begin(), regionHeap.end());
 			regionHeap.pop_back();
 
+			activeRegion->onOpen = false;
+
 			unsigned int regionAlongPath = activeRegion->getRandomRegionAlongPathToGoal(distribution, generator);
 			State p = discretization.getRandomStateNearRegionCenter(regionAlongPath, stateRadius);
+
 			return activeRegion->getNearestStateInRegion(p);
 		} else {
 			return uniformSampler->getTreeSample();
@@ -157,6 +162,7 @@ public:
 
 	void insertIntoTree(Edge* edge) {
 		unsigned int newCellId = discretization.getCellId(edge->end);
+
 		if(!regions[newCellId]->onOpen) {
 			regionHeap.push_back(regions[newCellId]);
 			std::push_heap(regionHeap.begin(), regionHeap.end());
