@@ -180,20 +180,22 @@ private:
 	std::vector<double> getColor(double min, double max, double value) const {
 		std::vector<double> color(3);
 
-		value = ((value - min) / (max - min)) * 510;
-
-		color[0] = 0;
-		color[1] = 255;
-		color[2] = 0;
+		value = ((value - min) / (max - min)) * 765;
 		
-		if(value >= 255) {
+		if(value < 255) {
+			color[0] = 0;
+			color[1] = value / 2;
+			color[2] = 255 - value;
+		} else if(value < 510) {
+			double relVal = value - 255;
+			color[0] = relVal;
+			color[1] = (relVal + 255) / 2;
+			color[2] = 0;
+		} else {
+			double relVal = value - 510;
 			color[0] = 255;
-			value -= 255;
-			color[1] -= value;
-			if(color[1] < 0) color[1] = 0;
-		}
-		else {
-			color[0] += value;
+			color[1] = 255 - relVal;
+			color[2] = 0;
 		}
 
 		for(unsigned int i = 0; i < 3; ++i) {
