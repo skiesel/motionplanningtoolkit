@@ -11,6 +11,10 @@
 class InstanceFileMap {
 public:
 	InstanceFileMap(const std::string &instance) {
+		append(instance);
+	}
+
+	void append(const std::string &instance) {
 		std::fstream file;
   		file.open(instance.c_str(), std::fstream::in);
 

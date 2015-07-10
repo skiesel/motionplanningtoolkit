@@ -1,3 +1,5 @@
+unsigned int GraphicsIterations = 10000;
+
 void blimp_RRT(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &workspace,
 		typename Blimp::State &start, typename Blimp::State &goal) {
 
@@ -14,7 +16,7 @@ void blimp_RRT(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &workspac
 
 /* planner config */
 
-	KDTreeType kdtreeType(4);
+	KDTreeType kdtreeType(3);
 	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
 	Sampler sampler(workspace, agent, kdtree);
 	TreeInterface treeInterface(kdtree, sampler);
@@ -26,7 +28,7 @@ void blimp_RRT(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &workspac
 			workspace.draw();
 			agent.drawMesh(start);
 			agent.drawMesh(goal);
-			planner.query(start, goal, 100, firstInvocation);
+			planner.query(start, goal, GraphicsIterations, firstInvocation);
 			firstInvocation = false;
 		};
 		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda);
@@ -51,7 +53,7 @@ void blimp_RRTConnect(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &w
 
 /* planner config */
 
-	KDTreeType kdtreeType(4);
+	KDTreeType kdtreeType(2);
 	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
 	Sampler sampler(workspace, agent, kdtree);
 	TreeInterface treeInterface(kdtree, sampler);
@@ -63,7 +65,7 @@ void blimp_RRTConnect(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &w
 			workspace.draw();
 			agent.drawMesh(start);
 			agent.drawMesh(goal);
-			planner.query(start, goal, 100, firstInvocation);
+			planner.query(start, goal, GraphicsIterations, firstInvocation);
 			firstInvocation = false;
 		};
 		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda);
@@ -118,9 +120,10 @@ void blimp_PPRM(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &workspa
 			workspace.draw();
 			agent.drawMesh(start);
 			agent.drawMesh(goal);
+			
 			// plakuTreeInterface.draw();
 
-			planner.query(start, goal, 100, firstInvocation);
+			planner.query(start, goal, GraphicsIterations, firstInvocation);
 			firstInvocation = false;
 		};
 		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda);
@@ -139,21 +142,23 @@ void blimp(const InstanceFileMap& args) {
 
 /* start and goal states */
 
-	auto startVars = args.doubleList("Agent Start Location");
+	auto startPosition = args.doubleList("Agent Start Location");
+	auto startOrientation =  args.doubleList("Agent Start Orientation");
 	fcl::Vec3f axis;
 	double theta;
-	fcl::Quaternion3f startOrientation(startVars[3], startVars[4], startVars[5], startVars[6]);
-	startOrientation.toAxisAngle(axis, theta);
+	fcl::Quaternion3f startQuaternion(startOrientation[0], startOrientation[1], startOrientation[2], startOrientation[3]);
+	startQuaternion.toAxisAngle(axis, theta);
 	theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
 
-	Agent::State start(startVars[0], startVars[1], startVars[2], theta);
+	Agent::State start(startPosition[0], startPosition[1], startPosition[2], theta);
 	
-	auto goalVars = args.doubleList("Agent Goal Location");
-	fcl::Quaternion3f goalOrientation(goalVars[3], goalVars[4], goalVars[5], goalVars[6]);
-	goalOrientation.toAxisAngle(axis, theta);
+	auto goalPosition = args.doubleList("Agent Goal Location");
+	auto goalOrientation = args.doubleList("Agent Goal Location");
+	fcl::Quaternion3f goalQuaternion(goalOrientation[0], goalOrientation[1], goalOrientation[2], goalOrientation[3]);
+	goalQuaternion.toAxisAngle(axis, theta);
 	theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
 
-	Agent::State goal(goalVars[0], goalVars[1], goalVars[2], theta);
+	Agent::State goal(goalPosition[0], goalPosition[1], goalPosition[2], theta);
 
 
 	std::string planner = args.value("Planner");
