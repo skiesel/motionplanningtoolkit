@@ -23,10 +23,17 @@ public:
 	typedef std::vector< std::pair<double, double> > StateVarRanges;
 
 	typedef std::vector<double> StateVars;
+	typedef std::vector<double> Control;
 
 	class State {
 	public:
 		State() : stateVars(5 + trailerCount) {}
+
+		State(double x, double y, double theta) : stateVars(5 + trailerCount) {
+			stateVars[X] = x;
+			stateVars[Y] = y;
+			stateVars[THETA] = theta;
+		}
 		
 		State(const State &s) : stateVars(s.stateVars.begin(), s.stateVars.end()) {}
 
@@ -46,6 +53,117 @@ public:
 				if(fabs(stateVars[0] - s.stateVars[0]) > 0.000001) return false;
 			}
 			return true;
+		}
+
+		std::vector<fcl::Transform3f> toFCLTransforms() const {
+			std::vector<fcl::Transform3f> transforms;
+
+			fcl::Vec3f axis(0,1,0);
+
+			fcl::Quaternion3f quaternion;
+			quaternion.fromAxisAngle(axis, M_PI / 2);
+			fcl::Transform3f baseTransform(quaternion);
+
+			//change to z axis
+			axis[1] = 0;
+			axis[2] = 1;
+
+			quaternion.fromAxisAngle(axis, stateVars[THETA]);
+			fcl::Transform3f rotation(quaternion);
+
+			fcl::Vec3f pose;
+			pose[0] = stateVars[X];
+			pose[1] = stateVars[Y];
+			pose[2] = 0;
+			fcl::Transform3f translation(pose);
+
+			baseTransform = translation * rotation * baseTransform;
+
+			transforms.emplace_back(baseTransform);
+
+			const auto &pos = transforms.back().getTranslation();
+
+			fprintf(stderr, "%g %g %g\n", pos[0], pos[1], pos[2]);
+
+			pose[0] = -(trailerLength + hitchLength);
+			pose[1] = 0;
+
+			translation = fcl::Transform3f(pose);
+
+			for(unsigned int i = 1; i < trailerCount + 1; ++i) {
+				std::vector<double> transform2 = OpenGLWrapper::getOpenGLWrapper().getIdentity();
+				
+				double t = stateVars[THETA + i] - stateVars[THETA + i - 1];
+
+				quaternion.fromAxisAngle(axis, t);
+				rotation = fcl::Transform3f(quaternion);
+
+				baseTransform = translation * rotation * baseTransform;
+
+				transforms.emplace_back(baseTransform);
+			}
+
+			return transforms;
+		}
+
+		std::vector< std::vector<double> > toOpenGLTransforms() const {
+			std::vector< std::vector<double> > transforms;
+
+			//We want the base cylinder and cone rotated correctly to start with
+			std::vector<double> baseRotation = OpenGLWrapper::getOpenGLWrapper().getIdentity();
+
+			double sinVal = sin(M_PI / 2);
+			double cosVal = cos(M_PI / 2);
+
+			baseRotation[0] = cosVal;
+			baseRotation[2] = -sinVal;
+			baseRotation[8] = sinVal;
+			baseRotation[10] = cosVal;
+
+			sinVal = sin(stateVars[THETA]);
+			cosVal = cos(stateVars[THETA]);
+
+			transforms.push_back(OpenGLWrapper::getOpenGLWrapper().getIdentity());
+
+			transforms.back()[0] = cosVal;
+			transforms.back()[1] = sinVal;
+			transforms.back()[4] = -sinVal;
+			transforms.back()[5] = cosVal;
+
+			math::multiply(baseRotation, transforms.back(), transforms.back());
+
+			auto translate = OpenGLWrapper::getOpenGLWrapper().getIdentity();
+
+			translate[12] = stateVars[X];
+			translate[13] = stateVars[Y];
+
+			math::multiply(transforms.back(), translate, transforms.back());
+
+			for(unsigned int i = 1; i < trailerCount + 1; ++i) {
+				
+				transforms.push_back(OpenGLWrapper::getOpenGLWrapper().getIdentity());
+
+				std::vector<double> &previous = transforms[transforms.size() - 2];
+
+				transforms.back()[14] = -(trailerLength + hitchLength);
+
+				double t = stateVars[THETA + i] - stateVars[THETA + i - 1];
+
+				sinVal = sin(t);
+				cosVal = cos(t);
+
+				transforms.back()[0] = cosVal;
+				transforms.back()[1] = sinVal;
+				transforms.back()[4] = -sinVal;
+				transforms.back()[5] = cosVal;
+
+				math::multiply(transforms.back(), previous, transforms.back());
+			}
+			return transforms;
+		}
+
+		fcl::Transform3f getTransform() const {
+			return toFCLTransforms()[0];
 		}
 
 		const StateVars& getStateVars() const { return stateVars; }
@@ -76,8 +194,10 @@ public:
 #endif
 
 		static unsigned int trailerCount;
+		static double trailerLength;
+		static double hitchLength;
 
-	private:
+	// private:
 		StateVars stateVars;
 	};
 
@@ -94,6 +214,18 @@ public:
 
 		Edge(const Edge& e) : start(e.start), end(e.end), cost(e.cost), dt(e.dt), a(e.a), w(e.w), treeIndex(e.treeIndex) {
 			populateTreeStateVars();
+		}
+
+		Edge& operator=(const Edge& e) {
+			start = e.start;
+			end = e.end;
+			cost = e.cost;
+			dt = e.dt;
+			a = e.a;
+			w = e.w;
+			treeIndex = e.treeIndex;
+			parent = e.parent;
+			return *this;
 		}
 
 		/* needed for being inserted into NN datastructure */
@@ -127,10 +259,11 @@ public:
 			OpenGLWrapper::getOpenGLWrapper().drawLines(line);
 		}
 #endif
-		const State start, end;
+		State start, end;
 		double cost, dt, a, w;
 		int treeIndex;
 		StateVars treeStateVars;
+		Edge* parent;
 
 		private:
 			void populateTreeStateVars() {
@@ -139,11 +272,12 @@ public:
 		}
 	};
 
-	SnakeTrailers(const InstanceFileMap &args) : mesh(args.value("Agent Mesh")), linearAccelerations(-0.1, 1), angularAccelerations(-M_PI / 18., M_PI / 18.) {
+	SnakeTrailers(const InstanceFileMap &args) {
 
 		trailerCount = State::trailerCount = stoi(args.value("Trailer Count"));
-		trailerLength = stod(args.value("Trailer Length"));
-		hitchLength = stod(args.value("Hitch Length"));
+		trailerWidth = stod(args.value("Trailer Width"));
+		trailerLength = State::trailerLength = stod(args.value("Trailer Length"));
+		hitchLength = State::hitchLength = stod(args.value("Hitch Length"));
 		
 		minimumVelocity = stod(args.value("Minimum Velocity"));
 		maximumVelocity = stod(args.value("Maximum Velocity"));
@@ -151,16 +285,29 @@ public:
 		minimumTurning = stod(args.value("Minimum Turning"));
 		maximumTurning = stod(args.value("Maximum Turning"));
 
+		linearAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Velocity")), stod(args.value("Maximum Velocity")));
+		angularAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Angular Acceleration")), stod(args.value("Maximum Angular Acceleration")));
+
+		controlBounds.emplace_back(stod(args.value("Minimum Velocity")), stod(args.value("Maximum Velocity")));
+		controlBounds.emplace_back(stod(args.value("Minimum Angular Acceleration")), stod(args.value("Maximum Angular Acceleration")));
+
 		boost::char_separator<char> sep(" ");
 		boost::tokenizer< boost::char_separator<char> > tokens(args.value("Goal Thresholds"), sep);
 		for(auto token : tokens) {
 			goalThresholds.push_back(std::stod(token));
 		}
 
+		meshes.push_back(new ConeHandler(trailerWidth, trailerLength));
+		if(trailerCount > 0) {
+			meshes.push_back(new CylinderHandler(trailerWidth, trailerLength));
+			for(unsigned int i = 0; i < trailerCount-1; ++i) {
+				meshes.push_back(meshes[1]);
+			}
+		}
+
 #ifdef WITHGRAPHICS
 		//make sure that the state gets populated AFTER trailercount is set
 		state = State();
-
 		OpenGLWrapper::setExternalKeyboardCallback([&](int key){
 			this->keyboard(key);
 		});
@@ -182,8 +329,28 @@ public:
 		return 5 + trailerCount;
 	}
 
+	Control controlFromVector(const std::vector<double> &controls) const {
+		return controls;
+	}
+
+	const std::vector< std::pair<double, double> >& getControlBounds() const {
+		return controlBounds;
+	}
+
 	State buildState(const StateVars& stateVars) const {
 		return State(stateVars);
+	}
+
+	State transformToState(const State &s, const fcl::Transform3f &transform) const {
+		fcl::Quaternion3f orientation = transform.getQuatRotation();
+		fcl::Vec3f axis;
+		double theta;
+		orientation.toAxisAngle(axis, theta);
+		theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
+
+		fcl::Vec3f position = transform.getTranslation();
+
+		return State(position[0], position[1], theta);
 	}
 
 	bool isGoal(const State &state, const State &goal) const {
@@ -192,6 +359,26 @@ public:
 
 		return fabs(s[X] - g[X]) < goalThresholds[X] &&
 		       fabs(s[Y] - g[Y]) < goalThresholds[Y];
+	}
+
+	Edge steerWithControl(const State &start, const Edge &getControlsFromThisEdge, double dt) const {
+		double a = getControlsFromThisEdge.a;
+		double w = getControlsFromThisEdge.w;
+
+		State end = doStep(start, a, w, dt);
+
+		return Edge(start, end, dt, a, w);
+	}
+
+	Edge steerWithControl(const State &start, const std::vector<double> controls, double dt) const {
+		/* Be careful about the order these are being passed in */
+
+		double a = controls[0];
+		double w = controls[1];
+
+		State end = doStep(start, a, w, dt);
+
+		return Edge(start, end, dt, a, w);
 	}
 
 	Edge steer(const State &start, const State &goal, double dt) const {
@@ -213,7 +400,6 @@ public:
 	}
 
 	const std::vector<const SimpleAgentMeshHandler*> getMeshes() const {
-		std::vector<const SimpleAgentMeshHandler*> meshes(trailerCount + 1, &mesh);
 		return meshes;
 	}
 
@@ -254,7 +440,7 @@ public:
 		State state = edge.start;
 
 		for(unsigned int step = 0; step < steps; ++step) {
-			const std::vector<fcl::Transform3f> transforms = stateToFCLTransforms(state);
+			const std::vector<fcl::Transform3f> transforms = state.toFCLTransforms();
 
 			poses.emplace_back();
 			for(const fcl::Transform3f &transform : transforms) {
@@ -299,11 +485,21 @@ public:
 		double a = 0, w = 0, dt = 0.1;
 
 		state = doStep(state, a, w, dt);
-		const StateVars &vars = state.getStateVars();
-		auto transforms = stateToOpenGLTransforms(state);
 
-		for(const std::vector<double> &transform : transforms) {
-			mesh.draw(color, transform);
+		state.print();
+		const StateVars &vars = state.getStateVars();
+		auto transforms = state.toOpenGLTransforms();
+
+		for(unsigned int i = 0; i < meshes.size(); ++i) {
+			meshes[i]->draw(color, transforms[i]);
+		}
+	}
+
+	void drawMesh(const State &s) const {
+		auto transforms = s.toOpenGLTransforms();
+
+		for(unsigned int i = 0; i < meshes.size(); ++i) {
+			meshes[i]->draw(color, transforms[i]);
 		}
 	}
 
@@ -315,9 +511,9 @@ public:
 
 			for(unsigned int step = 0; step < steps; ++step) {
 
-				auto transforms = stateToOpenGLTransforms(state);
-				for(const std::vector<double> &transform : transforms) {
-					mesh.draw(color, transform);
+				auto transforms = state.toOpenGLTransforms();
+				for(unsigned int i = 0; i < meshes.size(); ++i) {
+					meshes[i]->draw(color, transforms[i]);
 				}
 
 				state = doStep(state, edge->a, edge->w, dt);
@@ -330,14 +526,14 @@ public:
 		unsigned int endpoint = poseNumber % 2;
 		const Edge *edge = solution[edgeNumber];
 
-		auto transforms = stateToOpenGLTransforms(endpoint == 0 ? edge->start : edge->end);
-		for(const std::vector<double> &transform : transforms) {
-			mesh.draw(color, transform);
+		auto transforms = (endpoint == 0 ? edge->start : edge->end).toOpenGLTransforms();
+		for(unsigned int i = 0; i < meshes.size(); ++i) {
+			meshes[i]->draw(color, transforms[i]);
 		}
 	}
 #endif
 
-private:
+// private:
 	State doStep(const State& s, double a, double w, double dt) const {
 		const StateVars& vars = s.getStateVars();
 		StateVars newState(5 + trailerCount);
@@ -368,121 +564,17 @@ private:
 		return State(newState);
 	}
 
-	std::vector< std::vector<double> > stateToOpenGLTransforms(const State& s) const {
-		std::vector< std::vector<double> > transforms;
-		transforms.push_back(OpenGLWrapper::getOpenGLWrapper().getIdentity());
-
-		const StateVars &vars = s.getStateVars();
-
-		double sinVal = sin(vars[THETA]);
-		double cosVal = cos(vars[THETA]);
-
-		transforms.back()[0] = cosVal;
-		transforms.back()[1] = sinVal;
-		transforms.back()[4] = -sinVal;
-		transforms.back()[5] = cosVal;
-
-		transforms.back()[12] = vars[X];
-		transforms.back()[13] = vars[Y];
-
-		for(unsigned int i = 1; i < trailerCount + 1; ++i) {
-			
-			transforms.push_back(OpenGLWrapper::getOpenGLWrapper().getIdentity());
-
-			std::vector<double> &previous = transforms[transforms.size() - 2];
-
-			transforms.back()[12] = -(trailerLength + hitchLength);
-
-			double t = vars[THETA + i] - vars[THETA + i - 1];
-
-			double sinVal = sin(t);
-			double cosVal = cos(t);
-
-			transforms.back()[0] = cosVal;
-			transforms.back()[1] = sinVal;
-			transforms.back()[4] = -sinVal;
-			transforms.back()[5] = cosVal;
-
-			multiply(transforms.back(), previous, transforms.back());
-		}
-		return transforms;
-	}
-
-	std::vector<fcl::Transform3f> stateToFCLTransforms(const State& s) const {
-		std::vector<fcl::Transform3f> transforms;
-
-		const StateVars &vars = s.getStateVars();
-
-		fcl::Vec3f pose;
-		pose[0] = vars[X];
-		pose[1] = vars[Y];
-		pose[2] = 0;
-
-		fcl::Matrix3f rotation;
-		rotation.setIdentity();
-
-		double sinVal = sin(vars[THETA]);
-		double cosVal = cos(vars[THETA]);
-
-		rotation(0,0) = cosVal;
-		rotation(1,0) = -sinVal;
-		rotation(0,1) = sinVal;
-		rotation(1,1) = cosVal;
-
-		transforms.emplace_back(rotation, pose);
-
-		for(unsigned int i = 1; i < trailerCount + 1; ++i) {
-			
-			std::vector<double> transform2 = OpenGLWrapper::getOpenGLWrapper().getIdentity();
-
-			pose[0] = -(trailerLength + hitchLength);
-
-			double t = vars[THETA + i] - vars[THETA + i - 1];
-
-			sinVal = sin(t);
-			cosVal = cos(t);
-
-			fcl::Matrix3f rotation2;
-			rotation2.setIdentity();
-
-			rotation(0,0) = cosVal;
-			rotation(1,0) = -sinVal;
-			rotation(0,1) = sinVal;
-			rotation(1,1) = cosVal;
-
-			rotation = rotation * rotation2;
-
-			transforms.emplace_back(rotation, pose);
-		}
-
-		return transforms;
-	}
-
-	void multiply(const std::vector<double> &m1, const std::vector<double> &m2, std::vector<double> &out) const {
-		std::vector<double> temp(16);
-		for(unsigned int row = 0; row < 4; ++row) {
-			for(unsigned int col = 0; col < 4; ++col) {
-				double sum = 0;
-				for(unsigned int i = 0; i < 4; i++) {
-					double elem1 = m1[row * 4 + i];
-					double elem2 = m2[col + 4 * i];
-					sum += elem1 * elem2;
-				}
-				temp[row * 4 + col] = sum;
-			}
-		}
-		for(unsigned int i = 0; i < 16; i++) out[i] = temp[i];
-	}
-
 	double normalizeTheta(double t) const {
 		return (t - 2 * M_PI * std::floor((t + M_PI) / (2 * M_PI)));
 	}
 
-	SimpleAgentMeshHandler mesh;
+	std::vector<const SimpleAgentMeshHandler*> meshes;
 
 	unsigned int trailerCount;
-	double trailerLength, hitchLength, minimumVelocity, maximumVelocity, minimumTurning, maximumTurning;
+	double trailerLength, trailerWidth, hitchLength, minimumVelocity, maximumVelocity, minimumTurning, maximumTurning;
 	mutable std::uniform_real_distribution<double> linearAccelerations, angularAccelerations;
+
+	std::vector< std::pair<double, double> > controlBounds;
 
 	std::vector<double> goalThresholds;
 
@@ -493,3 +585,5 @@ private:
 };
 
 unsigned int SnakeTrailers::State::trailerCount = 0;
+double SnakeTrailers::State::trailerLength = 0;
+double SnakeTrailers::State::hitchLength = 0;

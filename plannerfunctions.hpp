@@ -1,15 +1,13 @@
 unsigned int GraphicsIterations = 10000;
 
-void blimp_RRT(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &workspace,
-		typename Blimp::State &start, typename Blimp::State &goal) {
+template<class Workspace, class Agent>
+void go_RRT(const InstanceFileMap& args, const Agent& agent, const Workspace &workspace,
+		const typename Agent::State &start, const typename Agent::State &goal) {
 
 	dfpair(stdout, "planner", "%s", "RRT");
-
-	typedef Blimp Agent;
-	typedef Map3D<Agent> Workspace;
 	// typedef flann::KDTreeSingleIndexParams KDTreeType;
 	typedef flann::KDTreeIndexParams KDTreeType;
-	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, Agent::Edge> KDTree;
+	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
 	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
 	typedef TreeInterface<Agent, KDTree, Sampler> TreeInterface;
 	typedef RRT<Workspace, Agent, TreeInterface> Planner;
@@ -38,15 +36,14 @@ void blimp_RRT(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &workspac
 	#endif
 }
 
-void blimp_RRTConnect(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &workspace,
-		typename Blimp::State &start, typename Blimp::State &goal) {
+template<class Workspace, class Agent>
+void go_RRTConnect(const InstanceFileMap& args, const Agent& agent, const Workspace &workspace,
+		const typename Agent::State &start, const typename Agent::State &goal) {
 	dfpair(stdout, "planner", "%s", "RRT Connect");
 
-	typedef Blimp Agent;
-	typedef Map3D<Agent> Workspace;
 	// typedef flann::KDTreeSingleIndexParams KDTreeType;
 	typedef flann::KDTreeIndexParams KDTreeType;
-	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, Agent::Edge> KDTree;
+	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
 	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
 	typedef TreeInterface<Agent, KDTree, Sampler> TreeInterface;
 	typedef RRTConnect<Workspace, Agent, TreeInterface> Planner;
@@ -75,12 +72,11 @@ void blimp_RRTConnect(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &w
 	#endif
 }
 
-void blimp_KPIECE(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &workspace,
-		typename Blimp::State &start, typename Blimp::State &goal) {
+template<class Workspace, class Agent>
+void go_KPIECE(const InstanceFileMap& args, const Agent& agent, const Workspace &workspace,
+		const typename Agent::State &start, const typename Agent::State &goal) {
 	dfpair(stdout, "planner", "%s", "KPIECE");
 
-	typedef Blimp Agent;
-	typedef Map3D<Agent> Workspace;
 	typedef KPIECE<Workspace, Agent> Planner;
 
 	Planner planner(workspace, agent, args);
@@ -88,12 +84,10 @@ void blimp_KPIECE(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &works
 	planner.dfpairs();
 }
 
-void blimp_PPRM(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &workspace,
-		typename Blimp::State &start, typename Blimp::State &goal) {
+template<class Workspace, class Agent>
+void go_PPRM(const InstanceFileMap& args, const Agent& agent, const Workspace &workspace,
+		const typename Agent::State &start, const typename Agent::State &goal) {
 	dfpair(stdout, "planner", "%s", "PPRM");
-
-	typedef Blimp Agent;
-	typedef Map3D<Agent> Workspace;
 
 	typedef PRMLite<Workspace, Agent> PRMLite;	
 	typedef PlakuTreeInterface<Workspace, Agent, PRMLite> PlakuTreeInterface;
@@ -133,6 +127,29 @@ void blimp_PPRM(const InstanceFileMap& args, Blimp& agent, Map3D<Blimp> &workspa
 	#endif
 }
 
+template<class Workspace, class Agent>
+void go(const InstanceFileMap& args, const Workspace &workspace, const Agent &agent,
+		const typename Agent::State &start, const typename Agent::State &goal) {
+	clock_t startT = clock();
+
+	std::string planner = args.value("Planner");
+
+	if(planner.compare("RRT") == 0) {
+		go_RRT<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("RRT Connect") == 0) {
+		go_RRTConnect<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("PPRM") == 0) {
+		go_PPRM<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("KPIECE") == 0) {
+		go_KPIECE<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else {
+		fprintf(stderr, "unreocognized planner: %s\n", planner.c_str());
+	}
+
+	clock_t endT = clock();
+	dfpair(stdout, "total time solving time", "%g", (double) (endT-startT) / CLOCKS_PER_SEC);
+}
+
 void blimp(const InstanceFileMap& args) {
 	typedef Blimp Agent;
 	typedef Map3D<Agent> Workspace;
@@ -153,31 +170,39 @@ void blimp(const InstanceFileMap& args) {
 	Agent::State start(startPosition[0], startPosition[1], startPosition[2], theta);
 	
 	auto goalPosition = args.doubleList("Agent Goal Location");
-	auto goalOrientation = args.doubleList("Agent Goal Location");
+	auto goalOrientation = args.doubleList("Agent Goal Orientation");
 	fcl::Quaternion3f goalQuaternion(goalOrientation[0], goalOrientation[1], goalOrientation[2], goalOrientation[3]);
 	goalQuaternion.toAxisAngle(axis, theta);
 	theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
 
 	Agent::State goal(goalPosition[0], goalPosition[1], goalPosition[2], theta);
-
-
-	std::string planner = args.value("Planner");
-
-	clock_t startT = clock();
-
-	if(planner.compare("RRT") == 0) {
-		blimp_RRT(args, agent, workspace, start, goal);
-	} else if(planner.compare("RRT Connect") == 0) {
-		blimp_RRTConnect(args, agent, workspace, start, goal);
-	} else if(planner.compare("PPRM") == 0) {
-		blimp_PPRM(args, agent, workspace, start, goal);
-	} else if(planner.compare("KPIECE") == 0) {
-		blimp_KPIECE(args, agent, workspace, start, goal);
-	} else {
-		fprintf(stderr, "unreocognized planner: %s\n", planner.c_str());
-	}
-
-	clock_t endT = clock();
-	dfpair(stdout, "total time solving time", "%g", (double) (endT-startT) / CLOCKS_PER_SEC);
 	
+	go<Workspace, Agent>(args, workspace, agent, start, goal);
+}
+
+void snake(const InstanceFileMap& args) {
+	typedef SnakeTrailers Agent;
+	typedef Map3D<Agent> Workspace;
+
+	Agent agent(args);
+	Workspace workspace(args);
+
+/* start and goal states */
+
+	auto startPosition = args.doubleList("Agent Start Location");
+	auto startOrientation =  args.doubleList("Agent Start Orientation");
+
+	Agent::StateVars startStateVars = startPosition;
+	startStateVars.push_back(0); //linear v
+	startStateVars.push_back(0); //angular v
+
+	startStateVars.insert(startStateVars.end(), startOrientation.begin(), startOrientation.end());
+
+	Agent::State start(startStateVars);
+	
+	auto goalPosition = args.doubleList("Agent Goal Location");
+
+	Agent::State goal(goalPosition);
+
+	go<Workspace, Agent>(args, workspace, agent, start, goal);
 }

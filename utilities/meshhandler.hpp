@@ -118,6 +118,8 @@ private:
 
 class SimpleAgentMeshHandler {
 public:
+	SimpleAgentMeshHandler() {}
+
 	SimpleAgentMeshHandler(const std::string &filename) {
 		AssimpMeshLoader meshLoader(filename.c_str());
 
@@ -141,12 +143,12 @@ public:
 		}
 	}
 
-	fcl::CollisionObject* getMeshPose(const fcl::Transform3f &tf) const {
+	virtual fcl::CollisionObject* getMeshPose(const fcl::Transform3f &tf) const {
 		return new fcl::CollisionObject(agentModel, tf);
 	}
 
 #ifdef WITHGRAPHICS
-	void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color(),
+	virtual void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color(),
 		const std::vector<double> &transform = OpenGLWrapper::getOpenGLWrapper().getIdentity()) const {
 		const OpenGLWrapper& opengl = OpenGLWrapper::getOpenGLWrapper();
 
@@ -154,7 +156,6 @@ public:
 			const std::vector<fcl::Vec3f>& verts = vertices[i];
 			const std::vector<fcl::Triangle>& tris = triangles[i];
 			std::vector<double> pts(84, 1.0);
-
 			auto c = color.getColor();
 			for(auto tri : tris) {
 				unsigned int cur = 0;
@@ -176,17 +177,143 @@ public:
 				}
 
 				opengl.drawTriangles(pts);
-				//opengl.drawPoints(pts);
+				// opengl.drawPoints(pts);
 			}
 		}
 	}
 #endif
 
-private:
+protected:
+	void multiply(const std::vector<double> &m1, const std::vector<double> &m2, std::vector<double> &out) const {
+		std::vector<double> temp(16);
+		for(unsigned int row = 0; row < 4; ++row) {
+			for(unsigned int col = 0; col < 4; ++col) {
+				double sum = 0;
+				for(unsigned int i = 0; i < 4; i++) {
+					double elem1 = m1[row * 4 + i];
+					double elem2 = m2[col + 4 * i];
+					sum += elem1 * elem2;
+				}
+				temp[row * 4 + col] = sum;
+			}
+		}
+		for(unsigned int i = 0; i < 16; i++) out[i] = temp[i];
+	}
+
+
 	boost::shared_ptr<Model> agentModel;
 	std::vector< std::vector<fcl::Vec3f> > vertices;
 	std::vector< std::vector<fcl::Triangle> > triangles;
 	std::vector< std::vector<double> > normals;
+};
+
+class CylinderHandler : public SimpleAgentMeshHandler {
+public:
+	CylinderHandler(double radius, double length) {
+		cylinder = boost::shared_ptr<Cylinder>(new fcl::Cylinder(radius, length));
+
+		std::vector<double> upNormal(3), downNormal(3);
+		upNormal[2] = 1;
+		downNormal[2] = -1;
+
+		vertices.emplace_back();
+		std::vector<fcl::Vec3f> &verts = vertices.back();
+
+		triangles.emplace_back();
+		std::vector<fcl::Triangle> &tris = triangles.back();
+
+		double topZ = length / 2;
+		double bottomZ = -length / 2;
+
+		verts.emplace_back(0, 0, topZ);
+		normals.push_back(upNormal);
+		verts.emplace_back(0, 0, bottomZ);
+		normals.push_back(downNormal);
+
+		unsigned int circlePoints = 90;
+		double x = radius;
+		double y = 0;
+
+		verts.emplace_back(x, y, topZ);
+		normals.push_back(upNormal);
+		verts.emplace_back(x, y, bottomZ);
+		normals.push_back(downNormal);
+
+		for(unsigned int i = 1; i < circlePoints+1; ++i) {
+			double rad = (double)(i % circlePoints) / (double)circlePoints * 2 * M_PI;
+			x = cos(rad) * radius;
+			y = sin(rad) * radius;
+
+			verts.emplace_back(x, y, topZ);
+			normals.push_back(upNormal);
+			verts.emplace_back(x, y, bottomZ);
+			normals.push_back(downNormal);
+
+			tris.emplace_back(0, verts.size()-4, verts.size()-2);
+			tris.emplace_back(1, verts.size()-3, verts.size()-1);
+
+			tris.emplace_back(verts.size()-4, verts.size()-2, verts.size()-3);
+			tris.emplace_back(verts.size()-3, verts.size()-1, verts.size()-4);
+		}
+
+	}
+
+	virtual fcl::CollisionObject* getMeshPose(const fcl::Transform3f &tf) const {
+		return new fcl::CollisionObject(cylinder, tf);
+	}
+
+private:
+	boost::shared_ptr<fcl::Cylinder> cylinder;
+};
+
+class ConeHandler : public SimpleAgentMeshHandler {
+public:
+	ConeHandler(double radius, double length) {
+		cone = boost::shared_ptr<Cone>(new fcl::Cone(radius, length));
+
+		std::vector<double> upNormal(3), downNormal(3);
+		upNormal[2] = 1;
+		downNormal[2] = -1;
+
+		vertices.emplace_back();
+		std::vector<fcl::Vec3f> &verts = vertices.back();
+
+		triangles.emplace_back();
+		std::vector<fcl::Triangle> &tris = triangles.back();
+
+		double topZ = length / 2;
+		double bottomZ = -length / 2;
+
+		verts.emplace_back(0, 0, topZ);
+		normals.push_back(upNormal);
+		verts.emplace_back(0, 0, bottomZ);
+		normals.push_back(downNormal);
+
+		unsigned int circlePoints = 90;
+		double x0 = radius;
+		double y0 = 0;
+		unsigned int vertNum = 2;
+		for(unsigned int i = 1; i < circlePoints+1; ++i) {
+			double rad = (double)(i % circlePoints) / (double)circlePoints * 2 * M_PI;
+			double x1 = cos(rad) * radius;
+			double y1 = sin(rad) * radius;
+
+			verts.emplace_back(x0, y0, bottomZ);
+			verts.emplace_back(x1, y1, bottomZ);
+			tris.emplace_back(1, vertNum, vertNum+1);
+			tris.emplace_back(0, vertNum, vertNum+1);
+			normals.push_back(downNormal);
+			normals.push_back(downNormal);
+			vertNum += 2;
+		}
+	}
+
+	virtual fcl::CollisionObject* getMeshPose(const fcl::Transform3f &tf) const {
+		return new fcl::CollisionObject(cone, tf);
+	}
+
+private:
+	boost::shared_ptr<fcl::Cone> cone;
 };
 
 class MeshHandler {

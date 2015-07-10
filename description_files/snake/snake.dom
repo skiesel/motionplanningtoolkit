@@ -1,0 +1,25 @@
+Seed ? 1
+
+Agent Type ? Snake
+Agent Mesh ? ../mesh_models/agent_models/simple_blimp2.dxf
+Goal Thresholds ? 0.25 0.25 0.25
+
+Trailer Length ? 0.05
+Trailer Width ? 0.025
+Hitch Length ? 0.001
+
+Minimum Velocity ? -1
+Maximum Velocity ? 5
+Minimum Turning ? -0.785398
+Maximum Turning ? 0.785398
+Minimum Forward Acceleration ? -2.5
+Maximum Forward Acceleration ? 2.5
+Minimum Angular Acceleration ? -0.1745
+Maximum Angular Acceleration ? 0.1745
+
+Environment Mesh ? ../mesh_models/environment_models/snake_world.dxf
+Environment Location ? 0 0 0 1 0 0 0
+Environment Bounding Box ? -2.5 2.5 -2.5 2.5 0 0
+
+Steering Delta t ? 0.5
+Collision Check Delta t ? 0.025

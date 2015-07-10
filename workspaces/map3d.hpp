@@ -68,7 +68,7 @@ public:
 	}
 
 #ifdef WITHGRAPHICS
-	void draw() { mesh.draw(); }
+	void draw() const { mesh.draw(); }
 #endif
 
 private:
