@@ -172,6 +172,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	InstanceFileMap args(argv[1]);
+	for(unsigned int i = 2; i < argc; ++i) {
+		args.append(argv[i]);
+	}
 
 	GlobalRandomGenerator.seed(stod(args.value("Seed")));
 	ompl::RNG::setSeed(stod(args.value("Seed")));
