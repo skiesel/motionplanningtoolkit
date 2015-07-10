@@ -342,12 +342,12 @@ private:
 			for(const auto vert : vertices) {
 
 				if(colors.size() == 0) {
-					// drawOpenGLPoint(vert->transform.getTranslation(), white);
-					agent.drawMesh(vert->transform);
+					drawOpenGLPoint(vert->transform.getTranslation(), white);
+					// agent.drawMesh(vert->transform);
 				} else {
-					// drawOpenGLPoint(vert->transform.getTranslation(), colors[curIndex]);
-					OpenGLWrapper::Color color(colors[curIndex][0], colors[curIndex][1], colors[curIndex][2]);
-					agent.drawMesh(vert->transform, color);
+					drawOpenGLPoint(vert->transform.getTranslation(), colors[curIndex]);
+					// OpenGLWrapper::Color color(colors[curIndex][0], colors[curIndex][1], colors[curIndex][2]);
+					// agent.drawMesh(vert->transform, color);
 					curIndex++;
 				}
 			}

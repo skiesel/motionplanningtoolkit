@@ -19,10 +19,6 @@ public:
 
 	State getTreeSample() const {
 		auto sample = sampleConfiguration();
-#ifdef WITHGRAPHICS
-		sample.draw();
-#endif
-
 		auto sampleEdge = Edge(sample);
 		typename NN::KNNResult result = nn.nearest(&sampleEdge, 0, 1);
 		return result.elements[0]->end;

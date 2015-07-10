@@ -49,7 +49,7 @@ public:
 			samplesGenerated++;
 
 #ifdef WITHGRAPHICS
-			samples.push_back(treeSample);
+			// samples.push_back(treeSample);
 #endif
 
 			auto edge = agent.randomSteer(treeSample, steeringDT);
@@ -67,23 +67,23 @@ public:
 
 			if(agent.isGoal(edge.end, goal)) {
 				fprintf(stderr, "found goal\n");
-				// std::vector<const Edge*> newSolution;
-				// double newSolutionCost = 0;
-				// State cur = edge.start;
-				// newSolution.push_back(pool.construct(edge));
-				// newSolutionCost += edge.cost;
-				// while(!cur.equals(start)) {
-				// 	auto e = treeInterface.getTreeEdge(cur);
-				// 	newSolution.push_back(e);
-				// 	newSolutionCost += e->cost;
-				// 	cur = e->start;
-				// }
-				// if(solutionCost < 0 || newSolutionCost < solutionCost) {
-				// 	poseNumber = 0;
-				// 	std::reverse(newSolution.begin(), newSolution.end());
-				// 	solution.clear();
-				// 	solution.insert(solution.begin(), newSolution.begin(), newSolution.end());
-				// }
+				std::vector<const Edge*> newSolution;
+				double newSolutionCost = 0;
+				State cur = edge.start;
+				newSolution.push_back(pool.construct(edge));
+				newSolutionCost += edge.cost;
+				while(!cur.equals(start)) {
+					auto e = treeInterface.getTreeEdge(cur);
+					newSolution.push_back(e);
+					newSolutionCost += e->cost;
+					cur = e->start;
+				}
+				if(solutionCost < 0 || newSolutionCost < solutionCost) {
+					poseNumber = 0;
+					std::reverse(newSolution.begin(), newSolution.end());
+					solution.clear();
+					solution.insert(solution.begin(), newSolution.begin(), newSolution.end());
+				}
 				
 				break;
 			}
@@ -113,7 +113,7 @@ public:
 			for(const Edge *edge : solution) {
 				edge->draw(red);
 			}
-			agent.drawSolution(solution);
+			agent.drawSolution(solution, collisionCheckDT);
 			// if(poseNumber >= solution.size() * 2) poseNumber = -1;
 			// if(poseNumber >= 0)
 			// 	agent.animateSolution(solution, poseNumber++);
