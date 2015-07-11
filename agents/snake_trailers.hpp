@@ -83,8 +83,6 @@ public:
 
 			const auto &pos = transforms.back().getTranslation();
 
-			fprintf(stderr, "%g %g %g\n", pos[0], pos[1], pos[2]);
-
 			pose[0] = -(trailerLength + hitchLength);
 			pose[1] = 0;
 
@@ -120,44 +118,48 @@ public:
 			baseRotation[8] = sinVal;
 			baseRotation[10] = cosVal;
 
-			sinVal = sin(stateVars[THETA]);
-			cosVal = cos(stateVars[THETA]);
-
-			transforms.push_back(OpenGLWrapper::getOpenGLWrapper().getIdentity());
-
-			transforms.back()[0] = cosVal;
-			transforms.back()[1] = sinVal;
-			transforms.back()[4] = -sinVal;
-			transforms.back()[5] = cosVal;
-
-			math::multiply(baseRotation, transforms.back(), transforms.back());
-
 			auto translate = OpenGLWrapper::getOpenGLWrapper().getIdentity();
 
 			translate[12] = stateVars[X];
 			translate[13] = stateVars[Y];
 
-			math::multiply(transforms.back(), translate, transforms.back());
+			transforms.push_back(OpenGLWrapper::getOpenGLWrapper().getIdentity());
+
+			math::multiply(baseRotation, translate, transforms.back());
+
+			auto rotate = OpenGLWrapper::getOpenGLWrapper().getIdentity();
+
+			sinVal = sin(stateVars[THETA]);
+			cosVal = cos(stateVars[THETA]);
+
+			rotate[0] = cosVal;
+			rotate[1] = -sinVal;
+			rotate[4] = sinVal;
+			rotate[5] = cosVal;
+
+			math::multiply(transforms.back(), rotate, transforms.back());
+
+			translate[13] = 0;
+			translate[12] = -(trailerLength + hitchLength);
 
 			for(unsigned int i = 1; i < trailerCount + 1; ++i) {
-				
 				transforms.push_back(OpenGLWrapper::getOpenGLWrapper().getIdentity());
 
 				std::vector<double> &previous = transforms[transforms.size() - 2];
 
-				transforms.back()[14] = -(trailerLength + hitchLength);
+				math::multiply(previous, translate, transforms.back());
 
 				double t = stateVars[THETA + i] - stateVars[THETA + i - 1];
 
 				sinVal = sin(t);
 				cosVal = cos(t);
 
-				transforms.back()[0] = cosVal;
-				transforms.back()[1] = sinVal;
-				transforms.back()[4] = -sinVal;
-				transforms.back()[5] = cosVal;
+				rotate[0] = cosVal;
+				rotate[1] = -sinVal;
+				rotate[4] = sinVal;
+				rotate[5] = cosVal;
 
-				math::multiply(transforms.back(), previous, transforms.back());
+				math::multiply(transforms.back(), rotate, transforms.back());
 			}
 			return transforms;
 		}
@@ -358,7 +360,7 @@ public:
 		const StateVars &g = goal.getStateVars();
 
 		return fabs(s[X] - g[X]) < goalThresholds[X] &&
-		       fabs(s[Y] - g[Y]) < goalThresholds[Y];
+			   fabs(s[Y] - g[Y]) < goalThresholds[Y];
 	}
 
 	Edge steerWithControl(const State &start, const Edge &getControlsFromThisEdge, double dt) const {
@@ -450,6 +452,13 @@ public:
 			state = doStep(state, edge.a, edge.w, dt);
 		}
 
+		const std::vector<fcl::Transform3f> transforms = edge.end.toFCLTransforms();
+
+		poses.emplace_back();
+		for(const fcl::Transform3f &transform : transforms) {
+			poses.back().push_back(transform);
+		}
+
 		return poses;
 	}
 
@@ -482,12 +491,11 @@ public:
 	}
 
 	void draw() const {
-		double a = 0, w = 0, dt = 0.1;
+		double a = 0, w = 0, dt = 0.01;
 
-		state = doStep(state, a, w, dt);
+		for(unsigned int i = 0; i < 10; ++i)
+			state = doStep(state, a, w, dt);
 
-		state.print();
-		const StateVars &vars = state.getStateVars();
 		auto transforms = state.toOpenGLTransforms();
 
 		for(unsigned int i = 0; i < meshes.size(); ++i) {

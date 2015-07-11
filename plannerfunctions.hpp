@@ -1,4 +1,4 @@
-unsigned int GraphicsIterations = 10000;
+unsigned int GraphicsIterations = 1000;
 
 template<class Workspace, class Agent>
 void go_RRT(const InstanceFileMap& args, const Agent& agent, const Workspace &workspace,
@@ -20,16 +20,20 @@ void go_RRT(const InstanceFileMap& args, const Agent& agent, const Workspace &wo
 	TreeInterface treeInterface(kdtree, sampler);
 	Planner planner(workspace, agent, treeInterface, args);
 
+	agent.state = start;
+
 	#ifdef WITHGRAPHICS
 		bool firstInvocation = true;
 		auto lambda = [&](){
 			workspace.draw();
-			agent.drawMesh(start);
-			agent.drawMesh(goal);
-			planner.query(start, goal, GraphicsIterations, firstInvocation);
-			firstInvocation = false;
+			agent.draw();
+
+			// agent.drawMesh(start);
+			// agent.drawMesh(goal);
+			// planner.query(start, goal, GraphicsIterations, firstInvocation);
+			// firstInvocation = false;
 		};
-		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda);
+		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
 	#else
 		planner.query(start, goal);
 		planner.dfpairs();
@@ -65,7 +69,7 @@ void go_RRTConnect(const InstanceFileMap& args, const Agent& agent, const Worksp
 			planner.query(start, goal, GraphicsIterations, firstInvocation);
 			firstInvocation = false;
 		};
-		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda);
+		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
 	#else
 		planner.query(start, goal);
 		planner.dfpairs();
@@ -120,7 +124,7 @@ void go_PPRM(const InstanceFileMap& args, const Agent& agent, const Workspace &w
 			planner.query(start, goal, GraphicsIterations, firstInvocation);
 			firstInvocation = false;
 		};
-		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda);
+		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
 	#else
 		planner.query(start, goal);
 		planner.dfpairs();

@@ -19,6 +19,7 @@
 #include <boost/thread/thread.hpp>
 
 #include "connexion_3d_mouse.hpp"
+#include "instancefilemap.hpp"
 
 class OpenGLWrapper {
 
@@ -66,7 +67,7 @@ public:
 		externalKeyboardCallback = keyboard;
 	}
 
-	void runWithCallback(std::function<void(void)> callback) {
+	void runWithCallback(std::function<void(void)> callback, const InstanceFileMap &args) {
 		glfwInit();
 
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -123,9 +124,17 @@ public:
 
 		Connexion3DMouse::createConnexion3DMouse();
 
-		zoom(1, 30);
-		rotate(0, 9);
-		rotate(1, 9);
+		if(args.exists("Zoom"))
+			zoom(1, stod(args.value("Zoom")));
+
+		if(args.exists("Rotate X"))
+			rotate(0, stod(args.value("Rotate X")));
+
+		if(args.exists("Rotate Y"))
+			rotate(1, stod(args.value("Rotate Y")));
+
+		if(args.exists("Rotate Z"))
+			rotate(2, stod(args.value("Rotate Z")));
 
 		while(!glfwWindowShouldClose(window)) {
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

@@ -192,6 +192,7 @@ public:
 		minimumVelocityZ = stod(args.value("Minimum Velocity Z"));
 		maximumVelocityZ = stod(args.value("Maximum Velocity Z"));
 
+		integrationStepSize = stod(args.value("Integration Step Size"));
 
 		linearAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Velocity")), stod(args.value("Maximum Velocity")));
 		zLinearAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Z Acceleration")), stod(args.value("Maximum Z Acceleration")));
@@ -266,10 +267,7 @@ public:
 		double w = getControlsFromThisEdge.w;
 		double z = getControlsFromThisEdge.z;
 
-		State end = doStep(start, a, w, z, dt / 10);
-		for(unsigned int i = 0; i < 9; i++) {
-			end = doStep(end, a, w, z, dt / 10);
-		}
+		State end = doSteps(start, a, w, z, dt);
 
 		return Edge(start, end, dt, a, w, z);
 	}
@@ -281,10 +279,7 @@ public:
 		double z = controls[1];
 		double w = controls[2];
 
-		State end = doStep(start, a, w, z, dt / 10);
-		for(unsigned int i = 0; i < 9; i++) {
-			end = doStep(end, a, w, z, dt / 10);
-		}
+		State end = doSteps(start, a, w, z, dt);
 
 		return Edge(start, end, dt, a, w, z);
 	}
@@ -298,10 +293,7 @@ public:
 		double w = angularAccelerations(GlobalRandomGenerator);
 		double z = zLinearAccelerations(GlobalRandomGenerator);
 
-		State end = doStep(start, a, w, z, dt / 10);
-		for(unsigned int i = 0; i < 9; i++) {
-			end = doStep(end, a, w, z, dt / 10);
-		}
+		State end = doSteps(start, a, w, z, dt);
 
 		return Edge(start, end, dt, a, w, z);
 	}
@@ -340,20 +332,19 @@ public:
 		std::vector<std::vector<fcl::Transform3f> > retPoses;
 
 		unsigned int steps = std::isinf(dt) ? 0 : edge.dt / dt;
-		
+
 		State state = edge.start;
 
 		retPoses.emplace_back();
 		retPoses.back().push_back(state.toFCLTransform());
 
 		for(unsigned int step = 0; step < steps; ++step) {
-			auto transform = state.toOpenGLTransform();
-			state = doStep(state, edge.a, edge.w, edge.z, dt);
-
-			// mesh.draw(color, stateToOpenGLTransform(state));
-			// state.draw();
+			state = doSteps(edge.start, edge.a, edge.w, edge.z, dt * (double)step);
 
 			retPoses.emplace_back();
+
+			// drawMesh(state);
+
 			retPoses.back().push_back(state.toFCLTransform());
 		}
 
@@ -398,7 +389,7 @@ public:
 	void draw() const {
 		double dt = 0.1;
 
-		state = doStep(state, 0, 0, 0, dt);
+		state = doSteps(state, 0, 0, 0, dt, true);
 
 		auto transform = state.toOpenGLTransform();
 
@@ -452,7 +443,7 @@ public:
 				mesh.draw(color, transform);
 				state.draw(OpenGLWrapper::Color::Green());
 
-				state = doStep(state, edge->a, edge->w, edge->z, dt);
+				state = doSteps(state, edge->a, edge->w, edge->z, dt, true);
 			}
 		}
 	}
@@ -469,28 +460,44 @@ public:
 #endif
 
 // private:
-	State doStep(const State& s, double a, double w, double z, double dt) const {
+
+	State doSteps(const State& s, double a, double w, double z, double dt, bool ignoreIntegrationStepSize = false) const {
 		const StateVars& vars = s.getStateVars();
-		StateVars newState(7);
+		StateVars newState = vars;
 
-		newState[X] = vars[X] + cos(vars[THETA]) * vars[V] * dt;
-		newState[Y] = vars[Y] + sin(vars[THETA]) * vars[V] * dt;
-		newState[THETA] = normalizeTheta(vars[THETA] + vars[V] * tan(vars[PSI]) / blimpLength);
+		unsigned int steps = ignoreIntegrationStepSize ? 0 : dt / integrationStepSize;
 
-		newState[Z] = vars[Z] + vars[VZ] * dt;
+		double leftOver = ignoreIntegrationStepSize ? dt : dt - ((double)steps * integrationStepSize);
 
-		newState[V] = vars[V] + a * dt;
-		newState[PSI] = vars[PSI] + w * dt;
-		newState[VZ] = vars[VZ] + z * dt;
+		assert(leftOver >= 0);
 
-		if(newState[V] > maximumVelocity) { newState[V] = maximumVelocity; }
-		else if(newState[V] < minimumVelocity ) { newState[V] = minimumVelocity; }
+		double stepSize = integrationStepSize;
 
-		if(newState[PSI] > maximumTurning) { newState[PSI] = maximumTurning; }
-		else if(newState[PSI] < minimumTurning) { newState[PSI] = minimumTurning; }
+		for(unsigned int i = 0; i < steps+1; ++i) {
 
-		if(newState[VZ] > maximumVelocityZ) { newState[VZ] = maximumVelocityZ; }
-		else if(newState[VZ] < minimumVelocityZ ) { newState[VZ] = minimumVelocityZ; }
+			if(i == steps) {
+				stepSize = leftOver;
+			}
+
+			newState[X] = newState[X] + cos(newState[THETA]) * newState[V] * stepSize;
+			newState[Y] = newState[Y] + sin(newState[THETA]) * newState[V] * stepSize;
+			newState[THETA] = normalizeTheta(newState[THETA] + newState[V] * tan(newState[PSI]) / blimpLength);
+
+			newState[Z] = newState[Z] + newState[VZ] * dt;
+
+			newState[V] = newState[V] + a * stepSize;
+			newState[PSI] = newState[PSI] + w * stepSize;
+			newState[VZ] = newState[VZ] + z * stepSize;
+
+			if(newState[V] > maximumVelocity) { newState[V] = maximumVelocity; }
+			else if(newState[V] < minimumVelocity ) { newState[V] = minimumVelocity; }
+
+			if(newState[PSI] > maximumTurning) { newState[PSI] = maximumTurning; }
+			else if(newState[PSI] < minimumTurning) { newState[PSI] = minimumTurning; }
+
+			if(newState[VZ] > maximumVelocityZ) { newState[VZ] = maximumVelocityZ; }
+			else if(newState[VZ] < minimumVelocityZ ) { newState[VZ] = minimumVelocityZ; }
+		}
 
 		return State(newState);
 	}
@@ -500,7 +507,7 @@ public:
 	}
 
 	SimpleAgentMeshHandler mesh;
-	double blimpLength, minimumVelocity, maximumVelocity, minimumTurning, maximumTurning, minimumVelocityZ, maximumVelocityZ;
+	double blimpLength, minimumVelocity, maximumVelocity, minimumTurning, maximumTurning, minimumVelocityZ, maximumVelocityZ, integrationStepSize;
 	mutable std::uniform_real_distribution<double> linearAccelerations, zLinearAccelerations, angularAccelerations;
 
 	std::vector< std::pair<double, double> > controlBounds;

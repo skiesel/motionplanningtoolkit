@@ -54,11 +54,12 @@ public:
 
 			auto edge = agent.randomSteer(treeSample, steeringDT);
 
+			++iterations;
+
 			if(!workspace.safeEdge(agent, edge, collisionCheckDT)) {
-				++iterations;
 				edgesRejected++;
 
-				if(iterationsAtATime > 0 && ++iterations > iterationsAtATime) break;
+				if(iterationsAtATime > 0 && iterations >= iterationsAtATime) break;
 
 				continue;
 			}
@@ -96,7 +97,7 @@ public:
 			treeEdges.push_back(e);
 #endif
 
-			if(iterationsAtATime > 0 && ++iterations > iterationsAtATime) break;
+			if(iterationsAtATime > 0 && iterations >= iterationsAtATime) break;
 		}
 
 #ifdef WITHGRAPHICS
