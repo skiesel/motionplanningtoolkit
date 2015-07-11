@@ -4,10 +4,12 @@
 #include <unordered_map>
 #include <fcl/math/transform.h>
 
+#ifdef VREPPLUGIN
 #include "v_repLib.h"
+#endif
 
-#include "../utilities/flannkdtreewrapper.hpp"
-#include "../utilities/datafile.hpp"
+#include "../../utilities/flannkdtreewrapper.hpp"
+#include "../../utilities/datafile.hpp"
 
 template <class Workspace, class Agent>
 class PRMLite {
@@ -78,16 +80,16 @@ public:
 
 		clock_t start = clock();
 		clock_t vertexStart = clock();
-		
+
 		generateVertices(workspace, agent, numVertices);
-		
+
 		clock_t end = clock();
 		double time = (double) (end-vertexStart) / CLOCKS_PER_SEC;
 		dfpair(stdout, "prm vertex build time", "%g", time);
 		clock_t edgeStart = clock();
 
 		generateEdges(workspace, agent, collisionCheckDT, edgeSetSize);
-		
+
 		end = clock();
 		time = (double) (end-edgeStart) / CLOCKS_PER_SEC;
 		dfpair(stdout, "prm edge build time", "%g", time);
@@ -125,7 +127,7 @@ public:
 		auto res = kdtree.nearest(&v, 1, 1);
 
 		assert(res.elements.size() > 0);
-		
+
 		return res.elements[0]->id;
 	}
 
@@ -225,7 +227,7 @@ private:
 
 				double cost = evaluateTransformDistance(vertices[i]->transform, endVertexZRotationOnly->transform);
 				if(cost == 0) continue;
-				
+
 				std::vector<fcl::Transform3f> edgeCandidate = interpolate(vertices[i]->transform, endVertexZRotationOnly->transform, collisionCheckDT);
 
 				if(edgeCandidate.size() == 0 || workspace.safePoses(agent, edgeCandidate, canonicalState)) {
@@ -360,7 +362,7 @@ private:
 			for(const auto& edgeSet : edges) {
 				std::vector<double> edgeForVrep(6);
 				const auto startVertex = vertices[edgeSet.first];
-				
+
 				const auto& trans = startVertex->transform.getTranslation();
 
 				for(const auto& edge : edgeSet.second) {
@@ -392,7 +394,7 @@ private:
 		OpenGLWrapper::getOpenGLWrapper().drawPoints(pt);
 	}
 #endif
-#ifdef VREPPLUGIN	
+#ifdef VREPPLUGIN
 	void drawVREP(bool drawPoints, bool drawLines, const std::vector<std::vector<double>> &colors) const {
 		simFloat coords[12];
 		for(unsigned int i = 0; i < 6; ++i)
@@ -404,7 +406,7 @@ private:
 			for(const auto vert : vertices) {
 				const auto& trans = vert->transform.getTranslation();
 
-				
+
 				for(unsigned int i = 0; i < 3; ++i) {
 					coords[i] = trans[i];
 				}
@@ -424,7 +426,7 @@ private:
 			for(const auto& edgeSet : edges) {
 				std::vector<double> edgeForVrep(6);
 				const auto startVertex = vertices[edgeSet.first];
-				
+
 				const auto& trans = startVertex->transform.getTranslation();
 				for(unsigned int i = 0; i < 3; ++i) {
 					edgeForVrep[i] = trans[i];
@@ -432,7 +434,7 @@ private:
 
 				for(const auto& edge : edgeSet.second) {
 					const auto endVertex = vertices[edge.second.endpoint];
-					
+
 					const auto& trans2 = endVertex->transform.getTranslation();
 					for(unsigned int i = 0; i < 3; ++i) {
 						edgeForVrep[3+i] = trans2[i];

@@ -13,7 +13,7 @@ class PlakuTreeInterface {
 
 	typedef flann::KDTreeSingleIndexParams KDTreeType;
 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
-	typedef UniformSampler<Workspace, Agent, KDTree> UniformSampler;
+	typedef UniformSampler<Workspace, Agent, KDTree> UniformSamplerT;
 
 	struct Region {
 		Region(unsigned int id, const Agent& agent) : heapIndex(std::numeric_limits<unsigned int>::max()), id(id), numSelections(0), heuristic(std::numeric_limits<double>::infinity()), weight(0), onOpen(false){
@@ -77,7 +77,7 @@ public:
 		KDTreeType kdtreeType;
 		uniformSamplerBackingKDTree = new KDTree(kdtreeType, agent.getTreeStateSize());
 
-		uniformSampler = new UniformSampler(workspace, agent, *uniformSamplerBackingKDTree);
+		uniformSampler = new UniformSamplerT(workspace, agent, *uniformSamplerBackingKDTree);
 
 		unsigned int regionCount = discretization.getCellCount();
 		regions.reserve(regionCount);
@@ -181,7 +181,7 @@ private:
 		std::vector<double> color(3);
 
 		value = ((value - min) / (max - min)) * 765;
-		
+
 		if(value < 255) {
 			color[0] = 0;
 			color[1] = value / 2;
@@ -234,8 +234,8 @@ private:
 	const Workspace &workspace;
 	const Agent &agent;
 	const Discretization &discretization;
-	
-	UniformSampler *uniformSampler;
+
+	UniformSamplerT *uniformSampler;
 	KDTree *uniformSamplerBackingKDTree;
 
 	unsigned int startRegionId, goalRegionId;

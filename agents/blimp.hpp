@@ -37,7 +37,7 @@ public:
 			stateVars[Z] = z;
 			stateVars[THETA] = theta;
 		}
-		
+
 		State(const State &s) : stateVars(s.stateVars.begin(), s.stateVars.end()) {}
 
 		State(const StateVars &vars) : stateVars(vars.begin(), vars.end()) {}
@@ -65,6 +65,7 @@ public:
 			fprintf(stderr, "\n");
 		}
 
+#ifdef WITHGRAPHICS
 		std::vector<double> toOpenGLTransform() const {
 			std::vector<double> transform = OpenGLWrapper::getOpenGLWrapper().getIdentity();
 
@@ -82,10 +83,11 @@ public:
 
 			return transform;
 		}
+#endif
 
 		fcl::Transform3f toFCLTransform() const {
 			fcl::Vec3f pose(stateVars[X], stateVars[Y], stateVars[Z]);
-			
+
 			fcl::Matrix3f rotation;
 			rotation.setIdentity();
 
@@ -182,10 +184,10 @@ public:
 
 	Blimp(const InstanceFileMap &args) : mesh(args.value("Agent Mesh")) {
 		blimpLength = stod(args.value("Blimp Length"));
-		
+
 		minimumVelocity = stod(args.value("Minimum Velocity"));
 		maximumVelocity = stod(args.value("Maximum Velocity"));
-		
+
 		minimumTurning = stod(args.value("Minimum Turning"));
 		maximumTurning = stod(args.value("Maximum Turning"));
 
@@ -433,7 +435,7 @@ public:
 	void drawSolution(const std::vector<const Edge*> &solution, double dt = std::numeric_limits<double>::infinity()) const {
 		for(const Edge* edge : solution) {
 			unsigned int steps = std::isinf(dt) ? 1 : edge->dt / dt;
-		
+
 			State state = edge->start;
 
 			edge->draw(OpenGLWrapper::Color::Green());

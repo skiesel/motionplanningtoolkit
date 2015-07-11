@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef WITHGRAPHICS
+
 #define GLEW_STATIC
 #include <GL/glew.h>
 
@@ -255,7 +257,7 @@ public:
 		line.insert(line.end(), color.getColor().begin(), color.getColor().end());
 		line.insert(line.end(), identity.begin(), identity.end());
 
-		
+
 		line.push_back(x2);
 		line.push_back(y2);
 		line.push_back(z2);
@@ -330,7 +332,7 @@ public:
 		mouseInfo.mouseButton = button;
 		mouseInfo.mouseState = action;
 		if(mouseInfo.mouseState == GLFW_RELEASE) {
-			mouseInfo.oldCoordIsGood = false;	
+			mouseInfo.oldCoordIsGood = false;
 		}
 	}
 
@@ -372,7 +374,7 @@ public:
 						double dx = fabs(x - mouseInfo.oldX);
 						double dy = fabs(y - mouseInfo.oldY);
 
-						if(dx >= dy) 
+						if(dx >= dy)
 							xRot += M_PI / 180 * ((x - mouseInfo.oldX > 0) ? 1 : -1);
 						else
 							yRot += M_PI / 180 * ((y - mouseInfo.oldY > 0) ? 1 : -1);
@@ -566,3 +568,5 @@ private:
 
 OpenGLWrapper *OpenGLWrapper::wrapperInstance = NULL;
 std::function<void(int)> OpenGLWrapper::externalKeyboardCallback([](int key){});
+
+#endif

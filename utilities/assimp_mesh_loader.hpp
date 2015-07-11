@@ -22,15 +22,18 @@ public:
 				std::vector< std::vector<double> > &normals) const {
 
 		for(unsigned int i = 0; i < scene->mNumMeshes; ++i) {
-			
+
 			auto mesh = scene->mMeshes[i];
 
 			vertices.emplace_back();
 			triangles.emplace_back();
-			
+
 			for(unsigned int j = 0; j < mesh->mNumVertices; ++j) {
 				auto vertex = mesh->mVertices[j];
-				vertices.back().emplace_back(vertex.x, vertex.y, vertex.z);
+				double x = vertex.x;
+				double y = vertex.y;
+				double z = vertex.z;
+				vertices.back().emplace_back(x, y, z);
 
 				normals.emplace_back(3);
 				if(mesh->HasNormals()) {

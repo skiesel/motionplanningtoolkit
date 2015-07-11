@@ -34,7 +34,7 @@ public:
 			stateVars[Y] = y;
 			stateVars[THETA] = theta;
 		}
-		
+
 		State(const State &s) : stateVars(s.stateVars.begin(), s.stateVars.end()) {}
 
 		State(const StateVars &vars) : stateVars(vars.begin(), vars.end()) {
@@ -89,8 +89,6 @@ public:
 			translation = fcl::Transform3f(pose);
 
 			for(unsigned int i = 1; i < trailerCount + 1; ++i) {
-				std::vector<double> transform2 = OpenGLWrapper::getOpenGLWrapper().getIdentity();
-				
 				double t = stateVars[THETA + i] - stateVars[THETA + i - 1];
 
 				quaternion.fromAxisAngle(axis, t);
@@ -104,6 +102,7 @@ public:
 			return transforms;
 		}
 
+#ifdef WITHGRAPHICS
 		std::vector< std::vector<double> > toOpenGLTransforms() const {
 			std::vector< std::vector<double> > transforms;
 
@@ -163,7 +162,7 @@ public:
 			}
 			return transforms;
 		}
-
+#endif
 		fcl::Transform3f getTransform() const {
 			return toFCLTransforms()[0];
 		}
@@ -280,10 +279,10 @@ public:
 		trailerWidth = stod(args.value("Trailer Width"));
 		trailerLength = State::trailerLength = stod(args.value("Trailer Length"));
 		hitchLength = State::hitchLength = stod(args.value("Hitch Length"));
-		
+
 		minimumVelocity = stod(args.value("Minimum Velocity"));
 		maximumVelocity = stod(args.value("Maximum Velocity"));
-		
+
 		minimumTurning = stod(args.value("Minimum Turning"));
 		maximumTurning = stod(args.value("Maximum Turning"));
 
@@ -438,7 +437,7 @@ public:
 		if(steps == 0) {
 			steps = 1;
 		}
-		
+
 		State state = edge.start;
 
 		for(unsigned int step = 0; step < steps; ++step) {
@@ -514,7 +513,7 @@ public:
 	void drawSolution(const std::vector<const Edge*> &solution, double dt = std::numeric_limits<double>::infinity()) const {
 		for(const Edge* edge : solution) {
 			unsigned int steps = std::isinf(dt) ? 1 : edge->dt / dt;
-		
+
 			State state = edge->start;
 
 			for(unsigned int step = 0; step < steps; ++step) {

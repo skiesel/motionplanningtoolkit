@@ -20,18 +20,15 @@ void go_RRT(const InstanceFileMap& args, const Agent& agent, const Workspace &wo
 	TreeInterface treeInterface(kdtree, sampler);
 	Planner planner(workspace, agent, treeInterface, args);
 
-	agent.state = start;
-
 	#ifdef WITHGRAPHICS
 		bool firstInvocation = true;
 		auto lambda = [&](){
 			workspace.draw();
 			agent.draw();
-
-			// agent.drawMesh(start);
-			// agent.drawMesh(goal);
-			// planner.query(start, goal, GraphicsIterations, firstInvocation);
-			// firstInvocation = false;
+			agent.drawMesh(start);
+			agent.drawMesh(goal);
+			planner.query(start, goal, GraphicsIterations, firstInvocation);
+			firstInvocation = false;
 		};
 		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
 	#else
@@ -93,7 +90,7 @@ void go_PPRM(const InstanceFileMap& args, const Agent& agent, const Workspace &w
 		const typename Agent::State &start, const typename Agent::State &goal) {
 	dfpair(stdout, "planner", "%s", "PPRM");
 
-	typedef PRMLite<Workspace, Agent> PRMLite;	
+	typedef PRMLite<Workspace, Agent> PRMLite;
 	typedef PlakuTreeInterface<Workspace, Agent, PRMLite> PlakuTreeInterface;
 	typedef RRT<Workspace, Agent, PlakuTreeInterface> Plaku;
 
@@ -118,7 +115,7 @@ void go_PPRM(const InstanceFileMap& args, const Agent& agent, const Workspace &w
 			workspace.draw();
 			agent.drawMesh(start);
 			agent.drawMesh(goal);
-			
+
 			// plakuTreeInterface.draw();
 
 			planner.query(start, goal, GraphicsIterations, firstInvocation);
@@ -172,7 +169,7 @@ void blimp(const InstanceFileMap& args) {
 	theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
 
 	Agent::State start(startPosition[0], startPosition[1], startPosition[2], theta);
-	
+
 	auto goalPosition = args.doubleList("Agent Goal Location");
 	auto goalOrientation = args.doubleList("Agent Goal Orientation");
 	fcl::Quaternion3f goalQuaternion(goalOrientation[0], goalOrientation[1], goalOrientation[2], goalOrientation[3]);
@@ -180,7 +177,7 @@ void blimp(const InstanceFileMap& args) {
 	theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
 
 	Agent::State goal(goalPosition[0], goalPosition[1], goalPosition[2], theta);
-	
+
 	go<Workspace, Agent>(args, workspace, agent, start, goal);
 }
 
@@ -203,7 +200,7 @@ void snake(const InstanceFileMap& args) {
 	startStateVars.insert(startStateVars.end(), startOrientation.begin(), startOrientation.end());
 
 	Agent::State start(startStateVars);
-	
+
 	auto goalPosition = args.doubleList("Agent Goal Location");
 
 	Agent::State goal(goalPosition);

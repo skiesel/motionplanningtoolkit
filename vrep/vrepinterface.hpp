@@ -89,7 +89,7 @@ public:
 		Edge(const State &start, const State &end, double cost, const std::vector<double> &controls, double duration, bool safe) : start(start),
 			end(end), cost(cost), treeIndex(0), controls(controls.begin(), controls.end()), duration(duration), safe(safe) {}
 
-		Edge(const Edge &e) : start(e.start), end(e.end), parent(e.parent), cost(e.cost), treeIndex(e.treeIndex), 
+		Edge(const Edge &e) : start(e.start), end(e.end), parent(e.parent), cost(e.cost), treeIndex(e.treeIndex),
 			controls(e.controls.begin(), e.controls.end()), duration(e.duration), safe(e.safe) {}
 
 		Edge& operator=(const Edge& e) {
@@ -244,7 +244,7 @@ public:
 
 		simFloat vals[4];
 		for(const auto &pose : poses) {
-			
+
 			const fcl::Vec3f &position = pose.getTranslation();
 			const fcl::Quaternion3f &quaternion = pose.getQuatRotation();
 
@@ -329,7 +329,7 @@ public:
 		State returnState;
 
 		saveState(returnState);
-		
+
 		return returnState;
 	}
 
@@ -529,7 +529,7 @@ public:
 			if(simGetObjectType(handle) == sim_object_joint_type) {
 				simGetJointTargetVelocity(handle, &target);
 				s.targetVelocities.push_back(target);
-				
+
 				simGetJointTargetPosition(handle, &target);
 				s.targetPositions.push_back(target);
 			}
@@ -603,15 +603,16 @@ public:
 	std::pair<double, bool> startSimulation(simFloat dt) const {
 		simulationDesiredRuntime = dt;
 
-		simulatorBarrier.count_down_and_wait(); // wait until simulator is ready
+		simulatorBarrier.wait(); // wait until simulator is ready
 		//simulator is running
-		simulatorBarrier.count_down_and_wait(); // wait until simulator is done
+		simulatorBarrier.wait(); // wait until simulator is done
 
 		return std::make_pair(simulationActualRuntime, wasCollision);
 	}
 
 	simFloat simulatorReady() {
-		simulatorBarrier.count_down_and_wait(); // wait until simulator should start
+		simulatorBarrier.wait(); // wait until simulator should start
+
 		wasCollision = false;
 		return simulationDesiredRuntime;
 	}
@@ -619,8 +620,8 @@ public:
 	void simulatorDone(simFloat actualDT, bool collided) {
 		simulationActualRuntime = actualDT;
 		wasCollision = collided;
-		
-		simulatorBarrier.count_down_and_wait(); // notify simulator is done
+
+		simulatorBarrier.wait(); // wait until simulator should start
 	}
 
 	WorkspaceBounds samplingBounds, workspaceBounds;
@@ -633,7 +634,7 @@ public:
 	simInt agentHandle, agentCollisionGroupHandle, collisionCheckAgainstThisGroup, statePositionGoalHandle, stateOrientationGoalHandle;
 	simInt* agentObjectTree;
 	simInt agentObjectCount;
-	
+
 	std::vector<simInt> controllableVelocityJointHandles, controllablePositionJointHandles, statePositionHandles, stateOrientationHandles, stateVelocityHandles;
 	mutable std::vector< std::uniform_real_distribution<double> > controlVelocityDistributions, controlPositionDistributions;
 
