@@ -44,6 +44,11 @@ target_link_libraries(Planner
 	${OMPL_LIBRARIES}
 )
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  find_library(LZ4 lz4)
+  target_link_libraries(Planner ${LZ4})
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
 if(BUILDGRAPHICS)
 	set_target_properties(Planner PROPERTIES
 	COMPILE_DEFINITIONS "WITHGRAPHICS")
