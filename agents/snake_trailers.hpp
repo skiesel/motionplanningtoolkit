@@ -268,8 +268,11 @@ public:
 
 		private:
 			void populateTreeStateVars() {
-			const StateVars& stateVars = end.getStateVars();
-			treeStateVars.insert(treeStateVars.end(), stateVars.begin(), stateVars.end());
+			const auto& vars = end.getStateVars();
+			treeStateVars.resize(vars.size());
+			for(unsigned int i = 0; i < vars.size(); ++i) {
+				treeStateVars[i] = (SnakeTrailers::NormalizeStateVars[i].first + vars[i]) * SnakeTrailers::NormalizeStateVars[i].second;				
+			}
 		}
 	};
 
@@ -291,6 +294,25 @@ public:
 
 		controlBounds.emplace_back(stod(args.value("Minimum Velocity")), stod(args.value("Maximum Velocity")));
 		controlBounds.emplace_back(stod(args.value("Minimum Angular Acceleration")), stod(args.value("Maximum Angular Acceleration")));
+
+
+		auto environmentBoundingBox = args.doubleList("Environment Bounding Box");
+
+		fprintf(stderr, "...ignoring z component in environment bounding box when normalizing tree vars\n");
+
+		for(unsigned int i = 0; i < environmentBoundingBox.size() - 2; i+=2) {
+			double term1 = -environmentBoundingBox[i];
+			double term2 = 1. / (environmentBoundingBox[i+1] - environmentBoundingBox[i]);
+			NormalizeStateVars.emplace_back(term1, term2);
+		}
+		
+		NormalizeStateVars.emplace_back(-minimumVelocity, 1. / (maximumVelocity - minimumVelocity)); //v
+		NormalizeStateVars.emplace_back(-minimumTurning, 1. / (maximumTurning - minimumTurning)); //psi
+		NormalizeStateVars.emplace_back(M_PI / 2., 1. / (2.*M_PI)); //theta
+		for(unsigned int i = 0; i < trailerCount; ++i) {
+			NormalizeStateVars.emplace_back(NormalizeStateVars.back());
+		}
+
 
 		boost::char_separator<char> sep(" ");
 		boost::tokenizer< boost::char_separator<char> > tokens(args.value("Goal Thresholds"), sep);
@@ -589,8 +611,14 @@ public:
 	const OpenGLWrapper::Color color;
 	mutable State state;
 #endif
+
+	static std::vector<std::pair<double, double>> NormalizeStateVars;
 };
+
+std::vector<std::pair<double, double>> SnakeTrailers::NormalizeStateVars;
 
 unsigned int SnakeTrailers::State::trailerCount = 0;
 double SnakeTrailers::State::trailerLength = 0;
 double SnakeTrailers::State::hitchLength = 0;
+
+

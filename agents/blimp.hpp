@@ -129,10 +129,16 @@ public:
 
 	class Edge {
 	public:
-		Edge(const State &start) : start(start), end(start), cost(0), dt(0), a(0), w(0), z(0), treeIndex(0) {}
+		Edge(const State &start) : start(start), end(start), cost(0), dt(0), a(0), w(0), z(0), treeIndex(0) {
+			buildTreeVars();
+		}
 		Edge(const State &start, const State &end, double cost, double a, double w, double z) : start(start),
-			end(end), cost(cost), dt(cost), a(a), w(w), z(z), treeIndex(0) {}
-		Edge(const Edge& e) : start(e.start), end(e.end), cost(e.cost), dt(e.dt), a(e.a), w(e.w), z(e.z), treeIndex(e.treeIndex) {}
+			end(end), cost(cost), dt(cost), a(a), w(w), z(z), treeIndex(0) {
+				buildTreeVars();
+			}
+		Edge(const Edge& e) : start(e.start), end(e.end), cost(e.cost), dt(e.dt), a(e.a), w(e.w), z(e.z), treeIndex(e.treeIndex) {
+			buildTreeVars();
+		}
 
 		Edge& operator=(const Edge &e) {
 			this->start = e.start;
@@ -146,8 +152,16 @@ public:
 			return *this;
 		}
 
+		void buildTreeVars() {
+			const auto& vars = end.getStateVars();
+			treeVars.resize(vars.size());
+			for(unsigned int i = 0; i < vars.size(); ++i) {
+				treeVars[i] = (Blimp::NormalizeStateVars[i].first + vars[i]) * Blimp::NormalizeStateVars[i].second;				
+			}
+		}
+
 		/* needed for being inserted into NN datastructure */
-		const StateVars& getTreeStateVars() const { return end.getStateVars(); }
+		const StateVars& getTreeStateVars() const { return treeVars; }
 		int getPointIndex() const { return treeIndex; }
 		void setPointIndex(int ptInd) { treeIndex = ptInd; }
 
@@ -180,6 +194,7 @@ public:
 		State start, end;
 		double cost, dt, a, w, z;
 		int treeIndex;
+		StateVars treeVars;
 	};
 
 	Blimp(const InstanceFileMap &args) : mesh(args.value("Agent Mesh")) {
@@ -194,13 +209,26 @@ public:
 		minimumVelocityZ = stod(args.value("Minimum Velocity Z"));
 		maximumVelocityZ = stod(args.value("Maximum Velocity Z"));
 
+		auto environmentBoundingBox = args.doubleList("Environment Bounding Box");
+
+		for(unsigned int i = 0; i < environmentBoundingBox.size(); i+=2) {
+			double term1 = -environmentBoundingBox[i];
+			double term2 = 1. / (environmentBoundingBox[i+1] - environmentBoundingBox[i]);
+			NormalizeStateVars.emplace_back(term1, term2);
+		}
+		
+		NormalizeStateVars.emplace_back(M_PI / 2., 1. / (2.*M_PI)); //theta
+		NormalizeStateVars.emplace_back(-minimumVelocity, 1. / (maximumVelocity - minimumVelocity)); //v
+		NormalizeStateVars.emplace_back(-minimumTurning, 1. / (maximumTurning - minimumTurning)); //psi
+		NormalizeStateVars.emplace_back(-minimumVelocityZ, 1. / (maximumVelocityZ - minimumVelocityZ)); //vz
+
 		integrationStepSize = stod(args.value("Integration Step Size"));
 
-		linearAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Velocity")), stod(args.value("Maximum Velocity")));
+		linearAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Forward Acceleration")), stod(args.value("Maximum Forward Acceleration")));
 		zLinearAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Z Acceleration")), stod(args.value("Maximum Z Acceleration")));
 		angularAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Angular Acceleration")), stod(args.value("Maximum Angular Acceleration")));
 
-		controlBounds.emplace_back(stod(args.value("Minimum Velocity")), stod(args.value("Maximum Velocity")));
+		controlBounds.emplace_back(stod(args.value("Minimum Forward Acceleration")), stod(args.value("Maximum Forward Acceleration")));
 		controlBounds.emplace_back(stod(args.value("Minimum Z Acceleration")), stod(args.value("Maximum Z Acceleration")));
 		controlBounds.emplace_back(stod(args.value("Minimum Angular Acceleration")), stod(args.value("Maximum Angular Acceleration")));
 
@@ -520,4 +548,7 @@ public:
 	const OpenGLWrapper::Color color;
 	mutable State state;
 #endif
+	static std::vector<std::pair<double, double>> NormalizeStateVars;
 };
+
+std::vector<std::pair<double, double>> Blimp::NormalizeStateVars;
