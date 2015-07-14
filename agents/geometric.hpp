@@ -290,8 +290,6 @@ public:
 		
 		State end = doSteps(start, translation, rotation, dt);
 
-		end.print();
-
 		return Edge(start, end, translation, rotation, dt);
 	}
 
@@ -429,8 +427,6 @@ public:
 		rot = math::slerp(fcl::Quaternion3f(), rot, dt);
 		baseQuaternion = rot * baseQuaternion;
 		baseQuaternion = math::normalize(baseQuaternion);
-
-		fprintf(stderr, "<%g %g %g %g>\n", baseQuaternion.getW(), baseQuaternion.getX(), baseQuaternion.getY(), baseQuaternion.getZ());
 
 		newState[3] = baseQuaternion.getW();
 		newState[4] = baseQuaternion.getX();
