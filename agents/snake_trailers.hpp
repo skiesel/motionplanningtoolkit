@@ -49,8 +49,8 @@ public:
 		}
 
 		const bool equals(const State &s) const {
-			for(unsigned int i = 0; i < 3; ++i) {
-				if(fabs(stateVars[0] - s.stateVars[0]) > 0.000001) return false;
+			for(unsigned int i = 0; i < 5 + trailerCount; ++i) {
+				if(fabs(stateVars[i] - s.stateVars[i]) > 0.000001) return false;
 			}
 			return true;
 		}
