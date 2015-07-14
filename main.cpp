@@ -13,6 +13,7 @@ std::default_random_engine GlobalRandomGenerator;
 #include "agents/dubins.hpp"
 #include "agents/snake_trailers.hpp"
 #include "agents/blimp.hpp"
+#include "agents/geometric.hpp"
 
 #include "planners/rrt.hpp"
 #include "planners/rrtconnect.hpp"
@@ -60,19 +61,23 @@ int main(int argc, char *argv[]) {
 
 	dfheader(stdout);
 
+	std::string domain = args.value("Agent Type");
+
 	// if(args.value("Agent Type").compare("Omnidirectional") == 0)
 	// 	omnidirectional(args);
 	// else if(args.value("Agent Type").compare("Dubins") == 0)
 	// 	dubins(args);
 	// else
-	if(args.value("Agent Type").compare("Snake") == 0)
+	if(domain.compare("Snake") == 0)
 		snake(args);
-	else if(args.value("Agent Type").compare("Blimp") == 0)
+	else if(domain.compare("Blimp") == 0)
 		blimp(args);
+	else if(domain.compare("Geometric") == 0)
+		geometric(args);
 	else
-		fprintf(stderr, "unrecognized Agent Type\n");
+		fprintf(stderr, "unrecognized Agent Type: %s\n", domain.c_str());
 
 	dffooter(stdout);
-
+	
 	return 0;
 }

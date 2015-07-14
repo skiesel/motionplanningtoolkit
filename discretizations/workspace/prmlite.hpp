@@ -10,6 +10,7 @@
 
 #include "../../utilities/flannkdtreewrapper.hpp"
 #include "../../utilities/datafile.hpp"
+#include "../../utilities/math.hpp"
 
 template <class Workspace, class Agent>
 class PRMLite {
@@ -146,9 +147,9 @@ public:
 	}
 
 	typename Agent::State getRandomStateNearRegionCenter(unsigned int index, double radius) const {
-		fcl::Vec3f point = randomPointInSphere(radius);
-		fcl::Quaternion3f rot = getRandomZOnlyQuaternion();
-		// fcl::Quaternion3f rot = getRandomQuaternion();
+		fcl::Vec3f point = math::randomPointInSphere(radius);
+		fcl::Quaternion3f rot = math::getRandomZOnlyQuaternion();
+		// fcl::Quaternion3f rot = math::getRandomUnitQuaternion();
 
 		fcl::Transform3f transform(rot, point);
 		transform = vertices[index]->transform * transform;
@@ -178,16 +179,6 @@ public:
 	}
 
 private:
-	fcl::Vec3f randomPointInSphere(double maxRadius = 1) const {
-		double radius = maxRadius * pow(zeroToOne(GlobalRandomGenerator), 1/3);
-		double theta = 2 * M_PI * zeroToOne(GlobalRandomGenerator);
-		double phi = acos(2 * zeroToOne(GlobalRandomGenerator) - 1);
-		double u = cos(phi);
-
-		double t1 = sqrt(1 - u * u);
-
-		return fcl::Vec3f(t1 * cos(theta) * radius, t1 * sin(theta) * radius, u * radius);
-	}
 
 	void generateVertices(const Workspace &workspace, const Agent &agent, unsigned int numVertices) {
 		vertices.reserve(numVertices);
@@ -203,8 +194,8 @@ private:
 		while(vertices.size() < numVertices) {
 			fcl::Vec3f translation = getRandomVector(linearDistributions);
 
-			fcl::Quaternion3f rotation = getRandomZOnlyQuaternion();
-			// fcl::Quaternion3f rotation = getRandomQuaternion();
+			fcl::Quaternion3f rotation = math::getRandomZOnlyQuaternion();
+			// fcl::Quaternion3f rotation = math::getRandomUnitQuaternion();
 			fcl::Transform3f transform(rotation, translation);
 
 			if(workspace.safePose(agent, transform, canonicalState)) {
@@ -228,7 +219,7 @@ private:
 				double cost = evaluateTransformDistance(vertices[i]->transform, endVertexZRotationOnly->transform);
 				if(cost == 0) continue;
 
-				std::vector<fcl::Transform3f> edgeCandidate = interpolate(vertices[i]->transform, endVertexZRotationOnly->transform, collisionCheckDT);
+				std::vector<fcl::Transform3f> edgeCandidate = math::interpolate(vertices[i]->transform, endVertexZRotationOnly->transform, collisionCheckDT);
 
 				if(edgeCandidate.size() == 0 || workspace.safePoses(agent, edgeCandidate, canonicalState)) {
 					edges[i][endVertexZRotationOnly->id] = Edge(endVertexZRotationOnly->id, cost);
@@ -256,85 +247,6 @@ private:
 		return vector;
 	}
 
-	std::vector<fcl::Transform3f> interpolate(const fcl::Transform3f &t1, const fcl::Transform3f &t2, double linearStepSize) const {
-		std::vector<fcl::Transform3f> interpolationPoints;
-
-		const fcl::Vec3f &v1 = t1.getTranslation();
-		const fcl::Vec3f &v2 = t2.getTranslation();
-
-		unsigned int steps = vectorDistance(v1, v2) / linearStepSize;
-
-		fcl::Vec3f vecStep = (v2 - v1) / steps;
-
-		const fcl::Quaternion3f &q1 = t1.getQuatRotation();
-		const fcl::Quaternion3f &q2 = t2.getQuatRotation();
-
-		// don't bother including the endpoints because this function is only used to check interpolation between points
-		// already known to be "safe"
-
-		fcl::Transform3f point(t1);
-		for(unsigned int i = 0; i < steps; ++i) {
-			point.setTransform(q1, point.getTranslation() + vecStep);
-			interpolationPoints.emplace_back(point);
-		}
-
-		return interpolationPoints;
-	}
-
-	double vectorDistance(const fcl::Vec3f &v1, const fcl::Vec3f &v2) const {
-		fcl::Vec3f diff = v1 - v2;
-		return sqrt(diff.dot(diff));
-	}
-
-	fcl::Quaternion3f normalize(fcl::Quaternion3f &q) const {
-		double x = q.getX();
-		double y = q.getY();
-		double z = q.getZ();
-		double w = q.getW();
-		double length = sqrt(x * x + y * y + z * z + w * w);
-
-		return fcl::Quaternion3f(x/length, y/length, z/length, w/length);
-	}
-
-	// This came from: http://www.sonycsl.co.jp/person/nielsen/visualcomputing/programs/slerp.cpp
-	fcl::Quaternion3f slerp(fcl::Quaternion3f q1, fcl::Quaternion3f q2, double lambda) {
-		float dotproduct = q1.dot(q2);
-
-		// algorithm adapted from Shoemake's paper
-		double lamdaHalf = lambda / 2.0;
-
-		double theta = acos(dotproduct);
-		if(theta < 0.0) {
-			theta = -theta;
-		}
-
-		double st = sin(theta);
-		double sut = sin(lamdaHalf * theta);
-		double sout = sin((1 - lamdaHalf) * theta);
-		double coeff1 = sout/st;
-		double coeff2 = sut/st;
-
-		return normalize(q1 * coeff1 + q1 * coeff2);
-	}
-
-	fcl::Quaternion3f getRandomZOnlyQuaternion() const {
-		double rad = zeroToOne(GlobalRandomGenerator) * 2 * M_PI;
-		fcl::Quaternion3f quaternion;
-		fcl::Vec3f axis(0,0,1);
-		quaternion.fromAxisAngle(axis, rad);
-		return quaternion;
-	}
-
-	fcl::Quaternion3f getRandomQuaternion() const {
-		double u1 = zeroToOne(GlobalRandomGenerator);
-		double u2 = zeroToOne(GlobalRandomGenerator);
-		double u3 = zeroToOne(GlobalRandomGenerator);
-
-		return fcl::Quaternion3f(sqrt(1-u1)*sin(2*M_PI*u2),
-								 sqrt(1-u1)*cos(2*M_PI*u2),
-								 sqrt(u1)*sin(2*M_PI*u3),
-								 sqrt(u1)*cos(2*M_PI*u3));
-	}
 #ifdef WITHGRAPHICS
 	void drawOpenGL(bool drawPoints, bool drawLines, const std::vector<std::vector<double>> &colors) const {
 		if(drawPoints) {
@@ -459,5 +371,4 @@ private:
 	std::vector<VertexZRotationOnly*> vertices;
 	std::unordered_map<unsigned int, std::unordered_map<unsigned int, Edge>> edges;
 	mutable KDTree kdtree;
-	mutable std::uniform_real_distribution<double> zeroToOne;
 };

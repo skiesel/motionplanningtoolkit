@@ -207,3 +207,27 @@ void snake(const InstanceFileMap& args) {
 
 	go<Workspace, Agent>(args, workspace, agent, start, goal);
 }
+
+void geometric(const InstanceFileMap& args) {
+	typedef Geometric Agent;
+	typedef Map3D<Agent> Workspace;
+
+	Agent agent(args);
+	Workspace workspace(args);
+
+/* start and goal states */
+
+	auto startPosition = args.doubleList("Agent Start Location");
+	auto startOrientation =  args.doubleList("Agent Start Orientation");
+
+	Agent::StateVars startStateVars = startPosition;
+	startStateVars.insert(startStateVars.end(), startOrientation.begin(), startOrientation.end());
+
+	Agent::State start(startStateVars);
+
+	auto goalPosition = args.doubleList("Agent Goal Location");
+
+	Agent::State goal(goalPosition);
+
+	go<Workspace, Agent>(args, workspace, agent, start, goal);
+}
