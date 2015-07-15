@@ -13,7 +13,7 @@
 #include "../../utilities/math.hpp"
 
 template <class Workspace, class Agent>
-class PRMLite {
+class LazyPRMLite {
 	typedef typename Agent::State State;
 
 	struct VertexZRotationOnly {
@@ -48,11 +48,15 @@ class PRMLite {
 	};
 
 	struct Edge {
-		Edge() {}
+		enum CollisionCheckStatus {
+			UNKNOWN = 0,
+			INVALID = 1,
+			VALID = 2,
+		};
 
-		Edge(unsigned int endpoint, double weight) : endpoint(endpoint), weight(weight) {
+		Edge() : status(UNKNOWN) {}
 
-		}
+		Edge(unsigned int endpoint, double weight) : endpoint(endpoint), weight(weight), status(UNKNOWN) {}
 
 		std::size_t operator()(const Edge &e) const {
 			return e.endpoint;
@@ -64,15 +68,16 @@ class PRMLite {
 
 		unsigned int endpoint;
 		double weight;
+		CollisionCheckStatus status;
 	};
 
 	typedef flann::KDTreeIndexParams KDTreeType;
 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, VertexZRotationOnly> KDTree;
 
 public:
-	PRMLite(const Workspace &workspace, const Agent &agent, const State &canonicalState, unsigned int numVertices,
+	LazyPRMLite(const Workspace &workspace, const Agent &agent, const State &canonicalState, unsigned int numVertices,
 		unsigned int edgeSetSize, double collisionCheckDT = 0.1) :
-		agent(agent), kdtree(KDTreeType(4), 4), canonicalState(canonicalState) {
+		agent(agent), workspace(workspace), kdtree(KDTreeType(4), 4), canonicalState(canonicalState), collisionCheckDT(collisionCheckDT) {
 
 		dfpair(stdout, "prm vertex set size", "%lu", numVertices);
 		dfpair(stdout, "prm edge set size", "%lu", edgeSetSize);
@@ -132,15 +137,39 @@ public:
 		return res.elements[0]->id;
 	}
 
+	bool isValidEdge(unsigned int i, unsigned int j) {
+		auto vertexAndEdges = edges.find(index);
+		assert(vertexAndEdges != edges.end());
+
+		auto &myEdges = vertexAndEdges->second;
+
+		auto edge = myEdges.find(j);
+		assert(edge != myEdges.end());
+
+		if(edge.second.status == Edge::UNKNOWN) {
+			std::vector<fcl::Transform3f> edgeCandidate = math::interpolate(vertices[i]->transform,
+		 													vertices[j]->transform, collisionCheckDT);
+			if(edgeCandidate.size() == 0 || workspace.safePoses(agent, edgeCandidate, canonicalState)) {
+				edges[i][j].status = Edge::VALID;
+				edges[j][i].status = Edge::VALID;
+			} else {
+				edges[i][j].status = Edge::INVALID;
+				edges[j][i].status = Edge::INVALID;
+			}
+		}
+		
+		return edge.second.status == Edge::VALID;
+	}
+
 	std::vector<unsigned int> getNeighboringCells(unsigned int index) const {
 		auto vertexAndEdges = edges.find(index);
 		assert(vertexAndEdges != edges.end());
 
-		const auto &edges = vertexAndEdges->second;
+		auto &myEdges = vertexAndEdges->second;
 
 		std::vector<unsigned int> ids;
-		ids.reserve(edges.size());
-		for(const auto &edge : edges) {
+		ids.reserve(myEdges.size());
+		for(auto &edge : myEdges) {
 			ids.push_back(edge.second.endpoint);
 		}
 		return ids;
@@ -219,12 +248,8 @@ private:
 				double cost = evaluateTransformDistance(vertices[i]->transform, endVertex->transform);
 				if(cost == 0) continue;
 
-				std::vector<fcl::Transform3f> edgeCandidate = math::interpolate(vertices[i]->transform, endVertex->transform, collisionCheckDT);
-
-				if(edgeCandidate.size() == 0 || workspace.safePoses(agent, edgeCandidate, canonicalState)) {
-					edges[i][endVertex->id] = Edge(endVertex->id, cost);
-					edges[endVertex->id][i] = Edge(i, cost); //the reverse interpolation would be symmetric
-				}
+				edges[i][endVertex->id] = Edge(endVertex->id, cost);
+				edges[endVertex->id][i] = Edge(i, cost); //the reverse interpolation would be symmetric
 			}
 		}
 	}
@@ -367,7 +392,9 @@ private:
 	}
 #endif
 	const Agent &agent;
+	const Workspace &workspace;
 	const State &canonicalState;
+	double collisionCheckDT;
 	std::vector<VertexZRotationOnly*> vertices;
 	std::unordered_map<unsigned int, std::unordered_map<unsigned int, Edge>> edges;
 	mutable KDTree kdtree;

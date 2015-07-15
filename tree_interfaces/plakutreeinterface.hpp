@@ -4,6 +4,9 @@
 #include <unordered_set>
 #include "../utilities/flannkdtreewrapper.hpp"
 #include "../utilities/heap.hpp"
+#include "../discretizations/workspace/lazyprmlite.hpp"
+
+template <class Workspace, class Agent, class Discretization> class DijkstraRunner;
 
 template <class Workspace, class Agent, class Discretization>
 class PlakuTreeInterface {
@@ -177,6 +180,10 @@ public:
 	}
 
 private:
+	void dijkstra(Region *region) {
+		dijkstraRunner.dijkstra(*this, region);
+	}
+
 	std::vector<double> getColor(double min, double max, double value) const {
 		std::vector<double> color(3);
 
@@ -205,35 +212,9 @@ private:
 		return color;
 	}
 
-	void dijkstra(Region *region) {
-		InPlaceBinaryHeap<Region> open;
-		region->setHeuristicAndPath(0, std::vector<unsigned int>());
-		open.push(region);
-
-		while(!open.isEmpty()) {
-			Region *current = open.pop();
-
-			std::vector<unsigned int> kids = discretization.getNeighboringCells(current->id);
-			for(unsigned int kid : kids) {
-				double newHeuristic = current->heuristic + discretization.getEdgeCostBetweenCells(current->id, kid);
-				Region *kidPtr = regions[kid];
-
-				if(newHeuristic < kidPtr->heuristic) {
-					kidPtr->setHeuristicAndPath(newHeuristic, current->regionPath);
-
-					if(open.inHeap(kidPtr)) {
-						open.siftFromItem(kidPtr);
-					} else {
-						open.push(kidPtr);
-					}
-				}
-			}
-		}
-	}
-
 	const Workspace &workspace;
 	const Agent &agent;
-	const Discretization &discretization;
+	Discretization &discretization;
 
 	UniformSamplerT *uniformSampler;
 	KDTree *uniformSamplerBackingKDTree;
@@ -244,4 +225,53 @@ private:
 
 	double alpha, b, stateRadius;
 	std::uniform_real_distribution<double> distribution;
+
+
+
+	/* This is ugly, but I think slightly better than the alternatives */
+	template<class W, class A, class D>
+	class DijkstraRunner {
+		typedef PlakuTreeInterface<W, A, D> TheBoss;
+		typedef typename TheBoss::Region Region;
+	public:
+		void dijkstra(TheBoss& theBoss, Region *region) {
+			InPlaceBinaryHeap<Region> open;
+			region->setHeuristicAndPath(0, std::vector<unsigned int>());
+			open.push(region);
+
+			while(!open.isEmpty()) {
+				Region *current = open.pop();
+
+				std::vector<unsigned int> kids = theBoss.discretization.getNeighboringCells(current->id);
+				for(unsigned int kid : kids) {
+					double newHeuristic = current->heuristic + theBoss.discretization.getEdgeCostBetweenCells(current->id, kid);
+					Region *kidPtr = theBoss.regions[kid];
+
+					if(newHeuristic < kidPtr->heuristic) {
+						kidPtr->setHeuristicAndPath(newHeuristic, current->regionPath);
+
+						if(open.inHeap(kidPtr)) {
+							open.siftFromItem(kidPtr);
+						} else {
+							open.push(kidPtr);
+						}
+					}
+				}
+			}
+		}
+	};
+
+	template<class W, class A>
+	class DijkstraRunner<W, A, LazyPRMLite<Workspace, Agent> > {
+		typedef PlakuTreeInterface<Workspace, Agent, LazyPRMLite<Workspace, Agent> > TheBoss;
+		typedef typename TheBoss::Region Region;
+	public:
+		void dijkstra(TheBoss& theBoss, Region *region) {
+			fprintf(stderr, "not implemented");
+			exit(0);
+		}
+	};
+
+	friend class DijkstraRunner<Workspace, Agent, Discretization>;
+	DijkstraRunner<Workspace, Agent, Discretization> dijkstraRunner;
 };
