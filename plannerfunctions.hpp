@@ -90,9 +90,9 @@ void go_PPRM(const InstanceFileMap& args, const Agent& agent, const Workspace &w
 		const typename Agent::State &start, const typename Agent::State &goal) {
 	dfpair(stdout, "planner", "%s", "PPRM");
 
-	typedef PRMLite<Workspace, Agent> PRMLite;
-	typedef PlakuTreeInterface<Workspace, Agent, PRMLite> PlakuTreeInterface;
-	typedef RRT<Workspace, Agent, PlakuTreeInterface> Plaku;
+	typedef LazyPRMLite<Workspace, Agent> PRMLite;
+	typedef PlakuTreeInterface<Workspace, Agent, PRMLite> PlakuTreeInterfaceT;
+	typedef RRT<Workspace, Agent, PlakuTreeInterfaceT> Plaku;
 
 	unsigned int numberOfPRMVertices = stol(args.value("Number Of PRM Vertices"));
 	unsigned int numberOfNearestNeighborEdgeConsiderations = stol(args.value("Nearest Neighbors To Consider In PRM Edge Construction"));
@@ -104,27 +104,26 @@ void go_PPRM(const InstanceFileMap& args, const Agent& agent, const Workspace &w
 	double b = stod(args.value("Plaku b Value"));
 	double stateRadius = stod(args.value("Plaku PRM State Selection Radius"));
 
-	PlakuTreeInterface plakuTreeInterface(workspace, agent, prmLite, start, goal, alpha, b, stateRadius);
+	PlakuTreeInterfaceT plakuTreeInterface(workspace, agent, prmLite, start, goal, alpha, b, stateRadius);
 
-	// plakuTreeInterface.draw();
-
-	Plaku planner(workspace, agent, plakuTreeInterface, args);
+	// Plaku planner(workspace, agent, plakuTreeInterface, args);
 	#ifdef WITHGRAPHICS
 		bool firstInvocation = true;
 		auto lambda = [&](){
+			plakuTreeInterface.draw();
 			workspace.draw();
 			agent.drawMesh(start);
 			agent.drawMesh(goal);
 
-			// plakuTreeInterface.draw();
+	// 		// plakuTreeInterface.draw();
 
-			planner.query(start, goal, GraphicsIterations, firstInvocation);
-			firstInvocation = false;
+	// 		planner.query(start, goal, GraphicsIterations, firstInvocation);
+	// 		firstInvocation = false;
 		};
 		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
-	#else
-		planner.query(start, goal);
-		planner.dfpairs();
+	// #else
+	// 	planner.query(start, goal);
+	// 	planner.dfpairs();
 	#endif
 }
 

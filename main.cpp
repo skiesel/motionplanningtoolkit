@@ -28,6 +28,7 @@ std::default_random_engine GlobalRandomGenerator;
 
 #include "discretizations/workspace/griddiscretization.hpp"
 #include "discretizations/workspace/prmlite.hpp"
+#include "discretizations/workspace/lazyprmlite.hpp"
 
 #include "utilities/flannkdtreewrapper.hpp"
 #include "utilities/instancefilemap.hpp"

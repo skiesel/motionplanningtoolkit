@@ -14,6 +14,7 @@
 
 template <class Workspace, class Agent>
 class PRMLite {
+protected:
 	typedef typename Agent::State State;
 
 	struct VertexZRotationOnly {
@@ -48,9 +49,15 @@ class PRMLite {
 	};
 
 	struct Edge {
-		Edge() {}
+		enum CollisionCheckingStatus {
+			UNKNOWN = 0,
+			INVALID = 1,
+			VALID = 2,
+		};
 
-		Edge(unsigned int endpoint, double weight) : endpoint(endpoint), weight(weight) {
+		Edge() : status(UNKNOWN) {}
+
+		Edge(unsigned int endpoint, double weight) : endpoint(endpoint), weight(weight), status(UNKNOWN) {
 
 		}
 
@@ -64,6 +71,7 @@ class PRMLite {
 
 		unsigned int endpoint;
 		double weight;
+		CollisionCheckingStatus status;
 	};
 
 	typedef flann::KDTreeIndexParams KDTreeType;
@@ -71,32 +79,9 @@ class PRMLite {
 
 public:
 	PRMLite(const Workspace &workspace, const Agent &agent, const State &canonicalState, unsigned int numVertices,
-		unsigned int edgeSetSize, double collisionCheckDT = 0.1) :
-		agent(agent), kdtree(KDTreeType(4), 4), canonicalState(canonicalState) {
-
-		dfpair(stdout, "prm vertex set size", "%lu", numVertices);
-		dfpair(stdout, "prm edge set size", "%lu", edgeSetSize);
-		dfpair(stdout, "prm edge collision check dt", "%g", collisionCheckDT);
-		dfpair(stdout, "prm random quaternion z only", "%s", "true");
-
-		clock_t start = clock();
-		clock_t vertexStart = clock();
-
-		generateVertices(workspace, agent, numVertices);
-
-		clock_t end = clock();
-		double time = (double) (end-vertexStart) / CLOCKS_PER_SEC;
-		dfpair(stdout, "prm vertex build time", "%g", time);
-		clock_t edgeStart = clock();
-
-		generateEdges(workspace, agent, collisionCheckDT, edgeSetSize);
-
-		end = clock();
-		time = (double) (end-edgeStart) / CLOCKS_PER_SEC;
-		dfpair(stdout, "prm edge build time", "%g", time);
-
-		time = (double) (end-start) / CLOCKS_PER_SEC;
-		dfpair(stdout, "prm build time", "%g", time);
+		unsigned int edgeSetSize, double collisionCheckDT, bool shouldGenerateEdges = true) :
+		workspace(workspace), agent(agent), kdtree(KDTreeType(4), 4), canonicalState(canonicalState), collisionCheckDT(collisionCheckDT), collisionChecks(0) {
+			initialize(numVertices, edgeSetSize, shouldGenerateEdges);
 	}
 
 	void grow(unsigned int howManyToAdd) {
@@ -178,9 +163,42 @@ public:
 		return edge != edges.end();
 	}
 
-private:
+protected:
 
-	void generateVertices(const Workspace &workspace, const Agent &agent, unsigned int numVertices) {
+	void initialize(unsigned int numVertices, unsigned int edgeSetSize, bool shouldGenerateEdges) {
+		dfpair(stdout, "prm vertex set size", "%lu", numVertices);
+		dfpair(stdout, "prm edge set size", "%lu", edgeSetSize);
+		dfpair(stdout, "prm edge collision check dt", "%g", collisionCheckDT);
+		dfpair(stdout, "prm random quaternion z only", "%s", "true");
+
+		startTime = clock();
+
+		clock_t vertexStart = clock();
+
+		generateVertices(numVertices);
+
+		clock_t end = clock();
+		double time = (double) (end-vertexStart) / CLOCKS_PER_SEC;
+		dfpair(stdout, "prm vertex build time", "%g", time);
+		
+		if(shouldGenerateEdges) {
+			clock_t edgeStart = clock();
+
+			generateEdges(edgeSetSize);
+
+			end = clock();
+
+			time = (double) (end-edgeStart) / CLOCKS_PER_SEC;
+			dfpair(stdout, "prm edge build time", "%g", time);
+			dfpair(stdout, "prm collision checks", "%u", collisionChecks);
+		
+
+			time = (double) (end-startTime) / CLOCKS_PER_SEC;
+			dfpair(stdout, "prm build time", "%g", time);
+		}
+	}
+
+	void generateVertices(unsigned int numVertices) {
 		vertices.reserve(numVertices);
 
 		auto bounds = workspace.getBounds();
@@ -206,7 +224,7 @@ private:
 		}
 	}
 
-	void generateEdges(const Workspace &workspace, const Agent &agent, double collisionCheckDT, double edgeSetSize) {
+	virtual void generateEdges(double edgeSetSize) {
 		for(unsigned int i = 0; i < vertices.size(); ++i) {
 			auto res = kdtree.kNearest(vertices[i], edgeSetSize+1, 0, 1);
 
@@ -221,9 +239,16 @@ private:
 
 				std::vector<fcl::Transform3f> edgeCandidate = math::interpolate(vertices[i]->transform, endVertex->transform, collisionCheckDT);
 
+				if(edgeCandidate.size() != 0) {
+					collisionChecks++;
+				}
+
 				if(edgeCandidate.size() == 0 || workspace.safePoses(agent, edgeCandidate, canonicalState)) {
 					edges[i][endVertex->id] = Edge(endVertex->id, cost);
+					edges[i][endVertex->id].status = Edge::CollisionCheckingStatus::VALID;
+					
 					edges[endVertex->id][i] = Edge(i, cost); //the reverse interpolation would be symmetric
+					edges[endVertex->id][i].status = Edge::CollisionCheckingStatus::VALID;
 				}
 			}
 		}
@@ -250,7 +275,7 @@ private:
 #ifdef WITHGRAPHICS
 	void drawOpenGL(bool drawPoints, bool drawLines, const std::vector<std::vector<double>> &colors) const {
 		if(drawPoints) {
-			glPointSize(5);
+			glPointSize(10);
 			unsigned int curIndex = 0;
 			std::vector<double> white(3,1);
 			for(const auto vert : vertices) {
@@ -365,10 +390,15 @@ private:
 			}
 		}
 	}
+
 #endif
+	const Workspace &workspace;
 	const Agent &agent;
 	const State &canonicalState;
 	std::vector<VertexZRotationOnly*> vertices;
 	std::unordered_map<unsigned int, std::unordered_map<unsigned int, Edge>> edges;
+	double collisionCheckDT;
+	unsigned int collisionChecks;
 	mutable KDTree kdtree;
+	clock_t startTime;
 };

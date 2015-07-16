@@ -34,6 +34,39 @@ class PlakuTreeInterface {
 			regionPath.push_back(id);
 		}
 
+		void addPathCandidate(double heur, const std::vector<unsigned int> &path) {
+			if(heur < heuristic) {
+				bestIndex = heuristicCandidates.size();
+				heuristic = heur;
+				regionPath = path;
+				regionPath.push_back(id);
+			}
+			heuristicCandidates.push_back(heur);
+			regionPathCandidates.emplace_back(path.begin(), path.end());
+			regionPathCandidates.back().emplace_back(id);
+		}
+
+		void currentInvalidFindNextBestPath() {
+			regionPathCandidates.erase(regionPathCandidates.begin() + bestIndex);
+			heuristicCandidates.erase(heuristicCandidates.begin() + bestIndex);
+
+			if(heuristicCandidates.size() == 0) {
+				bestIndex = 0;
+				heuristic = std::numeric_limits<double>::infinity();
+				regionPath.resize(0);
+				return;
+			}
+
+			heuristic = std::numeric_limits<double>::infinity();
+			for(unsigned int i = 0; i < heuristicCandidates.size(); ++i) {
+				if(heuristicCandidates[i] < heuristic) {
+					heuristic = heuristicCandidates[i];
+					bestIndex = i;
+				}
+			}
+			regionPath = regionPathCandidates[bestIndex];
+		}
+
 		void selected(double alpha) {
 			numSelections++;
 			weight = pow(alpha, numSelections) / (std::numeric_limits<double>::epsilon() + heuristic);
@@ -65,6 +98,11 @@ class PlakuTreeInterface {
 		unsigned int id, numSelections;
 		double heuristic, weight;
 		std::vector<unsigned int> regionPath;
+
+		unsigned int bestIndex;
+		std::vector<double> heuristicCandidates;
+		std::vector<std::vector<unsigned int>> regionPathCandidates;
+
 		bool onOpen;
 		KDTree *edgesInRegion;
 	};
@@ -267,8 +305,45 @@ private:
 		typedef typename TheBoss::Region Region;
 	public:
 		void dijkstra(TheBoss& theBoss, Region *region) {
-			fprintf(stderr, "not implemented");
-			exit(0);
+			InPlaceBinaryHeap<Region> open;
+			region->setHeuristicAndPath(0, std::vector<unsigned int>());
+			open.push(region);
+
+			while(!open.isEmpty()) {
+				Region *current = open.peek();
+
+				unsigned int pathLength = current->regionPath.size();
+
+				if(pathLength > 2 && !theBoss.discretization.isValidEdge(current->regionPath[pathLength-1], current->regionPath[pathLength-2])) {
+					current->currentInvalidFindNextBestPath();
+					if(current->regionPath.size() > 0) {
+						open.siftFromItem(current);
+					} else {
+						open.pop();
+					}
+					continue;
+				}
+
+				current = open.pop();
+
+				std::vector<unsigned int> kids = theBoss.discretization.getNeighboringCells(current->id);
+				for(unsigned int kid : kids) {
+					double newHeuristic = current->heuristic + theBoss.discretization.getEdgeCostBetweenCells(current->id, kid);
+					Region *kidPtr = theBoss.regions[kid];
+					double oldHeuristic = kidPtr->heuristic;
+					kidPtr->addPathCandidate(newHeuristic, current->regionPath);
+					if(newHeuristic < oldHeuristic) {
+						if(open.inHeap(kidPtr)) {
+							open.siftFromItem(kidPtr);
+						} else {
+							open.push(kidPtr);
+						}
+					}
+				}
+			}
+
+			// Get the edge checks to print
+			theBoss.discretization.dfPairs();
 		}
 	};
 

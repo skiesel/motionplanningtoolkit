@@ -53,6 +53,10 @@ namespace math {
 	fcl::Quaternion3f slerp(fcl::Quaternion3f q1, fcl::Quaternion3f q2, double lambda) {
 		float dotproduct = q1.dot(q2);
 
+		if(dotproduct >= 1) {
+			return q1;
+		}
+
 		// algorithm adapted from Shoemake's paper
 		double lamdaHalf = lambda / 2.0;
 
@@ -91,8 +95,11 @@ namespace math {
 
 		double totalLinearDistance = vectorDistance(v1, v2);
 
-
-		assert(linearStepSize < totalLinearDistance);
+		if(linearStepSize > totalLinearDistance) {
+			interpolationPoints.emplace_back(t1);
+			interpolationPoints.emplace_back(t2);
+			return interpolationPoints;
+		}
 
 		unsigned int steps = totalLinearDistance / linearStepSize;
 		double percentageStep = linearStepSize / totalLinearDistance;
@@ -102,11 +109,17 @@ namespace math {
 		const fcl::Quaternion3f &q1 = t1.getQuatRotation();
 		const fcl::Quaternion3f &q2 = t2.getQuatRotation();
 
+
+		interpolationPoints.emplace_back(t1);
+
 		fcl::Transform3f point(t1);
 		for(unsigned int i = 0; i < steps; ++i) {
-			point.setTransform(slerp(q1, q2, percentageStep * (double)i+1), point.getTranslation() + vecStep);
+			fcl::Quaternion3f slerped = slerp(q1, q2, percentageStep * (double)(i+1));
+			point.setTransform(slerped, point.getTranslation() + vecStep);
 			interpolationPoints.emplace_back(point);
 		}
+
+		interpolationPoints.emplace_back(t2);
 
 		return interpolationPoints;
 	}

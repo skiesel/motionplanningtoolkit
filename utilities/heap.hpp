@@ -32,6 +32,11 @@ template <class T> class InPlaceBinaryHeap {
 		siftUp(fill-1);
 	}
 
+	T* peek() {
+		assert(fill > 0);
+		return heap[0];
+	}
+
 	T* pop() {
 		assert(fill > 0);
 		T* ret_T = heap[0];
