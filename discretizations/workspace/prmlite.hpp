@@ -16,37 +16,54 @@ template <class Workspace, class Agent>
 class PRMLite {
 protected:
 	typedef typename Agent::State State;
+	typedef typename Agent::AbstractState AbstractState;
 
-	struct VertexZRotationOnly {
-		VertexZRotationOnly(const fcl::Transform3f &transform, unsigned int id) : transform(transform), id(id), treeStateVars(4) {
-			const fcl::Vec3f &translation = transform.getTranslation();
-			const fcl::Quaternion3f &quaternion = transform.getQuatRotation();
-			for(unsigned int i = 0; i < 3; ++i)
-				treeStateVars[i] = translation[i];
-
-			fcl::Vec3f axis;
-			double yaw;
-			quaternion.toAxisAngle(axis, yaw);
-			treeStateVars[3] = yaw;
-
-			// treeStateVars[3] = quaternion.getX();
-			// treeStateVars[4] = quaternion.getY();
-			// treeStateVars[5] = quaternion.getZ();
-			// treeStateVars[6] = quaternion.getW();
-		}
+	struct Vertex {
+		Vertex(const AbstractState& state, unsigned int id) : state(state), id(id) {}
 
 		const std::vector<double>& getTreeStateVars() const {
-			return treeStateVars;
+			return state.treeStateVars;
 		}
 
 		void setPointIndex(unsigned int index) {
 			// we aren't going to look things up in the traditional way so we don't need this stored
 		}
 
-		fcl::Transform3f transform;
 		unsigned int id;
-		std::vector<double> treeStateVars;
+		AbstractState state;
 	};
+
+
+	// struct VertexZRotationOnly {
+	// 	VertexZRotationOnly(const fcl::Transform3f &transform, unsigned int id) : transform(transform), id(id), treeStateVars(4) {
+	// 		const fcl::Vec3f &translation = transform.getTranslation();
+	// 		const fcl::Quaternion3f &quaternion = transform.getQuatRotation();
+	// 		for(unsigned int i = 0; i < 3; ++i)
+	// 			treeStateVars[i] = translation[i];
+
+	// 		fcl::Vec3f axis;
+	// 		double yaw;
+	// 		quaternion.toAxisAngle(axis, yaw);
+	// 		treeStateVars[3] = yaw;
+
+	// 		// treeStateVars[3] = quaternion.getX();
+	// 		// treeStateVars[4] = quaternion.getY();
+	// 		// treeStateVars[5] = quaternion.getZ();
+	// 		// treeStateVars[6] = quaternion.getW();
+	// 	}
+
+	// 	const std::vector<double>& getTreeStateVars() const {
+	// 		return treeStateVars;
+	// 	}
+
+	// 	void setPointIndex(unsigned int index) {
+	// 		// we aren't going to look things up in the traditional way so we don't need this stored
+	// 	}
+
+	// 	fcl::Transform3f transform;
+	// 	unsigned int id;
+	// 	std::vector<double> treeStateVars;
+	// };
 
 	struct Edge {
 		enum CollisionCheckingStatus {
@@ -75,7 +92,7 @@ protected:
 	};
 
 	typedef flann::KDTreeIndexParams KDTreeType;
-	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, VertexZRotationOnly> KDTree;
+	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, Vertex> KDTree;
 
 public:
 	PRMLite(const Workspace &workspace, const Agent &agent, const State &canonicalState, unsigned int numVertices,
@@ -92,9 +109,9 @@ public:
 		return vertices.size();
 	}
 
-	const fcl::Transform3f& getTransform(unsigned int i) const {
-		return vertices[i]->transform;
-	}
+	// const fcl::Transform3f& getTransform(unsigned int i) const {
+	// 	return vertices[i]->transform;
+	// }
 
 	double getEdgeCostBetweenCells(unsigned int c1, unsigned int c2) const {
 		auto vertexAndEdges = edges.find(c1);
@@ -109,7 +126,7 @@ public:
 	}
 
 	unsigned int getCellId(const typename Agent::State &state) const {
-		VertexZRotationOnly v(state.getTransform(), 0);
+		Vertex v(state.toAbstractState(), 0);
 		auto res = kdtree.nearest(&v, 1, 1);
 
 		assert(res.elements.size() > 0);
@@ -132,14 +149,16 @@ public:
 	}
 
 	typename Agent::State getRandomStateNearRegionCenter(unsigned int index, double radius) const {
-		fcl::Vec3f point = math::randomPointInSphere(radius);
-		fcl::Quaternion3f rot = math::getRandomZOnlyQuaternion();
-		// fcl::Quaternion3f rot = math::getRandomUnitQuaternion();
+		return agent.getRandomStateNear(vertices[index]->state, canonicalState, radius);
 
-		fcl::Transform3f transform(rot, point);
-		transform = vertices[index]->transform * transform;
+		// fcl::Vec3f point = math::randomPointInSphere(radius);
+		// fcl::Quaternion3f rot = math::getRandomZOnlyQuaternion();
+		// // fcl::Quaternion3f rot = math::getRandomUnitQuaternion();
 
-		return agent.transformToState(canonicalState, transform);
+		// fcl::Transform3f transform(rot, point);
+		// transform = vertices[index]->transform * transform;
+
+		// return agent.transformToState(canonicalState, transform);
 	}
 
 	void draw(bool drawPoints=true, bool drawLines=false, std::vector<std::vector<double>> colors = std::vector<std::vector<double>>()) const {
@@ -203,21 +222,25 @@ protected:
 
 		auto bounds = workspace.getBounds();
 
-		std::vector< std::uniform_real_distribution<double> > linearDistributions;
+		AbstractState::getRandomAbstractState(bounds);
 
-		for(auto range : bounds) {
-			linearDistributions.emplace_back(range.first, range.second);
-		}
+		// std::vector< std::uniform_real_distribution<double> > linearDistributions;
+
+		// for(auto range : bounds) {
+		// 	linearDistributions.emplace_back(range.first, range.second);
+		// }
 
 		while(vertices.size() < numVertices) {
-			fcl::Vec3f translation = getRandomVector(linearDistributions);
+			AbstractState state = AbstractState::getRandomAbstractState(bounds);
 
-			fcl::Quaternion3f rotation = math::getRandomZOnlyQuaternion();
-			// fcl::Quaternion3f rotation = math::getRandomUnitQuaternion();
-			fcl::Transform3f transform(rotation, translation);
+			// fcl::Vec3f translation = getRandomVector(linearDistributions);
 
-			if(workspace.safePose(agent, transform, canonicalState)) {
-				auto newVert = new VertexZRotationOnly(transform, vertices.size());
+			// fcl::Quaternion3f rotation = math::getRandomZOnlyQuaternion();
+			// // fcl::Quaternion3f rotation = math::getRandomUnitQuaternion();
+			// fcl::Transform3f transform(rotation, translation);
+
+			if(workspace.safePoses(agent, state.getTransforms(), canonicalState)) {
+				auto newVert = new Vertex(state, vertices.size());
 				vertices.push_back(newVert);
 				kdtree.insertPoint(newVert);
 			}
@@ -234,10 +257,10 @@ protected:
 					continue;
 				}
 
-				double cost = evaluateTransformDistance(vertices[i]->transform, endVertex->transform);
+				double cost = AbstractState::evaluateDistance(vertices[i]->state, endVertex->state);
 				if(cost == 0) continue;
 
-				std::vector<fcl::Transform3f> edgeCandidate = math::interpolate(vertices[i]->transform, endVertex->transform, collisionCheckDT);
+				auto edgeCandidate = AbstractState::interpolate(vertices[i]->state, endVertex->state, collisionCheckDT);
 
 				if(edgeCandidate.size() != 0) {
 					collisionChecks++;
@@ -254,23 +277,23 @@ protected:
 		}
 	}
 
-	double evaluateTransformDistance(const fcl::Transform3f &t1, const fcl::Transform3f &t2) const {
-		const fcl::Vec3f p1 = t1.getTranslation();
-		const fcl::Vec3f p2 = t2.getTranslation();
-		double dx = p1[0] - p2[0];
-		double dy = p1[1] - p2[1];
-		double dz = p1[2] - p2[2];
+	// double evaluateTransformDistance(const fcl::Transform3f &t1, const fcl::Transform3f &t2) const {
+	// 	const fcl::Vec3f p1 = t1.getTranslation();
+	// 	const fcl::Vec3f p2 = t2.getTranslation();
+	// 	double dx = p1[0] - p2[0];
+	// 	double dy = p1[1] - p2[1];
+	// 	double dz = p1[2] - p2[2];
 
-		return sqrt(dx*dx + dy*dy + dz*dz);
-	}
+	// 	return sqrt(dx*dx + dy*dy + dz*dz);
+	// }
 
-	fcl::Vec3f getRandomVector(std::vector< std::uniform_real_distribution<double> > &distributions) const {
-		fcl::Vec3f vector;
-		for(unsigned int i = 0; i < distributions.size(); ++i) {
-			vector[i] = distributions[i](GlobalRandomGenerator);
-		}
-		return vector;
-	}
+	// fcl::Vec3f getRandomVector(std::vector< std::uniform_real_distribution<double> > &distributions) const {
+	// 	fcl::Vec3f vector;
+	// 	for(unsigned int i = 0; i < distributions.size(); ++i) {
+	// 		vector[i] = distributions[i](GlobalRandomGenerator);
+	// 	}
+	// 	return vector;
+	// }
 
 #ifdef WITHGRAPHICS
 	void drawOpenGL(bool drawPoints, bool drawLines, const std::vector<std::vector<double>> &colors) const {
@@ -281,10 +304,10 @@ protected:
 			for(const auto vert : vertices) {
 
 				if(colors.size() == 0) {
-					drawOpenGLPoint(vert->transform.getTranslation(), white);
+					// drawOpenGLPoint(vert->transform.getTranslation(), white);
 					// agent.drawMesh(vert->transform);
 				} else {
-					drawOpenGLPoint(vert->transform.getTranslation(), colors[curIndex]);
+					// drawOpenGLPoint(vert->transform.getTranslation(), colors[curIndex]);
 					// OpenGLWrapper::Color color(colors[curIndex][0], colors[curIndex][1], colors[curIndex][2]);
 					// agent.drawMesh(vert->transform, color);
 					curIndex++;
@@ -296,19 +319,19 @@ protected:
 		if(drawLines) {
 			OpenGLWrapper::Color color;
 
-			for(const auto& edgeSet : edges) {
-				std::vector<double> edgeForVrep(6);
-				const auto startVertex = vertices[edgeSet.first];
+			// for(const auto& edgeSet : edges) {
+			// 	std::vector<double> edgeForVrep(6);
+			// 	const auto startVertex = vertices[edgeSet.first];
 
-				const auto& trans = startVertex->transform.getTranslation();
+			// 	const auto& trans = startVertex->transform.getTranslation();
 
-				for(const auto& edge : edgeSet.second) {
-					const auto endVertex = vertices[edge.second.endpoint];
-					const auto& trans2 = endVertex->transform.getTranslation();
+			// 	for(const auto& edge : edgeSet.second) {
+			// 		const auto endVertex = vertices[edge.second.endpoint];
+			// 		const auto& trans2 = endVertex->transform.getTranslation();
 
-					OpenGLWrapper::getOpenGLWrapper().drawLine(trans[0], trans[1], trans[2], trans2[0], trans2[1], trans2[2], color);
-				}
-			}
+			// 		OpenGLWrapper::getOpenGLWrapper().drawLine(trans[0], trans[1], trans[2], trans2[0], trans2[1], trans2[2], color);
+			// 	}
+			// }
 		}
 	}
 
@@ -333,69 +356,69 @@ protected:
 #endif
 #ifdef VREPPLUGIN
 	void drawVREP(bool drawPoints, bool drawLines, const std::vector<std::vector<double>> &colors) const {
-		simFloat coords[12];
-		for(unsigned int i = 0; i < 6; ++i)
-			coords[i] = 0;
+		// simFloat coords[12];
+		// for(unsigned int i = 0; i < 6; ++i)
+		// 	coords[i] = 0;
 
-		if(drawPoints) {
-			auto verticesHandle = simAddDrawingObject(sim_drawing_spherepoints | sim_drawing_itemcolors, 0.05, 0.0, -1, vertices.size(), NULL, NULL, NULL, NULL);
-			unsigned int curIndex = 0;
-			for(const auto vert : vertices) {
-				const auto& trans = vert->transform.getTranslation();
+		// if(drawPoints) {
+		// 	auto verticesHandle = simAddDrawingObject(sim_drawing_spherepoints | sim_drawing_itemcolors, 0.05, 0.0, -1, vertices.size(), NULL, NULL, NULL, NULL);
+		// 	unsigned int curIndex = 0;
+		// 	for(const auto vert : vertices) {
+		// 		const auto& trans = vert->transform.getTranslation();
 
 
-				for(unsigned int i = 0; i < 3; ++i) {
-					coords[i] = trans[i];
-				}
+		// 		for(unsigned int i = 0; i < 3; ++i) {
+		// 			coords[i] = trans[i];
+		// 		}
 
-				if(colors.size() > 0) {
-					for(unsigned int i = 0; i < 3; ++i) {
-						coords[3+i] = colors[curIndex][i];
-					}
-				}
-				simAddDrawingObjectItem(verticesHandle, coords);
-				curIndex++;
-			}
-		}
+		// 		if(colors.size() > 0) {
+		// 			for(unsigned int i = 0; i < 3; ++i) {
+		// 				coords[3+i] = colors[curIndex][i];
+		// 			}
+		// 		}
+		// 		simAddDrawingObjectItem(verticesHandle, coords);
+		// 		curIndex++;
+		// 	}
+		// }
 
-		if(drawLines) {
-			std::vector< std::vector<double> > edgesForVrep;
-			for(const auto& edgeSet : edges) {
-				std::vector<double> edgeForVrep(6);
-				const auto startVertex = vertices[edgeSet.first];
+		// if(drawLines) {
+		// 	std::vector< std::vector<double> > edgesForVrep;
+		// 	for(const auto& edgeSet : edges) {
+		// 		std::vector<double> edgeForVrep(6);
+		// 		const auto startVertex = vertices[edgeSet.first];
 
-				const auto& trans = startVertex->transform.getTranslation();
-				for(unsigned int i = 0; i < 3; ++i) {
-					edgeForVrep[i] = trans[i];
-				}
+		// 		const auto& trans = startVertex->transform.getTranslation();
+		// 		for(unsigned int i = 0; i < 3; ++i) {
+		// 			edgeForVrep[i] = trans[i];
+		// 		}
 
-				for(const auto& edge : edgeSet.second) {
-					const auto endVertex = vertices[edge.second.endpoint];
+		// 		for(const auto& edge : edgeSet.second) {
+		// 			const auto endVertex = vertices[edge.second.endpoint];
 
-					const auto& trans2 = endVertex->transform.getTranslation();
-					for(unsigned int i = 0; i < 3; ++i) {
-						edgeForVrep[3+i] = trans2[i];
-					}
+		// 			const auto& trans2 = endVertex->transform.getTranslation();
+		// 			for(unsigned int i = 0; i < 3; ++i) {
+		// 				edgeForVrep[3+i] = trans2[i];
+		// 			}
 
-					edgesForVrep.push_back(edgeForVrep);
-				}
-			}
+		// 			edgesForVrep.push_back(edgeForVrep);
+		// 		}
+		// 	}
 
-			auto edgesHandle = simAddDrawingObject(sim_drawing_lines, 1, 0.0, -1, edgesForVrep.size(), NULL, NULL, NULL, NULL);
+		// 	auto edgesHandle = simAddDrawingObject(sim_drawing_lines, 1, 0.0, -1, edgesForVrep.size(), NULL, NULL, NULL, NULL);
 
-			for(const auto &edge : edgesForVrep) {
-				for(unsigned int i = 0; i < 6; ++i)
-					coords[i] = edge[i];
-				simAddDrawingObjectItem(edgesHandle, coords);
-			}
-		}
+		// 	for(const auto &edge : edgesForVrep) {
+		// 		for(unsigned int i = 0; i < 6; ++i)
+		// 			coords[i] = edge[i];
+		// 		simAddDrawingObjectItem(edgesHandle, coords);
+		// 	}
+		// }
 	}
 
 #endif
 	const Workspace &workspace;
 	const Agent &agent;
 	const State &canonicalState;
-	std::vector<VertexZRotationOnly*> vertices;
+	std::vector<Vertex*> vertices;
 	std::unordered_map<unsigned int, std::unordered_map<unsigned int, Edge>> edges;
 	double collisionCheckDT;
 	unsigned int collisionChecks;

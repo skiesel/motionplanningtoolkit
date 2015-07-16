@@ -3,13 +3,12 @@
 #include <cmath>
 #include <stdlib.h>
 #include <random>
-
+#include "abstracttransformstate.hpp"
 #include "../utilities/fcl_helpers.hpp"
 #include "../utilities/openglwrapper.hpp"
 #include "../utilities/instancefilemap.hpp"
 
 class Blimp {
-
 	enum LABELS {
 		X = 0,
 		Y = 1,
@@ -21,6 +20,8 @@ class Blimp {
 	};
 
 public:
+	typedef AbstractTransformState AbstractState;
+
 	typedef std::vector< std::pair<double, double> > WorkspaceBounds;
 	typedef std::vector< std::pair<double, double> > StateVarRanges;
 
@@ -63,6 +64,12 @@ public:
 				fprintf(stderr, "%g ", v);
 			}
 			fprintf(stderr, "\n");
+		}
+
+		AbstractState toAbstractState() const {
+			fprintf(stderr, "toAbstractState not implemented\n");
+			exit(0);
+			return AbstractState();
 		}
 
 #ifdef WITHGRAPHICS
@@ -271,17 +278,23 @@ public:
 		return controlBounds;
 	}
 
-	State transformToState(const State &s, const fcl::Transform3f &transform) const {
-		fcl::Quaternion3f orientation = transform.getQuatRotation();
-		fcl::Vec3f axis;
-		double theta;
-		orientation.toAxisAngle(axis, theta);
-		theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
-
-		fcl::Vec3f position = transform.getTranslation();
-
-		return State(position[0], position[1], position[2], theta);
+	State getRandomStateNear(const AbstractState &a, const State &s, double radius) const {
+		fprintf(stderr, "getRandomStateNear no implemented\n");
+		exit(0);
+		return State();
 	}
+
+	// State transformToState(const State &s, const fcl::Transform3f &transform) const {
+	// 	fcl::Quaternion3f orientation = transform.getQuatRotation();
+	// 	fcl::Vec3f axis;
+	// 	double theta;
+	// 	orientation.toAxisAngle(axis, theta);
+	// 	theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
+
+	// 	fcl::Vec3f position = transform.getTranslation();
+
+	// 	return State(position[0], position[1], position[2], theta);
+	// }
 
 	bool isGoal(const State &state, const State &goal) const {
 		const StateVars &s = state.getStateVars();

@@ -4,14 +4,15 @@
 #include <stdlib.h>
 #include <random>
 
+#include "abstracttransformstate.hpp"
 #include "../utilities/fcl_helpers.hpp"
 #include "../utilities/openglwrapper.hpp"
 #include "../utilities/instancefilemap.hpp"
 
 class Geometric {
-
-
 public:
+	typedef AbstractTransformState AbstractState;
+	
 	typedef std::vector< std::pair<double, double> > WorkspaceBounds;
 	typedef std::vector< std::pair<double, double> > StateVarRanges;
 
@@ -49,6 +50,12 @@ public:
 				fprintf(stderr, "%g ", v);
 			}
 			fprintf(stderr, "\n");
+		}
+
+		AbstractState toAbstractState() const {
+			fprintf(stderr, "toAbstractState not implemented\n");
+			exit(0);
+			return AbstractState();
 		}
 
 #ifdef WITHGRAPHICS
@@ -237,20 +244,26 @@ public:
 		return controlBounds;
 	}
 
-	State transformToState(const State &s, const fcl::Transform3f &transform) const {
-		fcl::Vec3f position = transform.getTranslation();
-		fcl::Quaternion3f orientation = transform.getQuatRotation();
-		StateVars vars(7);
-		vars[0] = position[0];
-		vars[1] = position[1];
-		vars[2] = position[2];
-		vars[3] = orientation.getW();
-		vars[4] = orientation.getX();
-		vars[5] = orientation.getY();
-		vars[6] = orientation.getZ();
-
-		return State(vars);
+	State getRandomStateNear(const AbstractState &a, const State &s, double radius) const {
+		fprintf(stderr, "getRandomStateNear no implemented\n");
+		exit(0);
+		return State();
 	}
+
+	// State transformToState(const State &s, const fcl::Transform3f &transform) const {
+	// 	fcl::Vec3f position = transform.getTranslation();
+	// 	fcl::Quaternion3f orientation = transform.getQuatRotation();
+	// 	StateVars vars(7);
+	// 	vars[0] = position[0];
+	// 	vars[1] = position[1];
+	// 	vars[2] = position[2];
+	// 	vars[3] = orientation.getW();
+	// 	vars[4] = orientation.getX();
+	// 	vars[5] = orientation.getY();
+	// 	vars[6] = orientation.getZ();
+
+	// 	return State(vars);
+	// }
 
 	bool isGoal(const State &state, const State &goal) const {
 		const StateVars &s = state.getStateVars();

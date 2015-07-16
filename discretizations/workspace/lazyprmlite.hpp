@@ -5,6 +5,7 @@
 template <class Workspace, class Agent>
 class LazyPRMLite : public PRMLite<Workspace, Agent> {
 	typedef typename Agent::State State;
+	typedef typename Agent::AbstractState AbstractState;
 	typedef typename PRMLite<Workspace, Agent>::Edge Edge;
 
 public:
@@ -33,8 +34,8 @@ public:
 		auto &edge = this->edges[i][j];
 
 		if(edge.status == Edge::UNKNOWN) {
-			std::vector<fcl::Transform3f> edgeCandidate = math::interpolate(this->vertices[i]->transform,
-		 													this->vertices[j]->transform, this->collisionCheckDT);
+			auto edgeCandidate = AbstractState::interpolate(this->vertices[i]->state, this->vertices[j]->state, this->collisionCheckDT);
+
 			if(edgeCandidate.size() != 0) {
 				this->collisionChecks++;
 			}
@@ -65,7 +66,7 @@ public:
 					continue;
 				}
 
-				double cost = this->evaluateTransformDistance(this->vertices[i]->transform, endVertex->transform);
+				double cost = AbstractState::evaluateDistance(this->vertices[i]->state, endVertex->state);
 				if(cost == 0) continue;
 
 				this->edges[i][endVertex->id] = Edge(endVertex->id, cost);

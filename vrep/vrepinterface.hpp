@@ -5,10 +5,13 @@
 #include <boost/thread/barrier.hpp>
 #include <fcl/math/transform.h>
 
+#include "../agents/abstracttransformstate.hpp"
 #include "../utilities/instancefilemap.hpp"
 
 class VREPInterface {
 public:
+	typedef AbstractTransformState AbstractState;
+
 	typedef std::vector< std::pair<double, double> > WorkspaceBounds;
 	typedef std::vector< std::pair<double, double> > StateVarRanges;
 
@@ -71,6 +74,12 @@ public:
 		void print() const {
 			for(auto v : stateVars) { fprintf(stderr, "%g ", v); }
 			fprintf(stderr, "\n");
+		}
+
+		AbstractState toAbstractState() const {
+			fprintf(stderr, "toAbstractState not implemented\n");
+			exit(0);
+			return AbstractState();
 		}
 
 		StateVars stateVars, rootPosition, rootOrientation, goalPositionVars, goalOrientationVars;
@@ -305,33 +314,39 @@ public:
 		return controls;
 	}
 
-	State transformToState(const State& s, const fcl::Transform3f& transform) const {
-		loadState(s);
-
-		simFloat vals[4];
-		const fcl::Vec3f &position = transform.getTranslation();
-		const fcl::Quaternion3f &quaternion = transform.getQuatRotation();
-
-
-
-		for(unsigned int i = 0; i < 3; ++i)
-			vals[i] = position[i];
-
-		simSetObjectPosition(agentHandle, -1, vals);
-
-		vals[0] = quaternion.getX();
-		vals[1] = quaternion.getY();
-		vals[2] = quaternion.getZ();
-		vals[3] = quaternion.getW();
-
-		simSetObjectQuaternion(agentHandle, -1, vals);
-
-		State returnState;
-
-		saveState(returnState);
-
-		return returnState;
+	State getRandomStateNear(const AbstractState &a, const State &s, double radius) const {
+		fprintf(stderr, "getRandomStateNear no implemented\n");
+		exit(0);
+		return State();
 	}
+
+	// State transformToState(const State& s, const fcl::Transform3f& transform) const {
+	// 	loadState(s);
+
+	// 	simFloat vals[4];
+	// 	const fcl::Vec3f &position = transform.getTranslation();
+	// 	const fcl::Quaternion3f &quaternion = transform.getQuatRotation();
+
+
+
+	// 	for(unsigned int i = 0; i < 3; ++i)
+	// 		vals[i] = position[i];
+
+	// 	simSetObjectPosition(agentHandle, -1, vals);
+
+	// 	vals[0] = quaternion.getX();
+	// 	vals[1] = quaternion.getY();
+	// 	vals[2] = quaternion.getZ();
+	// 	vals[3] = quaternion.getW();
+
+	// 	simSetObjectQuaternion(agentHandle, -1, vals);
+
+	// 	State returnState;
+
+	// 	saveState(returnState);
+
+	// 	return returnState;
+	// }
 
 	Edge steer(const State &start, const State &goal, double dt) const {
 		return randomSteer(start, dt);
