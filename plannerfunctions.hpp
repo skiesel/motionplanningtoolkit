@@ -24,7 +24,6 @@ void go_RRT(const InstanceFileMap& args, const Agent& agent, const Workspace &wo
 		bool firstInvocation = true;
 		auto lambda = [&](){
 			workspace.draw();
-			agent.draw();
 			agent.drawMesh(start);
 			agent.drawMesh(goal);
 			planner.query(start, goal, GraphicsIterations, firstInvocation);

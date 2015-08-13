@@ -57,7 +57,13 @@ public:
 			wrapper[i].emplace_back(poses[i]);
 		}
 
-		return !MeshHandler::isInCollision(mesh, agentMeshes, wrapper);
+		bool safe = !MeshHandler::isInCollision(mesh, agentMeshes, wrapper);
+
+		if(!safe) {
+			fprintf(stderr, "collision\n");
+		}
+
+		return safe;
 	}
 
 	bool safePose(const Agent &agent, const fcl::Transform3f &pose, const State &state=State()) const {
@@ -68,7 +74,27 @@ public:
 	}
 
 #ifdef WITHGRAPHICS
-	void draw() const { mesh.draw(); }
+	void draw() const {
+		drawBoundingBox();
+		mesh.draw();
+	}
+
+	void drawBoundingBox() const {
+		OpenGLWrapper::getOpenGLWrapper().drawLine(bounds[0].first, bounds[1].first, bounds[2].first, bounds[0].second, bounds[1].first, bounds[2].first, OpenGLWrapper::Color::Red());
+		OpenGLWrapper::getOpenGLWrapper().drawLine(bounds[0].first, bounds[1].first, bounds[2].first, bounds[0].first, bounds[1].second, bounds[2].first, OpenGLWrapper::Color::Red());
+		OpenGLWrapper::getOpenGLWrapper().drawLine(bounds[0].second, bounds[1].first, bounds[2].first, bounds[0].second, bounds[1].second, bounds[2].first, OpenGLWrapper::Color::Red());
+		OpenGLWrapper::getOpenGLWrapper().drawLine(bounds[0].first, bounds[1].second, bounds[2].first, bounds[0].second, bounds[1].second, bounds[2].first, OpenGLWrapper::Color::Red());
+
+		OpenGLWrapper::getOpenGLWrapper().drawLine(bounds[0].first, bounds[1].first, bounds[2].second, bounds[0].second, bounds[1].first, bounds[2].second, OpenGLWrapper::Color::Red());
+		OpenGLWrapper::getOpenGLWrapper().drawLine(bounds[0].first, bounds[1].first, bounds[2].second, bounds[0].first, bounds[1].second, bounds[2].second, OpenGLWrapper::Color::Red());
+		OpenGLWrapper::getOpenGLWrapper().drawLine(bounds[0].second, bounds[1].first, bounds[2].second, bounds[0].second, bounds[1].second, bounds[2].second, OpenGLWrapper::Color::Red());
+		OpenGLWrapper::getOpenGLWrapper().drawLine(bounds[0].first, bounds[1].second, bounds[2].second, bounds[0].second, bounds[1].second, bounds[2].second, OpenGLWrapper::Color::Red());
+
+		OpenGLWrapper::getOpenGLWrapper().drawLine(bounds[0].first, bounds[1].first, bounds[2].first, bounds[0].first, bounds[1].first, bounds[2].second, OpenGLWrapper::Color::Red());
+		OpenGLWrapper::getOpenGLWrapper().drawLine(bounds[0].first, bounds[1].second, bounds[2].first, bounds[0].first, bounds[1].second, bounds[2].second, OpenGLWrapper::Color::Red());
+		OpenGLWrapper::getOpenGLWrapper().drawLine(bounds[0].second, bounds[1].first, bounds[2].first, bounds[0].second, bounds[1].first, bounds[2].second, OpenGLWrapper::Color::Red());
+		OpenGLWrapper::getOpenGLWrapper().drawLine(bounds[0].second, bounds[1].second, bounds[2].first, bounds[0].second, bounds[1].second, bounds[2].second, OpenGLWrapper::Color::Red());
+	}
 #endif
 
 private:

@@ -49,7 +49,8 @@ public:
 			samplesGenerated++;
 
 #ifdef WITHGRAPHICS
-			// samples.push_back(treeSample);
+			// treeSample.print();
+			samples.push_back(treeSample);
 #endif
 
 			auto edge = agent.randomSteer(treeSample, steeringDT);

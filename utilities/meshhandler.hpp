@@ -30,11 +30,6 @@ public:
 			if((i%4) == (i/4)) transform[i] = 1;
 		}
 
-		// const Vec3f &translation = tf.getTranslation();
-		// transform[12] = translation[0];
-		// transform[13] = translation[1];
-		// transform[14] = translation[2];
-
 		for(unsigned int i = 0; i < vertices.size(); i++) {
 			std::vector<fcl::Vec3f> &verts = vertices[i];
 			for(unsigned int j = 0; j < verts.size(); ++j) {

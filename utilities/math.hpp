@@ -5,6 +5,7 @@
 
 namespace math {
 	std::uniform_real_distribution<double> zeroToOne;
+	std::uniform_real_distribution<double> negOneToOne(-1,1);
 
 	void multiply(const std::vector<double> &m1, const std::vector<double> &m2, std::vector<double> &out) {
 		std::vector<double> temp(16);
@@ -24,14 +25,33 @@ namespace math {
 
 
 	fcl::Vec3f randomPointInSphere(double maxRadius = 1) {
-		double radius = maxRadius * pow(zeroToOne(GlobalRandomGenerator), 1/3);
-		double theta = 2 * M_PI * zeroToOne(GlobalRandomGenerator);
-		double phi = acos(2 * zeroToOne(GlobalRandomGenerator) - 1);
-		double u = cos(phi);
+		double x0, x1, x2, x3;
 
-		double t1 = sqrt(1 - u * u);
+		double denom = 2;
 
-		return fcl::Vec3f(t1 * cos(theta) * radius, t1 * sin(theta) * radius, u * radius);
+		while(denom >= 1) {
+			x0 = negOneToOne(GlobalRandomGenerator);
+			x1 = negOneToOne(GlobalRandomGenerator);
+			x2 = negOneToOne(GlobalRandomGenerator);
+			x3 = negOneToOne(GlobalRandomGenerator);
+			denom = x0*x0 + x1*x1 + x2*x2 + x3*x3;
+		}
+
+		double x = (2 * (x1 * x3 + x0 * x2)) / denom;
+		double y = (2 * (x2 * x3 - x0 * x1)) / denom;
+		double z = (x0*x0 + x3*x3 - x1*x1 - x2*x2) / denom;
+
+		return fcl::Vec3f(x, y, z);
+
+		// double radius = maxRadius * pow(zeroToOne(GlobalRandomGenerator), 1/3);
+		// double theta = 2 * M_PI * zeroToOne(GlobalRandomGenerator);
+		// double phi = acos(2 * zeroToOne(GlobalRandomGenerator) - 1);
+		// double u = cos(phi);
+
+		// double t1 = sqrt(1 - u * u);
+
+		// return fcl::Vec3f(t1 * cos(theta) * radius, t1 * sin(theta) * radius, u * radius);
+
 	}
 
 	double vectorDistance(const fcl::Vec3f &v1, const fcl::Vec3f &v2) {

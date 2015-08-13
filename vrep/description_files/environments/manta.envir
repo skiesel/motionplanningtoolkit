@@ -1,4 +1,4 @@
-Scene File ? /Users/skiesel/gopath/src/github.com/skiesel/motionplanningtoolkit/vrep/scenes/pprm_maze.ttt
+Scene File ? /Users/skiesel/gopath/src/github.com/skiesel/motionplanningtoolkit/vrep/scenes/pprm_maze_convex_hulled.ttt
 
 Agent Handle Name ? Manta
 Agent Collision Group Handle Name ? STL_Imported19

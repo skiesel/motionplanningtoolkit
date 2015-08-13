@@ -8,14 +8,19 @@ Environment Mesh ? ../mesh_models/environment_models/Easy_env.dae
 Environment Location ? 0 0 0 1 0 0 0
 Environment Bounding Box ? 1 12 -1 8 -13 -2
 
-Steering Delta t ? 0.1
-Collision Check Delta t ? 0.01
+Steering Delta t ? 1
+Collision Check Delta t ? 0.1
 
-Integration Step Size ? 0.01
+Integration Step Size ? 0.1
 
-Agent Start Location ? 6.87 1.08 -3.56
+#Agent Start Location ? 6.87 1.08 -3.56
+Agent Start Location ? 6.5 3.5 -3.5
 Agent Start Orientation ? 1 0 0 0
 
-Agent Goal Location ? 6.87 4.08 -11.56
+#Agent Goal Location ? 6.87 4.08 -11.56
+Agent Goal Location ? 6.5 3.5 -11.5
 
 Planner ? RRT
+
+Zoom ? 4
+Rotate X ? 9

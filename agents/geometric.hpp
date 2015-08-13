@@ -22,7 +22,7 @@ public:
 	class State {
 	public:
 		State() : stateVars(7) {
-			stateVars[6] = 1;
+			stateVars[3] = 1;
 		}
 
 		State(const State &s) : stateVars(s.stateVars.begin(), s.stateVars.end()) {}
@@ -31,6 +31,7 @@ public:
 
 		State& operator=(const State &s) {
 			stateVars.resize(7);
+			stateVars[3] = 1;
 			for(unsigned int i = 0; i < s.stateVars.size(); ++i)
 				stateVars[i] = s.stateVars[i];
 			return *this;
@@ -122,7 +123,7 @@ public:
 			buildTreeVars();
 		}
 		Edge(const State &start, const State &end, const fcl::Vec3f &translation, const fcl::Quaternion3f &rotation,
-			double dt) : start(start), translation(translation), rotation(rotation), dt(dt), cost(dt), treeIndex(0) {
+			double dt) : start(start), end(end), translation(translation), rotation(rotation), dt(dt), cost(dt), treeIndex(0) {
 				buildTreeVars();
 			}
 		Edge(const Edge& e) : start(e.start), end(e.end), translation(e.translation), rotation(e.rotation),
@@ -188,7 +189,7 @@ public:
 		StateVars treeVars;
 	};
 
-	Geometric(const InstanceFileMap &args) : mesh(args.value("Agent Mesh")) {
+	Geometric(const InstanceFileMap &args) : mesh(args.value("Agent Mesh")), color(OpenGLWrapper::Color::Red()) {
 
 		auto environmentBoundingBox = args.doubleList("Environment Bounding Box");
 
@@ -222,11 +223,10 @@ public:
 
 	StateVarRanges getStateVarRanges(const WorkspaceBounds& b) const {
 		StateVarRanges bounds(b.begin(), b.end());
-		bounds.emplace_back(0, 1);
-		bounds.emplace_back(0, 1);
-		bounds.emplace_back(0, 1);
-		bounds.emplace_back(0, 1);
-
+		bounds.emplace_back(-1, 1);
+		bounds.emplace_back(-1, 1);
+		bounds.emplace_back(-1, 1);
+		bounds.emplace_back(-1, 1);
 		return bounds;
 	}
 
@@ -298,8 +298,9 @@ public:
 	}
 
 	Edge randomSteer(const State &start, double dt) const {
-		fcl::Vec3f translation = math::randomPointInSphere();
-		fcl::Quaternion3f rotation = math::getRandomUnitQuaternion();
+		fcl::Vec3f translation;// = math::randomPointInSphere();
+		translation[3] = -0.01;
+		fcl::Quaternion3f rotation;// = math::getRandomUnitQuaternion();
 		
 		State end = doSteps(start, translation, rotation, dt);
 

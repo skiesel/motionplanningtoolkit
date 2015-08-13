@@ -55,7 +55,7 @@ public:
 				normals.emplace_back(3);
 				if(mesh->HasNormals()) {
 					aiVector3D norm(mesh->mNormals[j][0], mesh->mNormals[j][1], mesh->mNormals[j][2]);
-					norm *= transform;
+					// norm *= transform;
 					normals.back()[0] = norm.x;
 					normals.back()[1] = norm.y;
 					normals.back()[2] = norm.z;
