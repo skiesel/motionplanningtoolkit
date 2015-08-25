@@ -10,6 +10,8 @@
 
 class InstanceFileMap {
 public:
+	InstanceFileMap() {}
+
 	InstanceFileMap(const std::string &instance) {
 		append(instance);
 	}
