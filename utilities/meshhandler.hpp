@@ -264,7 +264,7 @@ private:
 class ConeHandler : public SimpleAgentMeshHandler {
 public:
 	ConeHandler(double radius, double length) {
-		cone = boost::shared_ptr<Cone>(new fcl::Cone(radius, length));
+		cone = boost::shared_ptr<fcl::Cone>(new fcl::Cone(radius, length));
 
 		std::vector<double> upNormal(3), downNormal(3);
 		upNormal[2] = 1;
@@ -309,6 +309,34 @@ public:
 
 private:
 	boost::shared_ptr<fcl::Cone> cone;
+};
+
+class CapsuleHandler : public SimpleAgentMeshHandler {
+public:
+	CapsuleHandler(double radius, double length) {
+		capsule = boost::shared_ptr<fcl::Capsule>(new fcl::Capsule(radius, length));
+	}
+
+	virtual fcl::CollisionObject* getMeshPose(const fcl::Transform3f &tf) const {
+		return new fcl::CollisionObject(capsule, tf);
+	}
+
+private:
+	boost::shared_ptr<fcl::Capsule> capsule;
+};
+
+class BoxHandler : public SimpleAgentMeshHandler {
+public:
+	BoxHandler(double x, double y, double z) {
+		box = boost::shared_ptr<fcl::Box>(new fcl::Box(x, y, z));
+	}
+
+	virtual fcl::CollisionObject* getMeshPose(const fcl::Transform3f &tf) const {
+		return new fcl::CollisionObject(box, tf);
+	}
+
+private:
+	boost::shared_ptr<fcl::Box> box;
 };
 
 class MeshHandler {
