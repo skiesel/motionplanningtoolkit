@@ -116,6 +116,14 @@ public:
 		return result;
 	}
 
+	std::vector<Element*> getElements() const {
+		std::vector<Element*> elems(lookup.size());
+		unsigned int i = 0;
+		for(const auto &elem : lookup) {
+			elems[i++] = elem.second.data;
+		}
+		return elems;
+	}
 
 private:
 	flann::Index<DistanceMetric> kdtree;
