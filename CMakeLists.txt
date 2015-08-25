@@ -9,6 +9,7 @@ set(BUILDGRAPHICS 1)
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 add_executable(Planner main.cpp)
+#add_executable(Planner mesh_testing.cpp)
 
 if(IS_DIRECTORY "/Library/Frameworks/3DconnexionClient.framework")
 	add_definitions(-DWITHCONNEXION)
