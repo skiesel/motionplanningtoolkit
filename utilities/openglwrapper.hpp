@@ -90,6 +90,9 @@ public:
 		glEnable(GL_CULL_FACE);
 		glDepthFunc(GL_LEQUAL);
 		glEnable(GL_DEPTH_TEST);
+		
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
 
 		// Create Vertex Array Object
 		GLuint vao;
