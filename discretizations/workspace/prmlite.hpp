@@ -95,10 +95,14 @@ protected:
 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, Vertex> KDTree;
 
 public:
-	PRMLite(const Workspace &workspace, const Agent &agent, const State &canonicalState, unsigned int numVertices,
-		unsigned int edgeSetSize, double collisionCheckDT, bool shouldGenerateEdges = true) :
-		workspace(workspace), agent(agent), kdtree(KDTreeType(4), 4), canonicalState(canonicalState), collisionCheckDT(collisionCheckDT), collisionChecks(0) {
-			initialize(numVertices, edgeSetSize, shouldGenerateEdges);
+	PRMLite(const Workspace &workspace, const Agent &agent, const State &canonicalState, unsigned int numVertices, unsigned int edgeSetSize, double collisionCheckDT, bool shouldGenerateEdges = true)
+			: workspace(workspace),
+			  agent(agent),
+			  kdtree(KDTreeType(agent.getTreeStateSize()), agent.getTreeStateSize()),
+			  canonicalState(canonicalState),
+			  collisionCheckDT(collisionCheckDT),
+			  collisionChecks(0) {
+		initialize(numVertices, edgeSetSize, shouldGenerateEdges);
 	}
 
 	void grow(unsigned int howManyToAdd) {

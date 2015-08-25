@@ -9,6 +9,8 @@ std::default_random_engine GlobalRandomGenerator;
 
 #include "workspaces/map3d.hpp"
 
+#include "workspaces/planarlinkage.hpp"
+
 #include "agents/omnidirectional.hpp"
 #include "agents/dubins.hpp"
 #include "agents/snake_trailers.hpp"
@@ -57,19 +59,18 @@ int main(int argc, char *argv[]) {
 		args.append(argv[i]);
 	}
 
-	GlobalRandomGenerator.seed(stod(args.value("Seed")));
-	ompl::RNG::setSeed(stod(args.value("Seed")));
+//	GlobalRandomGenerator.seed(stod(args.value("Seed")));
+//	ompl::RNG::setSeed(stod(args.value("Seed")));
 
 	dfheader(stdout);
 
 	std::string domain = args.value("Agent Type");
 
-	// if(args.value("Agent Type").compare("Omnidirectional") == 0)
-	// 	omnidirectional(args);
+	 if(domain.compare("PlanarLinkage") == 0)
+	 	planarLinkage(args);
 	// else if(args.value("Agent Type").compare("Dubins") == 0)
 	// 	dubins(args);
-	// else
-	if(domain.compare("Snake") == 0)
+	else if(domain.compare("Snake") == 0)
 		snake(args);
 	else if(domain.compare("Blimp") == 0)
 		blimp(args);
