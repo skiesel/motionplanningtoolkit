@@ -94,10 +94,8 @@ namespace Planar {
 #ifdef WITHGRAPHICS
 
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
-			const auto &identity = OpenGLWrapper::getOpenGLWrapper().getIdentity();
-
 			OpenGLWrapper::getOpenGLWrapper()
-					.drawLine(begin.x, begin.y, 0, end.x, end.y, 0, OpenGLWrapper::Color::Blue());
+					.drawLine(begin.x, begin.y, 0, end.x, end.y, 0, color);
 		}
 
 #endif
@@ -302,10 +300,11 @@ public:
 #ifdef WITHGRAPHICS
 
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
+
+			OpenGLWrapper::Color c = OpenGLWrapper::Color(0, 1, 0, 0.01);
 			for (Link link : links) {
-				link.draw(color);
+				link.draw(c);
 			}
-			const auto &identity = OpenGLWrapper::getOpenGLWrapper().getIdentity();
 		}
 
 #endif
@@ -374,7 +373,7 @@ public:
 		}
 
 		static double evaluateDistance(const State &a, const State &b) {
-			return 0;
+			return 1;
 		}
 
 		StateVars treeStateVars;
@@ -491,7 +490,6 @@ public:
 			std::cerr << "  " << start.getStateVars()[i];
 			std::cerr << "-> " << v;
 
-
 			sum += v;
 			max = std::max(max, v);
 			controls[i] = v;
@@ -556,6 +554,10 @@ public:
 
 	Control controlFromVector(const Control &controls) const {
 		return controls;
+	}
+
+	State getRandomStateNear(const State &state, const State &canonicalState, double radius) const {
+		return state; //TODO
 	}
 
 	/*** Workspace interface ***/
