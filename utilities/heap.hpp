@@ -13,7 +13,7 @@ int sort(const T*) const [ -1 less, 0 equal, 1 greater ]
 #include <vector>
 
 template <class T> class InPlaceBinaryHeap {
-	public:
+public:
 	InPlaceBinaryHeap(int size=100) : heap(size), fill(0) {
 
 	}
@@ -22,7 +22,7 @@ template <class T> class InPlaceBinaryHeap {
 
 	}
 
-	void push(T* data) {
+	void push(T *data) {
 		if(fill >= heap.size()) {
 			heap.resize(heap.size() * 2);
 		}
@@ -32,14 +32,14 @@ template <class T> class InPlaceBinaryHeap {
 		siftUp(fill-1);
 	}
 
-	T* peek() {
+	T *peek() {
 		assert(fill > 0);
 		return heap[0];
 	}
 
-	T* pop() {
+	T *pop() {
 		assert(fill > 0);
-		T* ret_T = heap[0];
+		T *ret_T = heap[0];
 		swap(0,fill-1);
 		fill--;
 		siftDown(0);
@@ -55,11 +55,11 @@ template <class T> class InPlaceBinaryHeap {
 		return fill;
 	}
 
-	bool inHeap(const T* data) const {
+	bool inHeap(const T *data) const {
 		return data->getHeapIndex() != std::numeric_limits<unsigned int>::max();
 	}
 
-	void siftFromItem(const T* data) {
+	void siftFromItem(const T *data) {
 		unsigned int index = data->getHeapIndex();
 		if(index < fill) {
 			int parent_index = parent(index);
@@ -86,7 +86,7 @@ private:
 	}
 
 	void swap(unsigned int i, unsigned int j) {
-		T* temp = heap[i];
+		T *temp = heap[i];
 		heap[i] = heap[j];
 		heap[j] = temp;
 
@@ -102,14 +102,13 @@ private:
 				return left_index;
 			else
 				return right_index;
-		}
-		else if(left_index < fill)
+		} else if(left_index < fill)
 			return left_index;
 		else if(right_index < fill)
 			return right_index;
 		else
 			return index;
-		}
+	}
 
 	void siftDown(unsigned int index) {
 		unsigned int child_index = childToSwap(index);
@@ -129,6 +128,6 @@ private:
 		}
 	}
 
-	std::vector<T*> heap;
+	std::vector<T *> heap;
 	unsigned int fill;
 };

@@ -33,14 +33,22 @@ public:
 
 		const bool equals(const State &s) const {
 			return fabs(stateVars[0] - s.stateVars[0]) <= 0.000001 &&
-					fabs(stateVars[1] - s.stateVars[1]) <= 0.000001 &&
-					fabs(stateVars[2] - s.stateVars[2]) <= 0.000001;
+			       fabs(stateVars[1] - s.stateVars[1]) <= 0.000001 &&
+			       fabs(stateVars[2] - s.stateVars[2]) <= 0.000001;
 		}
 
-		double x() const { return stateVars[0]; }
-		double y() const { return stateVars[1]; }
-		double z() const { return stateVars[2]; }
-		const StateVars& getStateVars() const { return stateVars; }
+		double x() const {
+			return stateVars[0];
+		}
+		double y() const {
+			return stateVars[1];
+		}
+		double z() const {
+			return stateVars[2];
+		}
+		const StateVars &getStateVars() const {
+			return stateVars;
+		}
 
 		void print() const {
 			for(auto v : stateVars) {
@@ -74,12 +82,18 @@ public:
 	public:
 		Edge(const State &start) : start(start), end(start), cost(0), treeIndex(0) {}
 		Edge(const State &start, const State &end, double cost) : start(start), end(end), cost(cost), treeIndex(0) {}
-		Edge(const Edge& e) : start(e.start), end(e.end), cost(e.cost), treeIndex(e.treeIndex) {}
+		Edge(const Edge &e) : start(e.start), end(e.end), cost(e.cost), treeIndex(e.treeIndex) {}
 
 		/* needed for being inserted into NN datastructure */
-		const StateVars& getTreeStateVars() const { return end.getStateVars(); }
-		int getPointIndex() const { return treeIndex; }
-		void setPointIndex(int ptInd) { treeIndex = ptInd; }
+		const StateVars &getTreeStateVars() const {
+			return end.getStateVars();
+		}
+		int getPointIndex() const {
+			return treeIndex;
+		}
+		void setPointIndex(int ptInd) {
+			treeIndex = ptInd;
+		}
 
 #ifdef WITHGRAPHICS
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
@@ -125,18 +139,18 @@ public:
 		return 3;
 	}
 
-	StateVarRanges getStateVarRanges(const WorkspaceBounds& bounds) const {
+	StateVarRanges getStateVarRanges(const WorkspaceBounds &bounds) const {
 		return bounds;
 	}
 
-	State buildState(const StateVars& stateVars) const {
+	State buildState(const StateVars &stateVars) const {
 		return State(stateVars);
 	}
 
 	bool isGoal(const State &state, const State &goal) const {
 		return fabs(state.x() - goal.x()) < goalThresholds[0] &&
-		fabs(state.y() - goal.y()) < goalThresholds[1] &&
-		fabs(state.z() - goal.z()) < goalThresholds[2];
+		       fabs(state.y() - goal.y()) < goalThresholds[1] &&
+		       fabs(state.z() - goal.z()) < goalThresholds[2];
 	}
 
 	Edge steer(const State &start, const State &goal, double dt) const {
@@ -154,8 +168,8 @@ public:
 
 
 		State state(startX + dx * fraction,
-					startY + dy * fraction,
-					startZ + dz * fraction);
+		            startY + dy * fraction,
+		            startZ + dz * fraction);
 
 		return Edge(start, state, dt);
 	}
@@ -172,31 +186,31 @@ public:
 		double dist = sqrt(randX*randX + randY*randY + randZ*randZ);
 
 		State state(startX + randX / dist,
-					startY + randY / dist,
-					startZ + randZ / dist);
+		            startY + randY / dist,
+		            startZ + randZ / dist);
 
 		return Edge(start, state, dt);
 	}
 
-	std::vector<const SimpleAgentMeshHandler*> getMeshes() const {
-		std::vector<const SimpleAgentMeshHandler*> meshes(1, &mesh);
+	std::vector<const SimpleAgentMeshHandler *> getMeshes() const {
+		std::vector<const SimpleAgentMeshHandler *> meshes(1, &mesh);
 		return meshes;
 	}
 
-	std::vector< std::vector<fcl::Transform3f> > getRepresentivePosesForLocation(const std::vector<double> &loc) const {
-		std::vector<std::vector<fcl::Transform3f> > retPoses;
+	std::vector<State> getRepresentiveStatesForLocation(const std::vector<double> &loc) const {
+		std::vector<State> states;
 
-		fcl::Vec3f pose(loc[0], loc[1], loc[2]);
+		// fcl::Vec3f pose(loc[0], loc[1], loc[2]);
 
-		retPoses.emplace_back();
-		retPoses.back().push_back(fcl::Transform3f(pose));
+		// retPoses.emplace_back();
+		// retPoses.back().push_back(fcl::Transform3f(pose));
 
-		return retPoses;
+		return states;
 	}
 
 	std::vector<std::vector<fcl::Transform3f> > getPoses(const Edge &edge, double dt) const {
 		std::vector<std::vector<fcl::Transform3f> > retPoses;
-		
+
 		double startX = edge.start.x();
 		double startY = edge.start.y();
 		double startZ = edge.start.z();
@@ -225,9 +239,9 @@ public:
 			for(unsigned int i = 0; i < iterations; ++i) {
 				double stepSize = step * (double)i;
 
-				fcl::Vec3f translation(startX + stepSize * dx, 
-										startY + stepSize * dy,
-										startZ + stepSize * dz);
+				fcl::Vec3f translation(startX + stepSize * dx,
+				                       startY + stepSize * dy,
+				                       startZ + stepSize * dz);
 				retPoses.emplace_back();
 				retPoses.back().push_back(fcl::Transform3f(translation));
 			}
@@ -246,7 +260,7 @@ public:
 		mesh.draw();
 	}
 
-	void drawSolution(const std::vector<const Edge*> &solution, double dt = std::numeric_limits<double>::infinity()) const {
+	void drawSolution(const std::vector<const Edge *> &solution, double dt = std::numeric_limits<double>::infinity()) const {
 		for(const Edge *edge : solution) {
 			std::vector< std::vector<fcl::Transform3f> > poses = getPoses(*edge, dt);
 			auto transform = OpenGLWrapper::getOpenGLWrapper().getIdentity();
@@ -261,7 +275,7 @@ public:
 		}
 	}
 
-	void animateSolution(const std::vector<const Edge*> &solution, unsigned int poseNumber) const {
+	void animateSolution(const std::vector<const Edge *> &solution, unsigned int poseNumber) const {
 		auto transform = OpenGLWrapper::getOpenGLWrapper().getIdentity();
 		unsigned int edgeNumber = poseNumber / 2;
 		unsigned int endpoint = poseNumber % 2;

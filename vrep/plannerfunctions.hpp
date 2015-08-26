@@ -12,7 +12,7 @@
 #include "../discretizations/workspace/prmlite.hpp"
 #include "../utilities/datafile.hpp"
 
-void solveWithRRT(const VREPInterface *interface, const InstanceFileMap* args, const VREPInterface::State &start, const VREPInterface::State &goal) {
+void solveWithRRT(const VREPInterface *interface, const InstanceFileMap *args, const VREPInterface::State &start, const VREPInterface::State &goal) {
 	dfpair(stdout, "planner", "%s", "RRT");
 
 	typedef flann::KDTreeSingleIndexParams KDTreeType;
@@ -31,7 +31,7 @@ void solveWithRRT(const VREPInterface *interface, const InstanceFileMap* args, c
 	rrt.dfpairs();
 }
 
-void solveWithRRTConnect(const VREPInterface *interface, const InstanceFileMap* args, const VREPInterface::State &start, const VREPInterface::State &goal) {
+void solveWithRRTConnect(const VREPInterface *interface, const InstanceFileMap *args, const VREPInterface::State &start, const VREPInterface::State &goal) {
 	dfpair(stdout, "planner", "%s", "RRT Connect");
 
 	typedef flann::KDTreeSingleIndexParams KDTreeType;
@@ -50,10 +50,10 @@ void solveWithRRTConnect(const VREPInterface *interface, const InstanceFileMap* 
 	rrtconnect.dfpairs();
 }
 
-void solveWithPlaku(const VREPInterface *interface, const InstanceFileMap* args, const VREPInterface::State &start, const VREPInterface::State &goal) {
+void solveWithPlaku(const VREPInterface *interface, const InstanceFileMap *args, const VREPInterface::State &start, const VREPInterface::State &goal) {
 	dfpair(stdout, "planner", "%s", "Plaku IROS 2014");
 
-	typedef PRMLite<VREPInterface, VREPInterface> PRMLite;	
+	typedef PRMLite<VREPInterface, VREPInterface> PRMLite;
 	typedef PlakuTreeInterface<VREPInterface, VREPInterface, PRMLite> PlakuTreeInterface;
 	typedef RRT<VREPInterface, VREPInterface, PlakuTreeInterface> Plaku;
 
@@ -75,7 +75,7 @@ void solveWithPlaku(const VREPInterface *interface, const InstanceFileMap* args,
 	plaku.query(start, goal);
 }
 
-void solveWithKPIECE(const VREPInterface *interface, const InstanceFileMap* args, const VREPInterface::State &start, const VREPInterface::State &goal) {
+void solveWithKPIECE(const VREPInterface *interface, const InstanceFileMap *args, const VREPInterface::State &start, const VREPInterface::State &goal) {
 	dfpair(stdout, "planner", "%s", "KPIECE");
 
 	KPIECE<VREPInterface, VREPInterface> kpiece(*interface, *interface, *args);

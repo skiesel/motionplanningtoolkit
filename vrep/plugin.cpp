@@ -57,7 +57,7 @@ void setupInstanceFromInstanceFile(const InstanceFileMap *args) {
 	simSetObjectOrientation(goalHandle, -1, vals);
 }
 
-VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
+VREP_DLLEXPORT unsigned char v_repStart(void *reservedPointer,int reservedInt) {
 	char curDirAndFile[1024];
 	getcwd(curDirAndFile, sizeof(curDirAndFile));
 	std::string currentDirAndPath(curDirAndFile);
@@ -70,11 +70,11 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 #endif
 
 	vrepLib=loadVrepLibrary(temp.c_str());
-	if (vrepLib==NULL) {
+	if(vrepLib==NULL) {
 		fprintf(stderr, "Error, could not find or correctly load v_rep.dll. Cannot start 'BubbleRob' plugin.\n");
 		return 0;
 	}
-	if (getVrepProcAddresses(vrepLib)==0) {
+	if(getVrepProcAddresses(vrepLib)==0) {
 		fprintf(stderr, "Error, could not find all required functions in v_rep.dll. Cannot start 'BubbleRob' plugin.\n");
 		unloadVrepLibrary(vrepLib);
 		return 0;
@@ -83,13 +83,13 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 	// Check the V-REP version:
 	int vrepVer;
 	simGetIntegerParameter(sim_intparam_program_version,&vrepVer);
-	if (vrepVer<30200) {
+	if(vrepVer<30200) {
 		fprintf(stderr, "Sorry, your V-REP copy is somewhat old, V-REP 3.2.0 or higher is required. Cannot start 'BubbleRob' plugin.\n");
 		unloadVrepLibrary(vrepLib);
 		return 0;
 	}
 
-	simChar* instanceFile = simGetStringParameter(sim_stringparam_app_arg1);
+	simChar *instanceFile = simGetStringParameter(sim_stringparam_app_arg1);
 
 	if(instanceFile == NULL || strlen(instanceFile) == 0) {
 		fprintf(stderr, "...libv_repExtskiesel.dylib not running\n");
@@ -103,7 +103,7 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 
 	simStartSimulation();
 
-	boost::thread workerThread([&](){
+	boost::thread workerThread([&]() {
 		dfheader(stdout);
 
 		setupInstanceFromInstanceFile(args);
@@ -113,7 +113,7 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 
 		simInt goalHandle = simGetObjectHandle("Goal");
 		VREPInterface::State goal;
-		
+
 		simFloat vals[3];
 		simGetObjectPosition(goalHandle, -1, vals);
 		for(unsigned int i = 0; i < 3; ++i) {
@@ -130,7 +130,7 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 		clock_t startT = clock();
 
 		if(args->value("Planner").compare("RRT") == 0) {
-			solveWithRRT(interface, args, start, goal);	
+			solveWithRRT(interface, args, start, goal);
 		} else if(args->value("Planner").compare("RRT Connect") == 0) {
 			solveWithRRTConnect(interface, args, start, goal);
 		} else if(args->value("Planner").compare("Plaku IROS 2014") == 0) {
@@ -141,9 +141,9 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt) {
 			fprintf(stderr, "unrecognized planner!");
 			exit(1);
 		}
-		
+
 		clock_t endT = clock();
-		dfpair(stdout, "total time solving time", "%g", (double) (endT-startT) / CLOCKS_PER_SEC);
+		dfpair(stdout, "total time solving time", "%g", (double)(endT-startT) / CLOCKS_PER_SEC);
 
 		dffooter(stdout);
 		exit(0);
@@ -157,17 +157,17 @@ VREP_DLLEXPORT void v_repEnd() {
 	unloadVrepLibrary(vrepLib);
 }
 
-VREP_DLLEXPORT void* v_repMessage(int message,int* auxiliaryData,void* customData,int* replyData) {
+VREP_DLLEXPORT void *v_repMessage(int message,int *auxiliaryData,void *customData,int *replyData) {
 	// This is called quite often. Just watch out for messages/events you want to handle
 	// This function should not generate any error messages:
-	void* retVal=NULL;
+	void *retVal=NULL;
 
 	if(pluginActive) {
-		if(start < 0) {	
+		if(start < 0) {
 			start = simGetSimulationTime();
 			dt = interface->simulatorReady();
 		}
-		
+
 		simFloat curDT = simGetSimulationTime() - start;
 		bool collision = interface->collision();
 		if(collision || dt <= curDT) {

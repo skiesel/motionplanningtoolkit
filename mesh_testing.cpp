@@ -2,7 +2,7 @@
 std::default_random_engine GlobalRandomGenerator;
 
 #ifdef WITHGRAPHICS
-	#include "utilities/openglwrapper.hpp"
+#include "utilities/openglwrapper.hpp"
 #endif
 
 #include <string>
@@ -20,7 +20,7 @@ void print(const std::vector<double> &transform) {
 	}
 }
 
-std::vector<double> toDoubleVec(const fcl::Transform3f& transform) {
+std::vector<double> toDoubleVec(const fcl::Transform3f &transform) {
 	std::vector<double> vec(16);
 
 	const fcl::Vec3f &transVec = transform.getTranslation();
@@ -72,7 +72,7 @@ void runCollisionTiming(const StaticEnvironmentMeshHandler &env, const SimpleAge
 	static InstanceFileMap args;
 
 	std::vector<std::vector<fcl::Transform3f> > poses;
-	std::vector<const SimpleAgentMeshHandler*> agentPieces;
+	std::vector<const SimpleAgentMeshHandler *> agentPieces;
 	agentPieces.push_back(&agent);
 
 	fcl::Transform3f identity;
@@ -131,7 +131,7 @@ void runCollisionTimings(unsigned int checks, unsigned int frequency) {
 }
 
 struct KDNode {
-	static KDNode* newRandomPoint(unsigned int dimensionality) {
+	static KDNode *newRandomPoint(unsigned int dimensionality) {
 		KDNode *n = new KDNode(dimensionality);
 		for(unsigned int i = 0; i < dimensionality; i++) {
 			n->vars[i] = uniformDistribution(GlobalRandomGenerator);
@@ -139,7 +139,7 @@ struct KDNode {
 		return n;
 	}
 
-	const std::vector<double>& getTreeStateVars() const {
+	const std::vector<double> &getTreeStateVars() const {
 		return vars;
 	}
 
@@ -170,12 +170,12 @@ void runKDTreeInsertionTesting(unsigned int insertions, unsigned int queries, un
 	KDTreeType kdtreeType(numTrees);
 	KDTree kdtree(kdtreeType, dimensionality);
 
-	std::vector<KDNode*> nodes(insertions);
+	std::vector<KDNode *> nodes(insertions);
 	for(unsigned int i = 0; i < insertions; i++) {
 		nodes[i] = KDNode::newRandomPoint(dimensionality);
 	}
 
-	std::vector<KDNode*> queryNodes(queries);
+	std::vector<KDNode *> queryNodes(queries);
 	for(unsigned int i = 0; i < queries; i++) {
 		queryNodes[i] = KDNode::newRandomPoint(dimensionality);
 	}
@@ -217,8 +217,12 @@ void runKDTreeInsertionTesting(unsigned int insertions, unsigned int queries, un
 	fprintf(stderr, "total time for %u queries: %g\n", queries, duration);
 	fprintf(stderr, "total rate: %g queries/sec\n", (double)queries / duration);
 
-	for(unsigned int i = 0; i < insertions; i++) { delete nodes[i]; }
-	for(unsigned int i = 0; i < queries; i++) { delete queryNodes[i]; }
+	for(unsigned int i = 0; i < insertions; i++) {
+		delete nodes[i];
+	}
+	for(unsigned int i = 0; i < queries; i++) {
+		delete queryNodes[i];
+	}
 }
 
 struct TestData {
@@ -231,7 +235,7 @@ struct TestData {
 	void printGoFmtRow() const {
 		fprintf(stderr, "\"%s\", plotter.XYs{", identifier.c_str());
 		for(unsigned int j = 0; j < data.size(); j++) {
-			const auto& pt = data[j];
+			const auto &pt = data[j];
 			if(j < data.size() - 1) {
 				fprintf(stderr, "{%u, %g}, ", pt.first, pt.second);
 			} else {
@@ -251,13 +255,13 @@ template<class KDTree>
 void runKDTreeQueryTesting(unsigned int insertions, unsigned int queriesPerRound, unsigned int frequency, unsigned int dimensionality, KDTree &kdtree, unsigned int traversals = 1) {
 	GlobalRandomGenerator.seed(2);
 
-	std::vector<KDNode*> nodes(insertions);
+	std::vector<KDNode *> nodes(insertions);
 	for(unsigned int i = 0; i < insertions; i++) {
 		nodes[i] = KDNode::newRandomPoint(dimensionality);
 	}
 
 	unsigned int totalQueries = (insertions / frequency) * queriesPerRound;
-	std::vector<KDNode*> queryNodes(totalQueries);
+	std::vector<KDNode *> queryNodes(totalQueries);
 	for(unsigned int i = 0; i < totalQueries; i++) {
 		queryNodes[i] = KDNode::newRandomPoint(dimensionality);
 	}
@@ -279,8 +283,12 @@ void runKDTreeQueryTesting(unsigned int insertions, unsigned int queriesPerRound
 		kdtree.insertPoint(nodes[i]);
 	}
 
-	for(unsigned int i = 0; i < insertions; i++) { delete nodes[i]; }
-	for(unsigned int i = 0; i < totalQueries; i++) { delete queryNodes[i]; }
+	for(unsigned int i = 0; i < insertions; i++) {
+		delete nodes[i];
+	}
+	for(unsigned int i = 0; i < totalQueries; i++) {
+		delete queryNodes[i];
+	}
 }
 
 void runMultiKDTreeQueryTesting(unsigned int insertions, unsigned int queriesPerRound, unsigned int frequency, unsigned int dimensionality, unsigned int numTrees, unsigned int traversals) {
@@ -299,7 +307,7 @@ void runMultiKDTreeQueryTesting(unsigned int insertions, unsigned int queriesPer
 }
 
 void runAutTunedKDTreeQueryTesting(unsigned int insertions, unsigned int queriesPerRound, unsigned int frequency, unsigned int dimensionality,
-	double precision, double buildWeight, double sampleFraction) {
+                                   double precision, double buildWeight, double sampleFraction) {
 
 	typedef flann::KDTreeIndexParams InitialKDTreeType;
 	typedef FLANN_KDTreeWrapper<InitialKDTreeType, flann::L2<double>, KDNode> InitialKDTree;
@@ -320,13 +328,13 @@ void runAutTunedKDTreeQueryTesting(unsigned int insertions, unsigned int queries
 
 	GlobalRandomGenerator.seed(2);
 
-	std::vector<KDNode*> nodes(insertions);
+	std::vector<KDNode *> nodes(insertions);
 	for(unsigned int i = 0; i < insertions; i++) {
 		nodes[i] = KDNode::newRandomPoint(dimensionality);
 	}
 
 	unsigned int totalQueries = (insertions / frequency) * queriesPerRound;
-	std::vector<KDNode*> queryNodes(totalQueries);
+	std::vector<KDNode *> queryNodes(totalQueries);
 	for(unsigned int i = 0; i < totalQueries; i++) {
 		queryNodes[i] = KDNode::newRandomPoint(dimensionality);
 	}
@@ -366,14 +374,18 @@ void runAutTunedKDTreeQueryTesting(unsigned int insertions, unsigned int queries
 		}
 	}
 
-	for(unsigned int i = 0; i < insertions; i++) { delete nodes[i]; }
-	for(unsigned int i = 0; i < totalQueries; i++) { delete queryNodes[i]; }
+	for(unsigned int i = 0; i < insertions; i++) {
+		delete nodes[i];
+	}
+	for(unsigned int i = 0; i < totalQueries; i++) {
+		delete queryNodes[i];
+	}
 }
 
 void runKDTreeTests(unsigned int insertions, unsigned int queries, unsigned int frequency,
-				unsigned int minDimensions, unsigned int maxDimensions,
-				unsigned int minTrees, unsigned int maxTrees,
-				unsigned int minTraversals, unsigned int maxTraversals) {
+                    unsigned int minDimensions, unsigned int maxDimensions,
+                    unsigned int minTrees, unsigned int maxTrees,
+                    unsigned int minTraversals, unsigned int maxTraversals) {
 
 	maxDimensions++;
 	maxTrees++;
@@ -406,7 +418,7 @@ void runKDTreeTests(unsigned int insertions, unsigned int queries, unsigned int 
 	testData.back().printGoFmtRow();
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
 	// StaticEnvironmentMeshHandler env("/Users/skiesel/gopath/src/github.com/skiesel/motionplanningtoolkit/mesh_models/environment_models/Easy_env.dae", "0 0 0 1 0 0 0");
 	// SimpleAgentMeshHandler agent("/Users/skiesel/gopath/src/github.com/skiesel/motionplanningtoolkit/mesh_models/agent_models/Easy_robot.dae");
 

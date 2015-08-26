@@ -3,8 +3,8 @@
 #include <boost/tokenizer.hpp>
 #include <unordered_map>
 #include <fstream>
-#include <algorithm> 
-#include <functional> 
+#include <algorithm>
+#include <functional>
 #include <cctype>
 #include <locale>
 
@@ -18,7 +18,7 @@ public:
 
 	void append(const std::string &instance) {
 		std::fstream file;
-  		file.open(instance.c_str(), std::fstream::in);
+		file.open(instance.c_str(), std::fstream::in);
 
 		if(!file.is_open()) {
 			fprintf(stderr, "can't open instance file: %s\n", instance.c_str());
@@ -50,7 +50,7 @@ public:
 		return map.find(key) != map.end();
 	}
 
-	const std::string& value(const std::string &key) const {
+	const std::string &value(const std::string &key) const {
 		if(!exists(key)) {
 			fprintf(stderr, "Key \"%s\" not bound\n", key.c_str());
 			exit(1);

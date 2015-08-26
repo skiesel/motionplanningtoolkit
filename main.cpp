@@ -2,7 +2,7 @@
 std::default_random_engine GlobalRandomGenerator;
 
 #ifdef WITHGRAPHICS
-	#include "utilities/openglwrapper.hpp"
+#include "utilities/openglwrapper.hpp"
 #endif
 
 #include "utilities/math.hpp"
@@ -59,15 +59,15 @@ int main(int argc, char *argv[]) {
 		args.append(argv[i]);
 	}
 
-//	GlobalRandomGenerator.seed(stod(args.value("Seed")));
-//	ompl::RNG::setSeed(stod(args.value("Seed")));
+	GlobalRandomGenerator.seed(stod(args.value("Seed")));
+	ompl::RNG::setSeed(stod(args.value("Seed")));
 
 	dfheader(stdout);
 
 	std::string domain = args.value("Agent Type");
 
-	 if(domain.compare("PlanarLinkage") == 0)
-	 	planarLinkage(args);
+	if(domain.compare("PlanarLinkage") == 0)
+		planarLinkage(args);
 	// else if(args.value("Agent Type").compare("Dubins") == 0)
 	// 	dubins(args);
 	else if(domain.compare("Snake") == 0)
@@ -80,6 +80,6 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "unrecognized Agent Type: %s\n", domain.c_str());
 
 	dffooter(stdout);
-	
+
 	return 0;
 }
