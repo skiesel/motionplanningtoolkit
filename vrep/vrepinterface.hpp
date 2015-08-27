@@ -23,20 +23,20 @@ public:
 		State() {}
 
 		State(const State &s) : stateVars(s.stateVars.begin(), s.stateVars.end()),
-		 rootPosition(s.rootPosition.begin(), s.rootPosition.end()),
-		 rootOrientation(s.rootOrientation.begin(), s.rootOrientation.end()),
-		 goalPositionVars(s.goalPositionVars.begin(), s.goalPositionVars.end()),
-		 goalOrientationVars(s.goalOrientationVars.begin(), s.goalOrientationVars.end()),
-		 poses(s.poses),
-		 velocities(s.velocities.begin(), s.velocities.end()),
-		 targetVelocities(s.targetVelocities.begin(), s.targetVelocities.end()),
-		 targetPositions(s.targetPositions.begin(), s.targetPositions.end()) {}
+			rootPosition(s.rootPosition.begin(), s.rootPosition.end()),
+			rootOrientation(s.rootOrientation.begin(), s.rootOrientation.end()),
+			goalPositionVars(s.goalPositionVars.begin(), s.goalPositionVars.end()),
+			goalOrientationVars(s.goalOrientationVars.begin(), s.goalOrientationVars.end()),
+			poses(s.poses),
+			velocities(s.velocities.begin(), s.velocities.end()),
+			targetVelocities(s.targetVelocities.begin(), s.targetVelocities.end()),
+			targetPositions(s.targetPositions.begin(), s.targetPositions.end()) {}
 
 		State(const StateVars &vars) : stateVars(vars.begin(), vars.end()) {
 			stateVars.resize(fullStateSize);
 		}
 
-		State& operator=(const State& s) {
+		State &operator=(const State &s) {
 			stateVars = s.stateVars;
 			rootPosition = s.rootPosition;
 			rootOrientation = s.rootOrientation;
@@ -49,11 +49,17 @@ public:
 			return *this;
 		}
 
-		const StateVars &getStateVars() const { return stateVars; }
+		const StateVars &getStateVars() const {
+			return stateVars;
+		}
 
-		const StateVars &getGoalPositionStateVars() const { return goalPositionVars; }
+		const StateVars &getGoalPositionStateVars() const {
+			return goalPositionVars;
+		}
 
-		const StateVars &getGoalOrientationStateVars() const { return goalOrientationVars; }
+		const StateVars &getGoalOrientationStateVars() const {
+			return goalOrientationVars;
+		}
 
 		bool equals(const State &s) const {
 			for(unsigned int i = 0; i < stateVars.size(); ++i) {
@@ -72,7 +78,9 @@ public:
 		}
 
 		void print() const {
-			for(auto v : stateVars) { fprintf(stderr, "%g ", v); }
+			for(auto v : stateVars) {
+				fprintf(stderr, "%g ", v);
+			}
 			fprintf(stderr, "\n");
 		}
 
@@ -101,7 +109,7 @@ public:
 		Edge(const Edge &e) : start(e.start), end(e.end), parent(e.parent), cost(e.cost), treeIndex(e.treeIndex),
 			controls(e.controls.begin(), e.controls.end()), duration(e.duration), safe(e.safe) {}
 
-		Edge& operator=(const Edge& e) {
+		Edge &operator=(const Edge &e) {
 			start = e.start;
 			end = e.end;
 			cost = e.cost;
@@ -119,12 +127,18 @@ public:
 		}
 
 		/* needed for being inserted into NN datastructure */
-		const StateVars &getTreeStateVars() const { return end.getStateVars(); }
-		int getPointIndex() const { return treeIndex; }
-		void setPointIndex(int ptInd) { treeIndex = ptInd; }
+		const StateVars &getTreeStateVars() const {
+			return end.getStateVars();
+		}
+		int getPointIndex() const {
+			return treeIndex;
+		}
+		void setPointIndex(int ptInd) {
+			treeIndex = ptInd;
+		}
 
 		State start, end;
-		const Edge* parent;
+		const Edge *parent;
 		double cost, duration;
 		std::vector<double> controls;
 		int treeIndex;
@@ -248,61 +262,13 @@ public:
 		return edge.safe;
 	}
 
-	bool safePoses(const VREPInterface &agent , const std::vector<fcl::Transform3f> &poses, const State& s) const {
-		loadState(s);
-
-		simFloat vals[4];
-		for(const auto &pose : poses) {
-
-			const fcl::Vec3f &position = pose.getTranslation();
-			const fcl::Quaternion3f &quaternion = pose.getQuatRotation();
-
-			for(unsigned int i = 0; i < 3; ++i)
-				vals[i] = position[i];
-
-			simSetObjectPosition(agentHandle, -1, vals);
-
-			vals[0] = quaternion.getX();
-			vals[1] = quaternion.getY();
-			vals[2] = quaternion.getZ();
-			vals[3] = quaternion.getW();
-
-			simSetObjectQuaternion(agentHandle, -1, vals);
-
-			if(collision()) return false;
-		}
-		return true;
-	}
-
-	bool safePose(const VREPInterface &agent, const fcl::Transform3f &pose, const State& s) const {
-		loadState(s);
-
-		simFloat vals[4];
-		const fcl::Vec3f &position = pose.getTranslation();
-		const fcl::Quaternion3f &quaternion = pose.getQuatRotation();
-
-		for(unsigned int i = 0; i < 3; ++i)
-			vals[i] = position[i];
-
-		simSetObjectPosition(agentHandle, -1, vals);
-
-		vals[0] = quaternion.getX();
-		vals[1] = quaternion.getY();
-		vals[2] = quaternion.getZ();
-		vals[3] = quaternion.getW();
-
-		simSetObjectQuaternion(agentHandle, -1, vals);
-
-		return !collision();
-	}
-
 
 	//from the perspective of the agent
 	StateVarRanges getStateVarRanges(const WorkspaceBounds &bounds) const {
 		return samplingBounds;
 	}
 
-	const std::vector< std::pair<double, double> >& getControlBounds() const {
+	const std::vector< std::pair<double, double> > &getControlBounds() const {
 		return controlBounds;
 	}
 
@@ -314,7 +280,7 @@ public:
 		return controls;
 	}
 
-	State getRandomStateNear(const AbstractState &a, const State &s, double radius) const {
+	State getRandomStateNearAbstractState(const AbstractState &a, const State &s, double radius) const {
 		fprintf(stderr, "getRandomStateNear no implemented\n");
 		exit(0);
 		return State();
@@ -358,7 +324,9 @@ public:
 
 		loadState(start);
 
-		if(collision()) { return edge; }
+		if(collision()) {
+			return edge;
+		}
 
 		unsigned int curControl = 0;
 		for(unsigned int i = 0; i < controllableVelocityJointHandles.size(); ++i) {
@@ -371,7 +339,9 @@ public:
 
 		std::pair<double, bool> result = startSimulation(dt);
 
-		if(result.second || collision()) { return edge; }
+		if(result.second || collision()) {
+			return edge;
+		}
 
 		State end;
 		saveState(end);
@@ -387,7 +357,9 @@ public:
 
 		loadState(start);
 
-		if(collision()) { return edge; }
+		if(collision()) {
+			return edge;
+		}
 
 		unsigned int curControl = 0;
 		for(unsigned int i = 0; i < controllableVelocityJointHandles.size(); ++i) {
@@ -400,7 +372,9 @@ public:
 
 		std::pair<double, bool> result = startSimulation(dt);
 
-		if(result.second || collision()) { return edge; }
+		if(result.second || collision()) {
+			return edge;
+		}
 
 		State end;
 		saveState(end);
@@ -416,7 +390,9 @@ public:
 
 		loadState(start);
 
-		if(collision()) { return edge; }
+		if(collision()) {
+			return edge;
+		}
 
 		std::vector<double> controls;
 		for(unsigned int i = 0; i < controllableVelocityJointHandles.size(); ++i) {
@@ -431,7 +407,9 @@ public:
 
 		std::pair<double, bool> result = startSimulation(dt);
 
-		if(result.second || collision()) { return edge; }
+		if(result.second || collision()) {
+			return edge;
+		}
 
 		State end;
 		saveState(end);
@@ -463,9 +441,9 @@ public:
 		saveState(start);
 	}
 
-	void animateSolution(const std::vector<const Edge*> &solution) const {
+	void animateSolution(const std::vector<const Edge *> &solution) const {
 		while(true) {
-			for(const Edge* edge : solution) {
+			for(const Edge *edge : solution) {
 				loadState(edge->start);
 				unsigned int controlNum = 0;
 				const std::vector<double> &controls = edge->controls;
@@ -482,8 +460,8 @@ public:
 		}
 	}
 
-	bool validateSolution(const std::vector<const Edge*> &solution, const State &goal) const {
-		for(const Edge* edge : solution) {
+	bool validateSolution(const std::vector<const Edge *> &solution, const State &goal) const {
+		for(const Edge *edge : solution) {
 			loadState(edge->start);
 			unsigned int controlNum = 0;
 			const std::vector<double> &controls = edge->controls;
@@ -517,7 +495,7 @@ public:
 		return simCheckCollision(agentCollisionGroupHandle, collisionCheckAgainstThisGroup) == 1;
 	}
 
-	void saveState(State& s) const {
+	void saveState(State &s) const {
 		simFloat vals[6];
 
 		simGetObjectPosition(agentHandle, -1, vals);
@@ -606,7 +584,7 @@ public:
 		}
 	}
 
-	bool stateInBounds(const State& s) const {
+	bool stateInBounds(const State &s) const {
 		for(unsigned int i = 0; i < 3; ++i) {
 			if(s.rootPosition[i] < workspaceBounds[i].first || s.rootPosition[i] > workspaceBounds[i].second) {
 				return false;
@@ -647,7 +625,7 @@ public:
 	bool wasCollision;
 
 	simInt agentHandle, agentCollisionGroupHandle, collisionCheckAgainstThisGroup, statePositionGoalHandle, stateOrientationGoalHandle;
-	simInt* agentObjectTree;
+	simInt *agentObjectTree;
 	simInt agentObjectCount;
 
 	std::vector<simInt> controllableVelocityJointHandles, controllablePositionJointHandles, statePositionHandles, stateOrientationHandles, stateVelocityHandles;

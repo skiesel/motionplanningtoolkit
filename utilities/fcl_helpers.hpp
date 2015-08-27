@@ -24,6 +24,40 @@ Transform3f parseTransform(const std::string transform) {
 	return Transform3f(quaternion, vector);
 }
 
+std::vector<double> fclTransformToOpenGL(const Transform3f &transform) {
+	std::vector<double> vec(16);
+
+	const fcl::Vec3f &transVec = transform.getTranslation();
+	const fcl::Matrix3f &rot = transform.getRotation();
+
+	std::vector<double> transMatrix(16, 0);
+	std::vector<double> rotationMatrix(16, 0);
+
+	for(unsigned int i = 0; i < 16; i++) {
+		if(i % 4 == i / 4) {
+			transMatrix[i] = 1;
+			rotationMatrix[i] = 1;
+		}
+	}
+
+	transMatrix[3] = transVec[0];
+	transMatrix[7] = transVec[1];
+	transMatrix[11] = transVec[2];
+
+	for(unsigned int i = 0; i < 3; i++) {
+
+		const fcl::Vec3f &row = rot.getRow(i);
+		for(unsigned int j = 0; j < 3; j++) {
+			//yes, this should be 4
+			rotationMatrix[i * 4 + j] = row[j];
+		}
+	}
+
+	math::multiply(rotationMatrix, transMatrix, vec);
+
+	return vec;
+}
+
 struct CollisionData {
 	CollisionData() : done(false) {}
 

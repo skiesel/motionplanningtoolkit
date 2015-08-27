@@ -3,3 +3,5 @@ build
 debug
 sketchup_files
 description_files/*/instances
+
+IGNORE*

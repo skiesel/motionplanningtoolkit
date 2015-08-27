@@ -17,11 +17,12 @@ class PRMLite {
 protected:
 	typedef typename Agent::State State;
 	typedef typename Agent::AbstractState AbstractState;
+	typedef typename Agent::AbstractEdge AbstractEdge;
 
 	struct Vertex {
-		Vertex(const AbstractState& state, unsigned int id) : state(state), id(id) {}
+		Vertex(const AbstractState &state, unsigned int id) : state(state), id(id) {}
 
-		const std::vector<double>& getTreeStateVars() const {
+		const std::vector<double> &getTreeStateVars() const {
 			return state.treeStateVars;
 		}
 
@@ -32,38 +33,6 @@ protected:
 		unsigned int id;
 		AbstractState state;
 	};
-
-
-	// struct VertexZRotationOnly {
-	// 	VertexZRotationOnly(const fcl::Transform3f &transform, unsigned int id) : transform(transform), id(id), treeStateVars(4) {
-	// 		const fcl::Vec3f &translation = transform.getTranslation();
-	// 		const fcl::Quaternion3f &quaternion = transform.getQuatRotation();
-	// 		for(unsigned int i = 0; i < 3; ++i)
-	// 			treeStateVars[i] = translation[i];
-
-	// 		fcl::Vec3f axis;
-	// 		double yaw;
-	// 		quaternion.toAxisAngle(axis, yaw);
-	// 		treeStateVars[3] = yaw;
-
-	// 		// treeStateVars[3] = quaternion.getX();
-	// 		// treeStateVars[4] = quaternion.getY();
-	// 		// treeStateVars[5] = quaternion.getZ();
-	// 		// treeStateVars[6] = quaternion.getW();
-	// 	}
-
-	// 	const std::vector<double>& getTreeStateVars() const {
-	// 		return treeStateVars;
-	// 	}
-
-	// 	void setPointIndex(unsigned int index) {
-	// 		// we aren't going to look things up in the traditional way so we don't need this stored
-	// 	}
-
-	// 	fcl::Transform3f transform;
-	// 	unsigned int id;
-	// 	std::vector<double> treeStateVars;
-	// };
 
 	struct Edge {
 		enum CollisionCheckingStatus {
@@ -95,13 +64,12 @@ protected:
 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, Vertex> KDTree;
 
 public:
-	PRMLite(const Workspace &workspace, const Agent &agent, const State &canonicalState, unsigned int numVertices, unsigned int edgeSetSize, double collisionCheckDT, bool shouldGenerateEdges = true)
-			: workspace(workspace),
-			  agent(agent),
-			  kdtree(KDTreeType(agent.getTreeStateSize()), agent.getTreeStateSize()),
-			  canonicalState(canonicalState),
-			  collisionCheckDT(collisionCheckDT),
-			  collisionChecks(0) {
+	PRMLite(const Workspace &workspace, const Agent &agent, unsigned int numVertices, unsigned int edgeSetSize, double collisionCheckDT, bool shouldGenerateEdges = true)
+		: workspace(workspace),
+		  agent(agent),
+		  kdtree(KDTreeType(agent.getTreeStateSize()), agent.getTreeStateSize()),
+		  collisionCheckDT(collisionCheckDT),
+		  collisionChecks(0) {
 		initialize(numVertices, edgeSetSize, shouldGenerateEdges);
 	}
 
@@ -112,10 +80,6 @@ public:
 	unsigned int getCellCount() const {
 		return vertices.size();
 	}
-
-	// const fcl::Transform3f& getTransform(unsigned int i) const {
-	// 	return vertices[i]->transform;
-	// }
 
 	double getEdgeCostBetweenCells(unsigned int c1, unsigned int c2) const {
 		auto vertexAndEdges = edges.find(c1);
@@ -130,7 +94,7 @@ public:
 	}
 
 	unsigned int getCellId(const typename Agent::State &state) const {
-		Vertex v(state.toAbstractState(), 0);
+		Vertex v(agent.toAbstractState(state), 0);
 		auto res = kdtree.nearest(&v, 1, 1);
 
 		assert(res.elements.size() > 0);
@@ -153,16 +117,7 @@ public:
 	}
 
 	typename Agent::State getRandomStateNearRegionCenter(unsigned int index, double radius) const {
-		return agent.getRandomStateNear(vertices[index]->state, canonicalState, radius);
-
-		// fcl::Vec3f point = math::randomPointInSphere(radius);
-		// fcl::Quaternion3f rot = math::getRandomZOnlyQuaternion();
-		// // fcl::Quaternion3f rot = math::getRandomUnitQuaternion();
-
-		// fcl::Transform3f transform(rot, point);
-		// transform = vertices[index]->transform * transform;
-
-		// return agent.transformToState(canonicalState, transform);
+		return agent.getRandomStateNearAbstractState(vertices[index]->state, radius);
 	}
 
 	void draw(bool drawPoints=true, bool drawLines=false, std::vector<std::vector<double>> colors = std::vector<std::vector<double>>()) const {
@@ -201,9 +156,9 @@ protected:
 		generateVertices(numVertices);
 
 		clock_t end = clock();
-		double time = (double) (end-vertexStart) / CLOCKS_PER_SEC;
+		double time = (double)(end-vertexStart) / CLOCKS_PER_SEC;
 		dfpair(stdout, "prm vertex build time", "%g", time);
-		
+
 		if(shouldGenerateEdges) {
 			clock_t edgeStart = clock();
 
@@ -211,12 +166,12 @@ protected:
 
 			end = clock();
 
-			time = (double) (end-edgeStart) / CLOCKS_PER_SEC;
+			time = (double)(end-edgeStart) / CLOCKS_PER_SEC;
 			dfpair(stdout, "prm edge build time", "%g", time);
 			dfpair(stdout, "prm collision checks", "%u", collisionChecks);
-		
 
-			time = (double) (end-startTime) / CLOCKS_PER_SEC;
+
+			time = (double)(end-startTime) / CLOCKS_PER_SEC;
 			dfpair(stdout, "prm build time", "%g", time);
 		}
 	}
@@ -228,22 +183,10 @@ protected:
 
 		AbstractState::getRandomAbstractState(bounds);
 
-		// std::vector< std::uniform_real_distribution<double> > linearDistributions;
-
-		// for(auto range : bounds) {
-		// 	linearDistributions.emplace_back(range.first, range.second);
-		// }
-
 		while(vertices.size() < numVertices) {
 			AbstractState state = AbstractState::getRandomAbstractState(bounds);
 
-			// fcl::Vec3f translation = getRandomVector(linearDistributions);
-
-			// fcl::Quaternion3f rotation = math::getRandomZOnlyQuaternion();
-			// // fcl::Quaternion3f rotation = math::getRandomUnitQuaternion();
-			// fcl::Transform3f transform(rotation, translation);
-
-			if(workspace.safePoses(agent, state.getTransforms(), canonicalState)) {
+			if(workspace.safeAbstractState(agent, state)) {
 				auto newVert = new Vertex(state, vertices.size());
 				vertices.push_back(newVert);
 				kdtree.insertPoint(newVert);
@@ -264,59 +207,43 @@ protected:
 				double cost = AbstractState::evaluateDistance(vertices[i]->state, endVertex->state);
 				if(cost == 0) continue;
 
-				auto edgeCandidate = AbstractState::interpolate(vertices[i]->state, endVertex->state, collisionCheckDT);
+				AbstractEdge edgeCandidate = agent.generateAbstractEdge(vertices[i]->state, endVertex->state);
 
 				if(edgeCandidate.size() != 0) {
 					collisionChecks++;
 				}
 
-				if(edgeCandidate.size() == 0 || workspace.safePoses(agent, edgeCandidate, canonicalState)) {
+				if(edgeCandidate.size() == 0 || workspace.safeAbstractEdge(agent, edgeCandidate, collisionCheckDT)) {
 					edges[i][endVertex->id] = Edge(endVertex->id, cost);
 					edges[i][endVertex->id].status = Edge::CollisionCheckingStatus::VALID;
-					
-					edges[endVertex->id][i] = Edge(i, cost); //the reverse interpolation would be symmetric
-					edges[endVertex->id][i].status = Edge::CollisionCheckingStatus::VALID;
+
+					if(agent.areAbstractEdgesSymmetric()) {
+						edges[endVertex->id][i] = Edge(i, cost);
+						edges[endVertex->id][i].status = Edge::CollisionCheckingStatus::VALID;
+					}
 				}
 			}
 		}
 	}
 
-	// double evaluateTransformDistance(const fcl::Transform3f &t1, const fcl::Transform3f &t2) const {
-	// 	const fcl::Vec3f p1 = t1.getTranslation();
-	// 	const fcl::Vec3f p2 = t2.getTranslation();
-	// 	double dx = p1[0] - p2[0];
-	// 	double dy = p1[1] - p2[1];
-	// 	double dz = p1[2] - p2[2];
-
-	// 	return sqrt(dx*dx + dy*dy + dz*dz);
-	// }
-
-	// fcl::Vec3f getRandomVector(std::vector< std::uniform_real_distribution<double> > &distributions) const {
-	// 	fcl::Vec3f vector;
-	// 	for(unsigned int i = 0; i < distributions.size(); ++i) {
-	// 		vector[i] = distributions[i](GlobalRandomGenerator);
-	// 	}
-	// 	return vector;
-	// }
-
 #ifdef WITHGRAPHICS
 	void drawOpenGL(bool drawPoints, bool drawLines, const std::vector<std::vector<double>> &colors) const {
 		if(drawPoints) {
 			glPointSize(10);
-			unsigned int curIndex = 0;
-			std::vector<double> white(3,1);
-			for(const auto vert : vertices) {
+			// unsigned int curIndex = 0;
+			// std::vector<double> white(3,1);
+			// for(const auto vert : vertices) {
 
-				if(colors.size() == 0) {
-					// drawOpenGLPoint(vert->transform.getTranslation(), white);
-					// agent.drawMesh(vert->transform);
-				} else {
-					// drawOpenGLPoint(vert->transform.getTranslation(), colors[curIndex]);
-					// OpenGLWrapper::Color color(colors[curIndex][0], colors[curIndex][1], colors[curIndex][2]);
-					// agent.drawMesh(vert->transform, color);
-					curIndex++;
-				}
-			}
+			// 	if(colors.size() == 0) {
+			// 		drawOpenGLPoint(vert->transform.getTranslation(), white);
+			// 		agent.drawMesh(vert->transform);
+			// 	} else {
+			// 		drawOpenGLPoint(vert->transform.getTranslation(), colors[curIndex]);
+			// 		OpenGLWrapper::Color color(colors[curIndex][0], colors[curIndex][1], colors[curIndex][2]);
+			// 		agent.drawMesh(vert->transform, color);
+			// 		curIndex++;
+			// 	}
+			// }
 			glPointSize(1);
 		}
 
@@ -421,8 +348,7 @@ protected:
 #endif
 	const Workspace &workspace;
 	const Agent &agent;
-	const State &canonicalState;
-	std::vector<Vertex*> vertices;
+	std::vector<Vertex *> vertices;
 	std::unordered_map<unsigned int, std::unordered_map<unsigned int, Edge>> edges;
 	double collisionCheckDT;
 	unsigned int collisionChecks;

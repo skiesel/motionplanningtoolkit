@@ -18,17 +18,17 @@ public:
 	}
 
 	void get(std::vector< std::vector<fcl::Vec3f> > &vertices,
-				std::vector< std::vector<fcl::Triangle> > &triangles,
-				std::vector< std::vector<double> > &normals) const {
+	         std::vector< std::vector<fcl::Triangle> > &triangles,
+	         std::vector< std::vector<double> > &normals) const {
 
 		aiMatrix4x4 identity;
 		walkSceneHierarchy(scene, scene->mRootNode, identity, vertices, triangles, normals);
 	}
 
 	void walkSceneHierarchy(const aiScene *scene, const aiNode *current, const aiMatrix4x4 &parentTransform,
-				std::vector< std::vector<fcl::Vec3f> > &vertices,
-				std::vector< std::vector<fcl::Triangle> > &triangles,
-				std::vector< std::vector<double> > &normals) const {
+	                        std::vector< std::vector<fcl::Vec3f> > &vertices,
+	                        std::vector< std::vector<fcl::Triangle> > &triangles,
+	                        std::vector< std::vector<double> > &normals) const {
 
 		const aiMatrix4x4 &transform = parentTransform * current->mTransformation;
 
@@ -75,8 +75,8 @@ public:
 				}
 
 				triangles.back().emplace_back(face.mIndices[0],
-												face.mIndices[1],
-												face.mIndices[2]);
+				                              face.mIndices[1],
+				                              face.mIndices[2]);
 			}
 		}
 

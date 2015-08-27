@@ -50,15 +50,23 @@ public:
 			color[2] = b;
 			color[3] = a;
 		}
-		const std::vector<double>& getColor() const { return color; }
-		static Color Red() { return Color(1,0,0); }
-		static Color Green() { return Color(0,1,0); }
-		static Color Blue() { return Color(0,0,1); }
+		const std::vector<double> &getColor() const {
+			return color;
+		}
+		static Color Red() {
+			return Color(1,0,0);
+		}
+		static Color Green() {
+			return Color(0,1,0);
+		}
+		static Color Blue() {
+			return Color(0,0,1);
+		}
 	private:
 		std::vector<double> color;
 	};
 
-	static OpenGLWrapper& getOpenGLWrapper() {
+	static OpenGLWrapper &getOpenGLWrapper() {
 		if(wrapperInstance == NULL) {
 			wrapperInstance = new OpenGLWrapper();
 		}
@@ -90,7 +98,7 @@ public:
 		glEnable(GL_CULL_FACE);
 		glDepthFunc(GL_LEQUAL);
 		glEnable(GL_DEPTH_TEST);
-		
+
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
 
@@ -130,16 +138,16 @@ public:
 		Connexion3DMouse::createConnexion3DMouse();
 
 		if(args.exists("Zoom"))
-			zoom(1, stod(args.value("Zoom")));
+			zoom(1, args.doubleVal("Zoom"));
 
 		if(args.exists("Rotate X"))
-			rotate(0, stod(args.value("Rotate X")));
+			rotate(0, args.doubleVal("Rotate X"));
 
 		if(args.exists("Rotate Y"))
-			rotate(1, stod(args.value("Rotate Y")));
+			rotate(1, args.doubleVal("Rotate Y"));
 
 		if(args.exists("Rotate Z"))
-			rotate(2, stod(args.value("Rotate Z")));
+			rotate(2, args.doubleVal("Rotate Z"));
 
 		while(!glfwWindowShouldClose(window)) {
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -194,7 +202,7 @@ public:
 
 	static void handle3DMouseEvents() {
 		Connexion3DMouse::MouseState state = Connexion3DMouse::getLatestState();
-		OpenGLWrapper& gl = getOpenGLWrapper();
+		OpenGLWrapper &gl = getOpenGLWrapper();
 		gl.translate(0, 1, state.tx / 1000);
 		gl.translate(1, 1, state.ty / 1000);
 		gl.translate(2, 1, state.tz / 1000);
@@ -210,21 +218,37 @@ public:
 
 		if(action == 0) {
 			switch(key) {
-				case GLFW_KEY_ESCAPE:
-					glfwSetWindowShouldClose(window, GL_TRUE);
-					break;
-				case GLFW_KEY_LEFT_SHIFT:
-				case GLFW_KEY_RIGHT_SHIFT:
-					getOpenGLWrapper().setShiftModifier(action);
-					break;
-				case '-': getOpenGLWrapper().zoom(-1); break;
-				case '=': if(mods == GLFW_MOD_SHIFT) getOpenGLWrapper().zoom(1); break;
-				case 'A': mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().translate(0, 1) : getOpenGLWrapper().translate(0, -1); break;
-				case 'S': mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().translate(1, -1) : getOpenGLWrapper().translate(1, 1); break;
-				case 'D': mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().translate(2, 1) : getOpenGLWrapper().translate(2, -1); break;
-				case 'Z': mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().rotate(0, 1) : getOpenGLWrapper().rotate(0, -1); break;
-				case 'X': mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().rotate(1, -1) : getOpenGLWrapper().rotate(1, 1); break;
-				case 'C': mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().rotate(2, 1) : getOpenGLWrapper().rotate(2, -1); break;
+			case GLFW_KEY_ESCAPE:
+				glfwSetWindowShouldClose(window, GL_TRUE);
+				break;
+			case GLFW_KEY_LEFT_SHIFT:
+			case GLFW_KEY_RIGHT_SHIFT:
+				getOpenGLWrapper().setShiftModifier(action);
+				break;
+			case '-':
+				getOpenGLWrapper().zoom(-1);
+				break;
+			case '=':
+				if(mods == GLFW_MOD_SHIFT) getOpenGLWrapper().zoom(1);
+				break;
+			case 'A':
+				mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().translate(0, 1) : getOpenGLWrapper().translate(0, -1);
+				break;
+			case 'S':
+				mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().translate(1, -1) : getOpenGLWrapper().translate(1, 1);
+				break;
+			case 'D':
+				mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().translate(2, 1) : getOpenGLWrapper().translate(2, -1);
+				break;
+			case 'Z':
+				mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().rotate(0, 1) : getOpenGLWrapper().rotate(0, -1);
+				break;
+			case 'X':
+				mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().rotate(1, -1) : getOpenGLWrapper().rotate(1, 1);
+				break;
+			case 'C':
+				mods == GLFW_MOD_SHIFT ? getOpenGLWrapper().rotate(2, 1) : getOpenGLWrapper().rotate(2, -1);
+				break;
 			}
 		}
 	}
@@ -364,15 +388,13 @@ public:
 					scaleMatrix[5] *= scaleFactor;
 					scaleMatrix[10] *= scaleFactor;
 				}
-			}
-			else if (!mouseInfo.shiftPressed) {
+			} else if(!mouseInfo.shiftPressed) {
 				if(leftButton) {
 					if(mouseInfo.oldCoordIsGood) {
 						translateMatrix[3] += (x - mouseInfo.oldX) * softenMouse;
 						translateMatrix[7] -= (y - mouseInfo.oldY) * softenMouse;
 					}
-				}
-				else {
+				} else {
 					if(mouseInfo.oldCoordIsGood) {
 						double dx = fabs(x - mouseInfo.oldX);
 						double dy = fabs(y - mouseInfo.oldY);
@@ -412,26 +434,36 @@ public:
 	}
 
 	void drawPolygon(const std::vector<double> &verts) const {
-		auto lambda = [&](){ glDrawArrays(GL_LINE_LOOP, 0, verts.size() / 28); };
+		auto lambda = [&]() {
+			glDrawArrays(GL_LINE_LOOP, 0, verts.size() / 28);
+		};
 		drawCommon(lambda, verts);
 	}
 
 	void drawTriangles(const std::vector<double> &verts) const {
-		auto lambda = [&](){ glDrawArrays(GL_TRIANGLE_STRIP, 0, verts.size() / 28); };
+		auto lambda = [&]() {
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, verts.size() / 28);
+		};
 		drawCommon(lambda, verts);
 	}
 
 	void drawPoints(const std::vector<double> &verts) const {
-		auto lambda = [&](){ glDrawArrays(GL_POINTS, 0, verts.size() / 28); };
+		auto lambda = [&]() {
+			glDrawArrays(GL_POINTS, 0, verts.size() / 28);
+		};
 		drawCommon(lambda, verts);
 	}
 
 	void drawLines(const std::vector<double> &verts) const {
-		auto lambda = [&](){ glDrawArrays(GL_LINE_STRIP, 0, verts.size() / 28); };
+		auto lambda = [&]() {
+			glDrawArrays(GL_LINE_STRIP, 0, verts.size() / 28);
+		};
 		drawCommon(lambda, verts);
 	}
 
-	const std::vector<double>& getIdentity() const { return Identity; }
+	const std::vector<double> &getIdentity() const {
+		return Identity;
+	}
 
 private:
 	OpenGLWrapper() : xRot(0), yRot(0), zRot(0), Identity(16, 0) {
@@ -448,9 +480,9 @@ private:
 		Identity[0] = Identity[5] = Identity[10] = Identity[15] = 1;
 	}
 
-	std::string readShader(const char* filename) const {
+	std::string readShader(const char *filename) const {
 		std::fstream file;
-  		file.open(filename, std::fstream::in);
+		file.open(filename, std::fstream::in);
 
 		if(!file.is_open()) {
 			fprintf(stderr, "can't open shader file: %s\n", filename);
@@ -481,25 +513,25 @@ private:
 		// Specify the layout of the vertex data
 		GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
 		glEnableVertexAttribArray(posAttrib);
-		glVertexAttribPointer(posAttrib, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void*)0);
+		glVertexAttribPointer(posAttrib, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void *)0);
 
 		GLint normAttrib = glGetAttribLocation(shaderProgram, "normal");
 		glEnableVertexAttribArray(normAttrib);
-		glVertexAttribPointer(normAttrib, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void*)(4*sizeof(float)));
+		glVertexAttribPointer(normAttrib, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void *)(4*sizeof(float)));
 
 		GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
 		glEnableVertexAttribArray(colAttrib);
-		glVertexAttribPointer(colAttrib, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void*)(8*sizeof(float)));
+		glVertexAttribPointer(colAttrib, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void *)(8*sizeof(float)));
 
 		GLint transformAttrib = glGetAttribLocation(shaderProgram, "transform");
 		glEnableVertexAttribArray(transformAttrib + 0);
 		glEnableVertexAttribArray(transformAttrib + 1);
 		glEnableVertexAttribArray(transformAttrib + 2);
 		glEnableVertexAttribArray(transformAttrib + 3);
-		glVertexAttribPointer(transformAttrib + 0, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void*)(12*sizeof(float)));
-		glVertexAttribPointer(transformAttrib + 1, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void*)(16*sizeof(float)));
-		glVertexAttribPointer(transformAttrib + 2, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void*)(20*sizeof(float)));
-		glVertexAttribPointer(transformAttrib + 3, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void*)(24*sizeof(float)));
+		glVertexAttribPointer(transformAttrib + 0, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void *)(12*sizeof(float)));
+		glVertexAttribPointer(transformAttrib + 1, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void *)(16*sizeof(float)));
+		glVertexAttribPointer(transformAttrib + 2, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void *)(20*sizeof(float)));
+		glVertexAttribPointer(transformAttrib + 3, 4, GL_FLOAT, GL_FALSE, 28*sizeof(float), (void *)(24*sizeof(float)));
 
 		drawType();
 
@@ -515,7 +547,7 @@ private:
 		multiply(transformMatrix, scaleMatrix, transformMatrix);
 	}
 
-	void makeIdentity(GLfloat* m) const {
+	void makeIdentity(GLfloat *m) const {
 		for(unsigned int i = 0; i < 16; i++) {
 			m[i] = 0;
 		}
@@ -525,7 +557,7 @@ private:
 		m[15] = 1;
 	}
 
-	void multiply(const GLfloat* m1, const GLfloat* m2, GLfloat* out) const {
+	void multiply(const GLfloat *m1, const GLfloat *m2, GLfloat *out) const {
 		GLfloat temp[16];
 		for(unsigned int row = 0; row < 4; ++row) {
 			for(unsigned int col = 0; col < 4; ++col) {
@@ -542,7 +574,7 @@ private:
 		for(unsigned int i = 0; i < 16; i++) out[i] = temp[i];
 	}
 
-	void printMatrix(const GLfloat* m) {
+	void printMatrix(const GLfloat *m) {
 		for(unsigned int i = 0; i < 16; i++) {
 			if(i % 4 == 0) {
 				fprintf(stderr, "\n%g\t", m[i]);
@@ -570,6 +602,6 @@ private:
 };
 
 OpenGLWrapper *OpenGLWrapper::wrapperInstance = NULL;
-std::function<void(int)> OpenGLWrapper::externalKeyboardCallback([](int key){});
+std::function<void(int)> OpenGLWrapper::externalKeyboardCallback([](int key) {});
 
 #endif

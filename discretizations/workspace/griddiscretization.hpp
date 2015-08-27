@@ -26,7 +26,7 @@ public:
 
 		for(unsigned int i = 0; i < cellCount; i++) {
 			auto pt = getGridCenter(i);
-			if(workspace.safePoses(agent, agent.getRepresentivePosesForLocation(pt))) {
+			if(workspace.safeStates(agent, agent.getRepresentiveStatesForLocation(pt))) {
 				grid[i] = true;
 			} else {
 				grid[i] = false;
@@ -74,7 +74,7 @@ public:
 
 		auto coordinate = getGridCoordinates(n);
 
-		for(const std::vector<int>& offsets : gridNeighborOffsets) {
+		for(const std::vector<int> &offsets : gridNeighborOffsets) {
 
 			std::vector<unsigned int> neighbor(offsets.size());
 			bool valid = true;
@@ -161,7 +161,7 @@ private:
 		std::vector<int> neighbor(dimensions.size());
 		populateGridNeighborOffsetsHelper(0, neighbor);
 	}
-	
+
 	void populateGridNeighborOffsetsHelper(unsigned int coord, std::vector<int> &neighbor) {
 		if(coord >= dimensions.size()) {
 			bool add = false;

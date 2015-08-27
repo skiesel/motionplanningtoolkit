@@ -19,7 +19,7 @@ class PlakuTreeInterface {
 	typedef UniformSampler<Workspace, Agent, KDTree> UniformSamplerT;
 
 	struct Region {
-		Region(unsigned int id, const Agent& agent) : heapIndex(std::numeric_limits<unsigned int>::max()), id(id), numSelections(0), heuristic(std::numeric_limits<double>::infinity()), weight(0), onOpen(false){
+		Region(unsigned int id, const Agent &agent) : heapIndex(std::numeric_limits<unsigned int>::max()), id(id), numSelections(0), heuristic(std::numeric_limits<double>::infinity()), weight(0), onOpen(false) {
 			KDTreeType kdtreeType;
 			edgesInRegion = new KDTree(kdtreeType, agent.getTreeStateSize());
 		}
@@ -77,7 +77,7 @@ class PlakuTreeInterface {
 			return regionPath[randomIndex];
 		}
 
-		State getNearestStateInRegion(const State& s) const {
+		State getNearestStateInRegion(const State &s) const {
 			Edge e(s);
 			auto res = edgesInRegion->nearest(&e, 0, 1);
 			assert(res.elements.size() > 0);
@@ -86,10 +86,18 @@ class PlakuTreeInterface {
 
 		/* used for initial heuristic computation */
 		unsigned int heapIndex;
-		int sort(const Region* r) const { return (heuristic - r->heuristic) > 0 ? -1 : 1; }
-		unsigned int getHeapIndex() const { return heapIndex; }
-		void setHeapIndex(unsigned int i) { heapIndex = i; }
-		void updateRegionPath(const std::vector<unsigned int> &rp) { regionPath = rp; }
+		int sort(const Region *r) const {
+			return (heuristic - r->heuristic) > 0 ? -1 : 1;
+		}
+		unsigned int getHeapIndex() const {
+			return heapIndex;
+		}
+		void setHeapIndex(unsigned int i) {
+			heapIndex = i;
+		}
+		void updateRegionPath(const std::vector<unsigned int> &rp) {
+			regionPath = rp;
+		}
 
 		static bool HeapCompare(const Region *r1, const Region *r2) {
 			return r1->weight < r2->weight;
@@ -108,8 +116,8 @@ class PlakuTreeInterface {
 	};
 
 public:
-	PlakuTreeInterface(const Workspace &workspace, const Agent &agent, Discretization& discretization,
-		const State& start, const State& goal, double alpha, double b, double stateRadius) : agent(agent), workspace(workspace),
+	PlakuTreeInterface(const Workspace &workspace, const Agent &agent, Discretization &discretization,
+	                   const State &start, const State &goal, double alpha, double b, double stateRadius) : agent(agent), workspace(workspace),
 		discretization(discretization), startRegionId(discretization.getCellId(start)),
 		goalRegionId(discretization.getCellId(goal)), activeRegion(NULL), alpha(alpha), b(b), stateRadius(stateRadius) {
 
@@ -199,7 +207,7 @@ public:
 		}
 	}
 
-	void insertIntoTree(Edge* edge) {
+	void insertIntoTree(Edge *edge) {
 		unsigned int newCellId = discretization.getCellId(edge->end);
 
 		if(!regions[newCellId]->onOpen) {
@@ -212,7 +220,7 @@ public:
 		uniformSamplerBackingKDTree->insertPoint(edge);
 	}
 
-	Edge* getTreeEdge(const State& s) const {
+	Edge *getTreeEdge(const State &s) const {
 		fatal("Not implemented: PlakuTreeInterface::getTreeEdge");
 		return NULL;
 	}
@@ -258,7 +266,7 @@ private:
 	KDTree *uniformSamplerBackingKDTree;
 
 	unsigned int startRegionId, goalRegionId;
-	std::vector<Region*> regions, regionHeap;
+	std::vector<Region *> regions, regionHeap;
 	Region *activeRegion;
 
 	double alpha, b, stateRadius;
@@ -272,7 +280,7 @@ private:
 		typedef PlakuTreeInterface<W, A, D> TheBoss;
 		typedef typename TheBoss::Region Region;
 	public:
-		void dijkstra(TheBoss& theBoss, Region *region) {
+		void dijkstra(TheBoss &theBoss, Region *region) {
 			InPlaceBinaryHeap<Region> open;
 			region->setHeuristicAndPath(0, std::vector<unsigned int>());
 			open.push(region);
@@ -304,7 +312,7 @@ private:
 		typedef PlakuTreeInterface<Workspace, Agent, LazyPRMLite<Workspace, Agent> > TheBoss;
 		typedef typename TheBoss::Region Region;
 	public:
-		void dijkstra(TheBoss& theBoss, Region *region) {
+		void dijkstra(TheBoss &theBoss, Region *region) {
 			InPlaceBinaryHeap<Region> open;
 			region->setHeuristicAndPath(0, std::vector<unsigned int>());
 			open.push(region);

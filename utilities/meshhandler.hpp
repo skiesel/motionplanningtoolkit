@@ -62,17 +62,17 @@ public:
 		delete worldCollisionModel;
 	}
 
-	const fcl::BroadPhaseCollisionManager* getCollisionChecker() const {
+	const fcl::BroadPhaseCollisionManager *getCollisionChecker() const {
 		return worldCollisionModel;
 	}
 
 #ifdef WITHGRAPHICS
 	void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
-		const OpenGLWrapper& opengl = OpenGLWrapper::getOpenGLWrapper();
+		const OpenGLWrapper &opengl = OpenGLWrapper::getOpenGLWrapper();
 
 		for(unsigned int i = 0; i < triangles.size(); ++i) {
-			const std::vector<fcl::Vec3f>& verts = vertices[i];
-			const std::vector<fcl::Triangle>& tris = triangles[i];
+			const std::vector<fcl::Vec3f> &verts = vertices[i];
+			const std::vector<fcl::Triangle> &tris = triangles[i];
 			std::vector<double> pts(84, 1.0);
 
 			auto c = color.getColor();
@@ -138,18 +138,18 @@ public:
 		}
 	}
 
-	virtual fcl::CollisionObject* getMeshPose(const fcl::Transform3f &tf) const {
+	virtual fcl::CollisionObject *getMeshPose(const fcl::Transform3f &tf) const {
 		return new fcl::CollisionObject(agentModel, tf);
 	}
 
 #ifdef WITHGRAPHICS
 	virtual void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color(),
-		const std::vector<double> &transform = OpenGLWrapper::getOpenGLWrapper().getIdentity()) const {
-		const OpenGLWrapper& opengl = OpenGLWrapper::getOpenGLWrapper();
+	                  const std::vector<double> &transform = OpenGLWrapper::getOpenGLWrapper().getIdentity()) const {
+		const OpenGLWrapper &opengl = OpenGLWrapper::getOpenGLWrapper();
 
 		for(unsigned int i = 0; i < triangles.size(); ++i) {
-			const std::vector<fcl::Vec3f>& verts = vertices[i];
-			const std::vector<fcl::Triangle>& tris = triangles[i];
+			const std::vector<fcl::Vec3f> &verts = vertices[i];
+			const std::vector<fcl::Triangle> &tris = triangles[i];
 			std::vector<double> pts(84, 1.0);
 			auto c = color.getColor();
 			for(auto tri : tris) {
@@ -253,7 +253,7 @@ public:
 
 	}
 
-	virtual fcl::CollisionObject* getMeshPose(const fcl::Transform3f &tf) const {
+	virtual fcl::CollisionObject *getMeshPose(const fcl::Transform3f &tf) const {
 		return new fcl::CollisionObject(cylinder, tf);
 	}
 
@@ -264,7 +264,7 @@ private:
 class ConeHandler : public SimpleAgentMeshHandler {
 public:
 	ConeHandler(double radius, double length) {
-		cone = boost::shared_ptr<Cone>(new fcl::Cone(radius, length));
+		cone = boost::shared_ptr<fcl::Cone>(new fcl::Cone(radius, length));
 
 		std::vector<double> upNormal(3), downNormal(3);
 		upNormal[2] = 1;
@@ -303,7 +303,7 @@ public:
 		}
 	}
 
-	virtual fcl::CollisionObject* getMeshPose(const fcl::Transform3f &tf) const {
+	virtual fcl::CollisionObject *getMeshPose(const fcl::Transform3f &tf) const {
 		return new fcl::CollisionObject(cone, tf);
 	}
 
@@ -311,19 +311,47 @@ private:
 	boost::shared_ptr<fcl::Cone> cone;
 };
 
+class CapsuleHandler : public SimpleAgentMeshHandler {
+public:
+	CapsuleHandler(double radius, double length) {
+		capsule = boost::shared_ptr<fcl::Capsule>(new fcl::Capsule(radius, length));
+	}
+
+	virtual fcl::CollisionObject *getMeshPose(const fcl::Transform3f &tf) const {
+		return new fcl::CollisionObject(capsule, tf);
+	}
+
+private:
+	boost::shared_ptr<fcl::Capsule> capsule;
+};
+
+class BoxHandler : public SimpleAgentMeshHandler {
+public:
+	BoxHandler(double x, double y, double z) {
+		box = boost::shared_ptr<fcl::Box>(new fcl::Box(x, y, z));
+	}
+
+	virtual fcl::CollisionObject *getMeshPose(const fcl::Transform3f &tf) const {
+		return new fcl::CollisionObject(box, tf);
+	}
+
+private:
+	boost::shared_ptr<fcl::Box> box;
+};
+
 class MeshHandler {
 public:
 	static bool isInCollision(const StaticEnvironmentMeshHandler &environment,
-								const std::vector<const SimpleAgentMeshHandler*> &agent,
-								const std::vector<std::vector<fcl::Transform3f> > &poses,
-								bool checkSelfCollision = false,
-								bool debug = false) {
+	                          const std::vector<const SimpleAgentMeshHandler *> &agent,
+	                          const std::vector<std::vector<fcl::Transform3f> > &poses,
+	                          bool checkSelfCollision = false,
+	                          bool debug = false) {
 
-		std::vector<fcl::CollisionObject*> agentPoses;
+		std::vector<fcl::CollisionObject *> agentPoses;
 		for(unsigned int i = 0; i < poses.size(); ++i) {
 			const std::vector<fcl::Transform3f> &pose = poses[i];
 
-			std::vector<fcl::CollisionObject*> selfCollisionObjects;
+			std::vector<fcl::CollisionObject *> selfCollisionObjects;
 
 			for(unsigned int j = 0; j < pose.size(); ++j) {
 				fcl::CollisionObject *agentPose = agent[j]->getMeshPose(pose[j]);

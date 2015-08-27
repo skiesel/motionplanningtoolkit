@@ -1,63 +1,10 @@
 #pragma once
 
-#include "workspaces/planarlinkage.hpp"
-#include <chrono>
-#include <thread>
-
 unsigned int GraphicsIterations = 1000;
 
 template<class Workspace, class Agent>
-void go_TEST(const InstanceFileMap& args, const Agent& agent, const Workspace &workspace,
-			const typename Agent::State &start, const typename Agent::State &goal) {
-
-	dfpair(stdout, "planner", "%s", "TEST");
-	// typedef flann::KDTreeSingleIndexParams KDTreeType;
-	typedef flann::KDTreeIndexParams KDTreeType;
-	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
-	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
-	typedef TreeInterface<Agent, KDTree, Sampler> TreeInterface;
-	typedef RRT<Workspace, Agent, TreeInterface> Planner;
-
-/* planner config */
-
-	KDTreeType kdtreeType(3);
-	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
-	Sampler sampler(workspace, agent, kdtree);
-	TreeInterface treeInterface(kdtree, sampler);
-	Planner planner(workspace, agent, treeInterface, args);
-
-	auto intermediateStates = Agent::AbstractState::interpolate(start.toAbstractState(), goal.toAbstractState(), 0.3);
-
-#ifdef WITHGRAPHICS
-	bool firstInvocation = true;
-	auto lambda = [&](){
-		start.draw();
-		goal.draw();
-		for (auto state : intermediateStates) {
-			state.draw();
-		}
-//		auto edge = agent.randomSteer(start, 0); //TEST//
-//		edge.end.draw(); //TEST//
-//		std::chrono::milliseconds timespan(1000); // TEST //
-//		std::this_thread::sleep_for(timespan);//TEST//
-		workspace.draw();
-		agent.draw();
-		agent.drawMesh(start);
-		agent.drawMesh(goal);
-		planner.query(start, goal, GraphicsIterations, firstInvocation);
-		firstInvocation = false;
-	};
-
-	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
-#else
-	planner.query(start, goal);
-	planner.dfpairs();
-#endif
-}
-
-template<class Workspace, class Agent>
-void go_RRT(const InstanceFileMap& args, const Agent& agent, const Workspace &workspace,
-		const typename Agent::State &start, const typename Agent::State &goal) {
+void go_RRT(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+            const typename Agent::State &start, const typename Agent::State &goal) {
 
 	dfpair(stdout, "planner", "%s", "RRT");
 	// typedef flann::KDTreeSingleIndexParams KDTreeType;
@@ -67,7 +14,7 @@ void go_RRT(const InstanceFileMap& args, const Agent& agent, const Workspace &wo
 	typedef TreeInterface<Agent, KDTree, Sampler> TreeInterface;
 	typedef RRT<Workspace, Agent, TreeInterface> Planner;
 
-/* planner config */
+	/* planner config */
 
 	KDTreeType kdtreeType(3);
 	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
@@ -75,25 +22,25 @@ void go_RRT(const InstanceFileMap& args, const Agent& agent, const Workspace &wo
 	TreeInterface treeInterface(kdtree, sampler);
 	Planner planner(workspace, agent, treeInterface, args);
 
-	#ifdef WITHGRAPHICS
-		bool firstInvocation = true;
-		auto lambda = [&](){
-			workspace.draw();
-			agent.drawMesh(start);
-			agent.drawMesh(goal);
-			planner.query(start, goal, GraphicsIterations, firstInvocation);
-			firstInvocation = false;
-		};
-		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
-	#else
-		planner.query(start, goal);
-		planner.dfpairs();
-	#endif
+#ifdef WITHGRAPHICS
+	bool firstInvocation = true;
+	auto lambda = [&]() {
+		workspace.draw();
+		agent.drawMesh(start);
+		agent.drawMesh(goal);
+		planner.query(start, goal, GraphicsIterations, firstInvocation);
+		firstInvocation = false;
+	};
+	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
+#else
+	planner.query(start, goal);
+	planner.dfpairs();
+#endif
 }
 
 template<class Workspace, class Agent>
-void go_RRTConnect(const InstanceFileMap& args, const Agent& agent, const Workspace &workspace,
-		const typename Agent::State &start, const typename Agent::State &goal) {
+void go_RRTConnect(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+                   const typename Agent::State &start, const typename Agent::State &goal) {
 	dfpair(stdout, "planner", "%s", "RRT Connect");
 
 	// typedef flann::KDTreeSingleIndexParams KDTreeType;
@@ -103,7 +50,7 @@ void go_RRTConnect(const InstanceFileMap& args, const Agent& agent, const Worksp
 	typedef TreeInterface<Agent, KDTree, Sampler> TreeInterface;
 	typedef RRTConnect<Workspace, Agent, TreeInterface> Planner;
 
-/* planner config */
+	/* planner config */
 
 	KDTreeType kdtreeType(2);
 	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
@@ -111,25 +58,25 @@ void go_RRTConnect(const InstanceFileMap& args, const Agent& agent, const Worksp
 	TreeInterface treeInterface(kdtree, sampler);
 	Planner planner(workspace, agent, treeInterface, args);
 
-	#ifdef WITHGRAPHICS
-		bool firstInvocation = true;
-		auto lambda = [&](){
-			workspace.draw();
-			agent.drawMesh(start);
-			agent.drawMesh(goal);
-			planner.query(start, goal, GraphicsIterations, firstInvocation);
-			firstInvocation = false;
-		};
-		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
-	#else
-		planner.query(start, goal);
-		planner.dfpairs();
-	#endif
+#ifdef WITHGRAPHICS
+	bool firstInvocation = true;
+	auto lambda = [&]() {
+		workspace.draw();
+		agent.drawMesh(start);
+		agent.drawMesh(goal);
+		planner.query(start, goal, GraphicsIterations, firstInvocation);
+		firstInvocation = false;
+	};
+	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
+#else
+	planner.query(start, goal);
+	planner.dfpairs();
+#endif
 }
 
 template<class Workspace, class Agent>
-void go_KPIECE(const InstanceFileMap& args, const Agent& agent, const Workspace &workspace,
-		const typename Agent::State &start, const typename Agent::State &goal) {
+void go_KPIECE(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+               const typename Agent::State &start, const typename Agent::State &goal) {
 	dfpair(stdout, "planner", "%s", "KPIECE");
 
 	typedef KPIECE<Workspace, Agent> Planner;
@@ -140,8 +87,8 @@ void go_KPIECE(const InstanceFileMap& args, const Agent& agent, const Workspace 
 }
 
 template<class Workspace, class Agent>
-void go_PPRM(const InstanceFileMap& args, const Agent& agent, const Workspace &workspace,
-		const typename Agent::State &start, const typename Agent::State &goal) {
+void go_PPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+             const typename Agent::State &start, const typename Agent::State &goal) {
 	dfpair(stdout, "planner", "%s", "PPRM");
 
 	typedef LazyPRMLite<Workspace, Agent> PRMLite;
@@ -150,40 +97,79 @@ void go_PPRM(const InstanceFileMap& args, const Agent& agent, const Workspace &w
 
 	unsigned int numberOfPRMVertices = stol(args.value("Number Of PRM Vertices"));
 	unsigned int numberOfNearestNeighborEdgeConsiderations = stol(args.value("Nearest Neighbors To Consider In PRM Edge Construction"));
-	double prmCollisionCheckDT = stod(args.value("PRM Collision Check DT"));
+	double prmCollisionCheckDT = args.doubleVal("PRM Collision Check DT");
 
-	PRMLite prmLite(workspace, agent, start, numberOfPRMVertices, numberOfNearestNeighborEdgeConsiderations, prmCollisionCheckDT);
+	PRMLite prmLite(workspace, agent, numberOfPRMVertices, numberOfNearestNeighborEdgeConsiderations, prmCollisionCheckDT);
 
-	double alpha = stod(args.value("Plaku Alpha Value"));
-	double b = stod(args.value("Plaku b Value"));
-	double stateRadius = stod(args.value("Plaku PRM State Selection Radius"));
+	double alpha = args.doubleVal("Plaku Alpha Value");
+	double b = args.doubleVal("Plaku b Value");
+	double stateRadius = args.doubleVal("Plaku PRM State Selection Radius");
 
 	PlakuTreeInterfaceT plakuTreeInterface(workspace, agent, prmLite, start, goal, alpha, b, stateRadius);
 
-	// Plaku planner(workspace, agent, plakuTreeInterface, args);
-	#ifdef WITHGRAPHICS
-		bool firstInvocation = true;
-		auto lambda = [&](){
-			plakuTreeInterface.draw();
-			workspace.draw();
-			agent.drawMesh(start);
-			agent.drawMesh(goal);
+	Plaku planner(workspace, agent, plakuTreeInterface, args);
+#ifdef WITHGRAPHICS
+	bool firstInvocation = true;
+	auto lambda = [&]() {
+		plakuTreeInterface.draw();
+		workspace.draw();
+		agent.drawMesh(start);
+		agent.drawMesh(goal);
 
-	// 		// plakuTreeInterface.draw();
+		// plakuTreeInterface.draw();
 
-	// 		planner.query(start, goal, GraphicsIterations, firstInvocation);
-	// 		firstInvocation = false;
-		};
-		OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
-	// #else
-	// 	planner.query(start, goal);
-	// 	planner.dfpairs();
-	#endif
+		planner.query(start, goal, GraphicsIterations, firstInvocation);
+		firstInvocation = false;
+	};
+	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
+#else
+	planner.query(start, goal);
+	planner.dfpairs();
+#endif
 }
 
+// template<class Workspace, class Agent>
+// void go_SST(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+//                    const typename Agent::State &start, const typename Agent::State &goal) {
+// 	dfpair(stdout, "planner", "%s", "SST");
+
+// 	// typedef flann::KDTreeSingleIndexParams KDTreeType;
+// 	typedef flann::KDTreeIndexParams KDTreeType;
+// 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
+// 	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
+// 	typedef SST<Agent, KDTree, Sampler> TreeInterface;
+// 	typedef RRTConnect<Workspace, Agent, TreeInterface> Planner;
+
+// 	/* planner config */
+
+// 	KDTreeType kdtreeType(2);
+// 	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
+// 	Sampler sampler(workspace, agent, kdtree);
+
+// 	double sstRadius = args.doubleVal("SST Radius");
+
+// 	TreeInterface treeInterface(kdtree, sampler, sstRadius);
+// 	Planner planner(workspace, agent, treeInterface, args);
+
+// #ifdef WITHGRAPHICS
+// 	bool firstInvocation = true;
+// 	auto lambda = [&]() {
+// 		workspace.draw();
+// 		agent.drawMesh(start);
+// 		agent.drawMesh(goal);
+// 		planner.query(start, goal, GraphicsIterations, firstInvocation);
+// 		firstInvocation = false;
+// 	};
+// 	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
+// #else
+// 	planner.query(start, goal);
+// 	planner.dfpairs();
+// #endif
+// }
+
 template<class Workspace, class Agent>
-void go(const InstanceFileMap& args, const Workspace &workspace, const Agent &agent,
-		const typename Agent::State &start, const typename Agent::State &goal) {
+void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &agent,
+        const typename Agent::State &start, const typename Agent::State &goal) {
 	clock_t startT = clock();
 
 	std::string planner = args.value("Planner");
@@ -196,24 +182,24 @@ void go(const InstanceFileMap& args, const Workspace &workspace, const Agent &ag
 		go_PPRM<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("KPIECE") == 0) {
 		go_KPIECE<Workspace, Agent>(args, agent, workspace, start, goal);
-	} else if(planner.compare("TEST") == 0) {
-		go_TEST<Workspace, Agent>(args, agent, workspace, start, goal);
+//	} else if(planner.compare("SST") == 0) {
+//		go_SST<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else {
 		fprintf(stderr, "unreocognized planner: %s\n", planner.c_str());
 	}
 
 	clock_t endT = clock();
-	dfpair(stdout, "total time solving time", "%g", (double) (endT-startT) / CLOCKS_PER_SEC);
+	dfpair(stdout, "total time solving time", "%g", (double)(endT-startT) / CLOCKS_PER_SEC);
 }
 
-void blimp(const InstanceFileMap& args) {
+void blimp(const InstanceFileMap &args) {
 	typedef Blimp Agent;
 	typedef Map3D<Agent> Workspace;
 
 	Agent agent(args);
 	Workspace workspace(args);
 
-/* start and goal states */
+	/* start and goal states */
 
 	auto startPosition = args.doubleList("Agent Start Location");
 	auto startOrientation =  args.doubleList("Agent Start Orientation");
@@ -233,17 +219,17 @@ void blimp(const InstanceFileMap& args) {
 
 	Agent::State goal(goalPosition[0], goalPosition[1], goalPosition[2], theta);
 
-//	go<Workspace, Agent>(args, workspace, agent, start, goal);
+	go<Workspace, Agent>(args, workspace, agent, start, goal);
 }
 
-void snake(const InstanceFileMap& args) {
+void snake(const InstanceFileMap &args) {
 	typedef SnakeTrailers Agent;
 	typedef Map3D<Agent> Workspace;
 
 	Agent agent(args);
 	Workspace workspace(args);
 
-/* start and goal states */
+	/* start and goal states */
 
 	auto startPosition = args.doubleList("Agent Start Location");
 	auto startOrientation =  args.doubleList("Agent Start Orientation");
@@ -260,17 +246,17 @@ void snake(const InstanceFileMap& args) {
 
 	Agent::State goal(goalPosition);
 
-//	go<Workspace, Agent>(args, workspace, agent, start, goal);
+	// go<Workspace, Agent>(args, workspace, agent, start, goal);
 }
 
-void geometric(const InstanceFileMap& args) {
+void geometric(const InstanceFileMap &args) {
 	typedef Geometric Agent;
 	typedef Map3D<Agent> Workspace;
 
 	Agent agent(args);
 	Workspace workspace(args);
 
-/* start and goal states */
+	/* start and goal states */
 
 	auto startPosition = args.doubleList("Agent Start Location");
 	auto startOrientation =  args.doubleList("Agent Start Orientation");
@@ -284,10 +270,10 @@ void geometric(const InstanceFileMap& args) {
 
 	Agent::State goal(goalPosition);
 
-//	go<Workspace, Agent>(args, workspace, agent, start, goal);
+	// go<Workspace, Agent>(args, workspace, agent, start, goal);
 }
 
-void planarLinkage(const InstanceFileMap& args) {
+void planarLinkage(const InstanceFileMap &args) {
 	typedef PlanarLinkage Agent;
 	typedef PlanarLinkage Workspace;
 

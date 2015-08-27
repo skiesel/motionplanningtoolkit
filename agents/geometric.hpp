@@ -12,7 +12,8 @@
 class Geometric {
 public:
 	typedef AbstractTransformState AbstractState;
-	
+	typedef std::vector<AbstractState> AbstractEdge;
+
 	typedef std::vector< std::pair<double, double> > WorkspaceBounds;
 	typedef std::vector< std::pair<double, double> > StateVarRanges;
 
@@ -29,7 +30,7 @@ public:
 
 		State(const StateVars &vars) : stateVars(vars.begin(), vars.end()) {}
 
-		State& operator=(const State &s) {
+		State &operator=(const State &s) {
 			stateVars.resize(7);
 			stateVars[3] = 1;
 			for(unsigned int i = 0; i < s.stateVars.size(); ++i)
@@ -37,7 +38,9 @@ public:
 			return *this;
 		}
 
-		const StateVars& getStateVars() const { return stateVars; }
+		const StateVars &getStateVars() const {
+			return stateVars;
+		}
 
 		const bool equals(const State &s) const {
 			for(unsigned int i = 0; i < 7; ++i) {
@@ -51,12 +54,6 @@ public:
 				fprintf(stderr, "%g ", v);
 			}
 			fprintf(stderr, "\n");
-		}
-
-		AbstractState toAbstractState() const {
-			fprintf(stderr, "toAbstractState not implemented\n");
-			exit(0);
-			return AbstractState();
 		}
 
 #ifdef WITHGRAPHICS
@@ -113,7 +110,7 @@ public:
 		}
 #endif
 
-	// private:
+		// private:
 		StateVars stateVars;
 	};
 
@@ -123,15 +120,15 @@ public:
 			buildTreeVars();
 		}
 		Edge(const State &start, const State &end, const fcl::Vec3f &translation, const fcl::Quaternion3f &rotation,
-			double dt) : start(start), end(end), translation(translation), rotation(rotation), dt(dt), cost(dt), treeIndex(0) {
-				buildTreeVars();
-			}
-		Edge(const Edge& e) : start(e.start), end(e.end), translation(e.translation), rotation(e.rotation),
+		     double dt) : start(start), end(end), translation(translation), rotation(rotation), dt(dt), cost(dt), treeIndex(0) {
+			buildTreeVars();
+		}
+		Edge(const Edge &e) : start(e.start), end(e.end), translation(e.translation), rotation(e.rotation),
 			dt(e.dt), cost(e.cost), treeIndex(e.treeIndex) {
 			buildTreeVars();
 		}
 
-		Edge& operator=(const Edge &e) {
+		Edge &operator=(const Edge &e) {
 			this->start = e.start;
 			this->end = e.end;
 			this->dt = e.dt;
@@ -143,17 +140,23 @@ public:
 		}
 
 		void buildTreeVars() {
-			const auto& vars = end.getStateVars();
+			const auto &vars = end.getStateVars();
 			treeVars.resize(vars.size());
 			for(unsigned int i = 0; i < vars.size(); ++i) {
-				treeVars[i] = (Geometric::NormalizeStateVars[i].first + vars[i]) * Geometric::NormalizeStateVars[i].second;				
+				treeVars[i] = (Geometric::NormalizeStateVars[i].first + vars[i]) * Geometric::NormalizeStateVars[i].second;
 			}
 		}
 
 		/* needed for being inserted into NN datastructure */
-		const StateVars& getTreeStateVars() const { return treeVars; }
-		int getPointIndex() const { return treeIndex; }
-		void setPointIndex(int ptInd) { treeIndex = ptInd; }
+		const StateVars &getTreeStateVars() const {
+			return treeVars;
+		}
+		int getPointIndex() const {
+			return treeIndex;
+		}
+		void setPointIndex(int ptInd) {
+			treeIndex = ptInd;
+		}
 
 #ifdef WITHGRAPHICS
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
@@ -204,7 +207,7 @@ public:
 		NormalizeStateVars.emplace_back(0, 1);
 		NormalizeStateVars.emplace_back(0, 1);
 
-		integrationStepSize = stod(args.value("Integration Step Size"));
+		integrationStepSize = args.doubleVal("Integration Step Size");
 
 		boost::char_separator<char> sep(" ");
 		boost::tokenizer< boost::char_separator<char> > tokens(args.value("Goal Thresholds"), sep);
@@ -213,7 +216,7 @@ public:
 		}
 
 #ifdef WITHGRAPHICS
-		OpenGLWrapper::setExternalKeyboardCallback([&](int key){});
+		OpenGLWrapper::setExternalKeyboardCallback([&](int key) {});
 #endif
 	}
 
@@ -221,7 +224,7 @@ public:
 		return 7;
 	}
 
-	StateVarRanges getStateVarRanges(const WorkspaceBounds& b) const {
+	StateVarRanges getStateVarRanges(const WorkspaceBounds &b) const {
 		StateVarRanges bounds(b.begin(), b.end());
 		bounds.emplace_back(-1, 1);
 		bounds.emplace_back(-1, 1);
@@ -230,7 +233,7 @@ public:
 		return bounds;
 	}
 
-	State buildState(const StateVars& stateVars) const {
+	State buildState(const StateVars &stateVars) const {
 		return State(stateVars);
 	}
 
@@ -238,13 +241,13 @@ public:
 		return controls;
 	}
 
-	const std::vector< std::pair<double, double> >& getControlBounds() const {
+	const std::vector< std::pair<double, double> > &getControlBounds() const {
 		fprintf(stderr, "Geometric::getControlBounds not implemented");
 		exit(0);
 		return controlBounds;
 	}
 
-	State getRandomStateNear(const AbstractState &a, const State &s, double radius) const {
+	State getRandomStateNearAbstractState(const AbstractState &a, const State &s, double radius) const {
 		fprintf(stderr, "getRandomStateNear no implemented\n");
 		exit(0);
 		return State();
@@ -301,24 +304,24 @@ public:
 		fcl::Vec3f translation;// = math::randomPointInSphere();
 		translation[3] = -0.01;
 		fcl::Quaternion3f rotation;// = math::getRandomUnitQuaternion();
-		
+
 		State end = doSteps(start, translation, rotation, dt);
 
 		return Edge(start, end, translation, rotation, dt);
 	}
 
-	std::vector<const SimpleAgentMeshHandler*> getMeshes() const {
-		std::vector<const SimpleAgentMeshHandler*> meshes(1, &mesh);
+	std::vector<const SimpleAgentMeshHandler *> getMeshes() const {
+		std::vector<const SimpleAgentMeshHandler *> meshes(1, &mesh);
 		return meshes;
 	}
 
-	std::vector<fcl::Transform3f> getRepresentivePosesForLocation(const std::vector<double> &loc) const {
-		std::vector<fcl::Transform3f> poses;
+	std::vector<State> getRepresentiveStatesForLocation(const std::vector<double> &loc) const {
+		std::vector<State> states;
 
-		fprintf(stderr, "Geometric::getRepresentivePosesForLocation not implemented\n");
+		fprintf(stderr, "Geometric::getRepresentiveStatesForLocation not implemented\n");
 		exit(0);
 
-		return poses;
+		return states;
 	}
 
 	std::vector<std::vector<fcl::Transform3f> > getPoses(const Edge &edge, double dt) const {
@@ -363,7 +366,7 @@ public:
 		drawMesh(transform, color);
 
 	}
-	void drawMesh(const fcl::Transform3f &transform, const OpenGLWrapper::Color& color) const {
+	void drawMesh(const fcl::Transform3f &transform, const OpenGLWrapper::Color &color) const {
 		std::vector<double> glTransform = OpenGLWrapper::getOpenGLWrapper().getIdentity();
 
 		const fcl::Vec3f &translation = transform.getTranslation();
@@ -386,8 +389,8 @@ public:
 		mesh.draw(color, glTransform);
 	}
 
-	void drawSolution(const std::vector<const Edge*> &solution, double dt = std::numeric_limits<double>::infinity()) const {
-		for(const Edge* edge : solution) {
+	void drawSolution(const std::vector<const Edge *> &solution, double dt = std::numeric_limits<double>::infinity()) const {
+		for(const Edge *edge : solution) {
 			unsigned int steps = std::isinf(dt) ? 1 : edge->dt / dt;
 
 			State state = edge->start;
@@ -404,7 +407,7 @@ public:
 		}
 	}
 
-	void animateSolution(const std::vector<const Edge*> &solution, unsigned int poseNumber) const {
+	void animateSolution(const std::vector<const Edge *> &solution, unsigned int poseNumber) const {
 		unsigned int edgeNumber = poseNumber / 2;
 		unsigned int endpoint = poseNumber % 2;
 		const Edge *edge = solution[edgeNumber];
@@ -417,8 +420,8 @@ public:
 
 // private:
 
-	State doSteps(const State& s, const fcl::Vec3f &translation, const fcl::Quaternion3f &rotation, double dt) const {
-		const StateVars& vars = s.getStateVars();
+	State doSteps(const State &s, const fcl::Vec3f &translation, const fcl::Quaternion3f &rotation, double dt) const {
+		const StateVars &vars = s.getStateVars();
 		StateVars newState = vars;
 
 		newState[0] += translation[0] * dt;

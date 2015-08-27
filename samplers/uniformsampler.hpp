@@ -10,7 +10,7 @@ class UniformSampler {
 	typedef typename Agent::StateVarRanges StateVarRanges;
 
 public:
-	UniformSampler(const Workspace &workspace, const Agent &agent, NN& nn) : workspace(workspace), agent(agent), nn(nn) {
+	UniformSampler(const Workspace &workspace, const Agent &agent, NN &nn) : workspace(workspace), agent(agent), nn(nn) {
 		stateVarDomains = agent.getStateVarRanges(workspace.getBounds());
 		for(auto range : stateVarDomains) {
 			distributions.emplace_back(range.first, range.second);
@@ -24,10 +24,10 @@ public:
 		return result.elements[0]->end;
 	}
 
-	Edge* getTreeEdge(const State& s) const {
+	Edge *getTreeEdge(const State &s) const {
 		auto edge = Edge(s);
 		typename NN::KNNResult result = nn.nearest(&edge);
-		return result.elements[0];	
+		return result.elements[0];
 	}
 
 private:

@@ -21,6 +21,7 @@ class SnakeTrailers {
 
 public:
 	typedef AbstractTransformState AbstractState;
+	typedef std::vector<AbstractState> AbstractEdge;
 
 	typedef std::vector< std::pair<double, double> > WorkspaceBounds;
 	typedef std::vector< std::pair<double, double> > StateVarRanges;
@@ -44,7 +45,7 @@ public:
 			stateVars.resize(5 + trailerCount);
 		}
 
-		State& operator=(const State &s) {
+		State &operator=(const State &s) {
 			stateVars.resize(5 + trailerCount);
 			for(unsigned int i = 0; i < s.stateVars.size(); ++i)
 				stateVars[i] = s.stateVars[i];
@@ -84,7 +85,7 @@ public:
 
 			transforms.emplace_back(baseTransform);
 
-			const auto &pos = transforms.back().getTranslation();
+			// const auto &pos = transforms.back().getTranslation();
 
 			pose[0] = -(trailerLength + hitchLength);
 			pose[1] = 0;
@@ -103,12 +104,6 @@ public:
 			}
 
 			return transforms;
-		}
-
-		AbstractState toAbstractState() const {
-			fprintf(stderr, "toAbstractState not implemented\n");
-			exit(0);
-			return AbstractState();
 		}
 
 #ifdef WITHGRAPHICS
@@ -176,7 +171,9 @@ public:
 			return toFCLTransforms()[0];
 		}
 
-		const StateVars& getStateVars() const { return stateVars; }
+		const StateVars &getStateVars() const {
+			return stateVars;
+		}
 
 		void print() const {
 			for(auto v : stateVars) {
@@ -207,7 +204,7 @@ public:
 		static double trailerLength;
 		static double hitchLength;
 
-	// private:
+		// private:
 		StateVars stateVars;
 	};
 
@@ -222,11 +219,11 @@ public:
 			populateTreeStateVars();
 		}
 
-		Edge(const Edge& e) : start(e.start), end(e.end), cost(e.cost), dt(e.dt), a(e.a), w(e.w), treeIndex(e.treeIndex) {
+		Edge(const Edge &e) : start(e.start), end(e.end), cost(e.cost), dt(e.dt), a(e.a), w(e.w), treeIndex(e.treeIndex) {
 			populateTreeStateVars();
 		}
 
-		Edge& operator=(const Edge& e) {
+		Edge &operator=(const Edge &e) {
 			start = e.start;
 			end = e.end;
 			cost = e.cost;
@@ -239,9 +236,15 @@ public:
 		}
 
 		/* needed for being inserted into NN datastructure */
-		const StateVars& getTreeStateVars() const { return treeStateVars; }
-		int getPointIndex() const { return treeIndex; }
-		void setPointIndex(int ptInd) { treeIndex = ptInd; }
+		const StateVars &getTreeStateVars() const {
+			return treeStateVars;
+		}
+		int getPointIndex() const {
+			return treeIndex;
+		}
+		void setPointIndex(int ptInd) {
+			treeIndex = ptInd;
+		}
 
 #ifdef WITHGRAPHICS
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
@@ -273,14 +276,14 @@ public:
 		double cost, dt, a, w;
 		int treeIndex;
 		StateVars treeStateVars;
-		Edge* parent;
+		Edge *parent;
 
-		private:
-			void populateTreeStateVars() {
-			const auto& vars = end.getStateVars();
+	private:
+		void populateTreeStateVars() {
+			const auto &vars = end.getStateVars();
 			treeStateVars.resize(vars.size());
 			for(unsigned int i = 0; i < vars.size(); ++i) {
-				treeStateVars[i] = (SnakeTrailers::NormalizeStateVars[i].first + vars[i]) * SnakeTrailers::NormalizeStateVars[i].second;				
+				treeStateVars[i] = (SnakeTrailers::NormalizeStateVars[i].first + vars[i]) * SnakeTrailers::NormalizeStateVars[i].second;
 			}
 		}
 	};
@@ -288,21 +291,21 @@ public:
 	SnakeTrailers(const InstanceFileMap &args) {
 
 		trailerCount = State::trailerCount = stoi(args.value("Trailer Count"));
-		trailerWidth = stod(args.value("Trailer Width"));
-		trailerLength = State::trailerLength = stod(args.value("Trailer Length"));
-		hitchLength = State::hitchLength = stod(args.value("Hitch Length"));
+		trailerWidth = args.doubleVal("Trailer Width");
+		trailerLength = State::trailerLength = args.doubleVal("Trailer Length");
+		hitchLength = State::hitchLength = args.doubleVal("Hitch Length");
 
-		minimumVelocity = stod(args.value("Minimum Velocity"));
-		maximumVelocity = stod(args.value("Maximum Velocity"));
+		minimumVelocity = args.doubleVal("Minimum Velocity");
+		maximumVelocity = args.doubleVal("Maximum Velocity");
 
-		minimumTurning = stod(args.value("Minimum Turning"));
-		maximumTurning = stod(args.value("Maximum Turning"));
+		minimumTurning = args.doubleVal("Minimum Turning");
+		maximumTurning = args.doubleVal("Maximum Turning");
 
-		linearAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Velocity")), stod(args.value("Maximum Velocity")));
-		angularAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Angular Acceleration")), stod(args.value("Maximum Angular Acceleration")));
+		linearAccelerations = std::uniform_real_distribution<double>(args.doubleVal("Minimum Velocity"), args.doubleVal("Maximum Velocity"));
+		angularAccelerations = std::uniform_real_distribution<double>(args.doubleVal("Minimum Angular Acceleration"), args.doubleVal("Maximum Angular Acceleration"));
 
-		controlBounds.emplace_back(stod(args.value("Minimum Velocity")), stod(args.value("Maximum Velocity")));
-		controlBounds.emplace_back(stod(args.value("Minimum Angular Acceleration")), stod(args.value("Maximum Angular Acceleration")));
+		controlBounds.emplace_back(args.doubleVal("Minimum Velocity"), args.doubleVal("Maximum Velocity"));
+		controlBounds.emplace_back(args.doubleVal("Minimum Angular Acceleration"), args.doubleVal("Maximum Angular Acceleration"));
 
 
 		auto environmentBoundingBox = args.doubleList("Environment Bounding Box");
@@ -314,7 +317,7 @@ public:
 			double term2 = 1. / (environmentBoundingBox[i+1] - environmentBoundingBox[i]);
 			NormalizeStateVars.emplace_back(term1, term2);
 		}
-		
+
 		NormalizeStateVars.emplace_back(-minimumVelocity, 1. / (maximumVelocity - minimumVelocity)); //v
 		NormalizeStateVars.emplace_back(-minimumTurning, 1. / (maximumTurning - minimumTurning)); //psi
 		NormalizeStateVars.emplace_back(M_PI / 2., 1. / (2.*M_PI)); //theta
@@ -340,13 +343,13 @@ public:
 #ifdef WITHGRAPHICS
 		//make sure that the state gets populated AFTER trailercount is set
 		state = State();
-		OpenGLWrapper::setExternalKeyboardCallback([&](int key){
+		OpenGLWrapper::setExternalKeyboardCallback([&](int key) {
 			this->keyboard(key);
 		});
 #endif
 	}
 
-	StateVarRanges getStateVarRanges(const WorkspaceBounds& b) const {
+	StateVarRanges getStateVarRanges(const WorkspaceBounds &b) const {
 		StateVarRanges bounds(b.begin(), b.begin() + 2);
 		bounds.emplace_back(minimumVelocity, maximumVelocity);
 		bounds.emplace_back(minimumTurning, maximumTurning);
@@ -365,15 +368,15 @@ public:
 		return controls;
 	}
 
-	const std::vector< std::pair<double, double> >& getControlBounds() const {
+	const std::vector< std::pair<double, double> > &getControlBounds() const {
 		return controlBounds;
 	}
 
-	State buildState(const StateVars& stateVars) const {
+	State buildState(const StateVars &stateVars) const {
 		return State(stateVars);
 	}
 
-	State getRandomStateNear(const AbstractState &a, const State &s, double radius) const {
+	State getRandomStateNearAbstractState(const AbstractState &a, const State &s, double radius) const {
 		fprintf(stderr, "getRandomStateNear no implemented\n");
 		exit(0);
 		return State();
@@ -396,7 +399,7 @@ public:
 		const StateVars &g = goal.getStateVars();
 
 		return fabs(s[X] - g[X]) < goalThresholds[X] &&
-			   fabs(s[Y] - g[Y]) < goalThresholds[Y];
+		       fabs(s[Y] - g[Y]) < goalThresholds[Y];
 	}
 
 	Edge steerWithControl(const State &start, const Edge &getControlsFromThisEdge, double dt) const {
@@ -437,34 +440,34 @@ public:
 		return Edge(start, end, dt, a, w);
 	}
 
-	const std::vector<const SimpleAgentMeshHandler*> getMeshes() const {
+	const std::vector<const SimpleAgentMeshHandler *> getMeshes() const {
 		return meshes;
 	}
 
-	std::vector< std::vector<fcl::Transform3f> > getRepresentivePosesForLocation(const std::vector<double> &loc) const {
-		std::vector<std::vector<fcl::Transform3f> > retPoses;
+	std::vector<State> getRepresentiveStatesForLocation(const std::vector<double> &loc) const {
+		std::vector<State> states;
 
-		fcl::Vec3f pose(loc[0], loc[1], loc[2]);
+		// fcl::Vec3f pose(loc[0], loc[1], loc[2]);
 
-		unsigned int rotations = 4;
-		double increment = M_PI / ((double)rotations * 2.);
-		fcl::Matrix3f rotation;
-		rotation.setIdentity();
+		// unsigned int rotations = 4;
+		// double increment = M_PI / ((double)rotations * 2.);
+		// fcl::Matrix3f rotation;
+		// rotation.setIdentity();
 
-		for(unsigned int i = 0; i < rotations; ++i) {
-			double cosVal = cos((double)i * increment);
-			double sinVal = sin((double)i * increment);
+		// for(unsigned int i = 0; i < rotations; ++i) {
+		// 	double cosVal = cos((double)i * increment);
+		// 	double sinVal = sin((double)i * increment);
 
-			rotation(0,0) = cosVal;
-			rotation(1,0) = -sinVal;
-			rotation(0,1) = sinVal;
-			rotation(1,1) = cosVal;
+		// 	rotation(0,0) = cosVal;
+		// 	rotation(1,0) = -sinVal;
+		// 	rotation(0,1) = sinVal;
+		// 	rotation(1,1) = cosVal;
 
-			retPoses.emplace_back();
-			retPoses.back().emplace_back(rotation, pose);
-		}
+		// 	retPoses.emplace_back();
+		// 	retPoses.back().emplace_back(rotation, pose);
+		// }
 
-		return retPoses;
+		return states;
 	}
 
 	std::vector< std::vector<fcl::Transform3f> > getPoses(const Edge &edge, double dt) const {
@@ -503,13 +506,21 @@ public:
 		double a = 0, w = 0, dt = 0.1;
 
 		switch(key) {
-			case 'Q': a = 1; break;
-			case 'W': w = 0.1; break;
-			case 'E': a = -1; break;
-			case 'R': w = -0.1; break;
+		case 'Q':
+			a = 1;
+			break;
+		case 'W':
+			w = 0.1;
+			break;
+		case 'E':
+			a = -1;
+			break;
+		case 'R':
+			w = -0.1;
+			break;
 		}
 
-		const StateVars& vars = state.getStateVars();
+		const StateVars &vars = state.getStateVars();
 		StateVars newState(5 + trailerCount);
 
 		newState[X] = vars[X];
@@ -547,8 +558,8 @@ public:
 		}
 	}
 
-	void drawSolution(const std::vector<const Edge*> &solution, double dt = std::numeric_limits<double>::infinity()) const {
-		for(const Edge* edge : solution) {
+	void drawSolution(const std::vector<const Edge *> &solution, double dt = std::numeric_limits<double>::infinity()) const {
+		for(const Edge *edge : solution) {
 			unsigned int steps = std::isinf(dt) ? 1 : edge->dt / dt;
 
 			State state = edge->start;
@@ -565,7 +576,7 @@ public:
 		}
 	}
 
-	void animateSolution(const std::vector<const Edge*> &solution, unsigned int poseNumber) const {
+	void animateSolution(const std::vector<const Edge *> &solution, unsigned int poseNumber) const {
 		unsigned int edgeNumber = poseNumber / 2;
 		unsigned int endpoint = poseNumber % 2;
 		const Edge *edge = solution[edgeNumber];
@@ -578,8 +589,8 @@ public:
 #endif
 
 // private:
-	State doStep(const State& s, double a, double w, double dt) const {
-		const StateVars& vars = s.getStateVars();
+	State doStep(const State &s, double a, double w, double dt) const {
+		const StateVars &vars = s.getStateVars();
 		StateVars newState(5 + trailerCount);
 
 		newState[X] = vars[X] + cos(vars[THETA]) * vars[V] * dt;
@@ -589,11 +600,17 @@ public:
 		newState[PSI] = vars[PSI] + w * dt;
 
 
-		if(newState[V] > maximumVelocity) { newState[V] = maximumVelocity; }
-		else if(newState[V] < minimumVelocity ) { newState[V] = minimumVelocity; }
+		if(newState[V] > maximumVelocity) {
+			newState[V] = maximumVelocity;
+		} else if(newState[V] < minimumVelocity) {
+			newState[V] = minimumVelocity;
+		}
 
-		if(newState[PSI] > maximumTurning) { newState[PSI] = maximumTurning; }
-		else if(newState[PSI] < minimumTurning) { newState[PSI] = minimumTurning; }
+		if(newState[PSI] > maximumTurning) {
+			newState[PSI] = maximumTurning;
+		} else if(newState[PSI] < minimumTurning) {
+			newState[PSI] = minimumTurning;
+		}
 
 
 		double coeff = vars[V] / (trailerLength + hitchLength);
@@ -612,7 +629,7 @@ public:
 		return (t - 2 * M_PI * std::floor((t + M_PI) / (2 * M_PI)));
 	}
 
-	std::vector<const SimpleAgentMeshHandler*> meshes;
+	std::vector<const SimpleAgentMeshHandler *> meshes;
 
 	unsigned int trailerCount;
 	double trailerLength, trailerWidth, hitchLength, minimumVelocity, maximumVelocity, minimumTurning, maximumTurning;

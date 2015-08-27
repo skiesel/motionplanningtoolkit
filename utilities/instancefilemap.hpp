@@ -3,20 +3,22 @@
 #include <boost/tokenizer.hpp>
 #include <unordered_map>
 #include <fstream>
-#include <algorithm> 
-#include <functional> 
+#include <algorithm>
+#include <functional>
 #include <cctype>
 #include <locale>
 
 class InstanceFileMap {
 public:
+	InstanceFileMap() {}
+
 	InstanceFileMap(const std::string &instance) {
 		append(instance);
 	}
 
 	void append(const std::string &instance) {
 		std::fstream file;
-  		file.open(instance.c_str(), std::fstream::in);
+		file.open(instance.c_str(), std::fstream::in);
 
 		if(!file.is_open()) {
 			fprintf(stderr, "can't open instance file: %s\n", instance.c_str());
@@ -48,12 +50,20 @@ public:
 		return map.find(key) != map.end();
 	}
 
-	const std::string& value(const std::string &key) const {
+	const std::string &value(const std::string &key) const {
 		if(!exists(key)) {
 			fprintf(stderr, "Key \"%s\" not bound\n", key.c_str());
 			exit(1);
 		}
 		return map.at(key);
+	}
+
+	double doubleVal(const std::string &key) const {
+		if(!exists(key)) {
+			fprintf(stderr, "Key \"%s\" not bound\n", key.c_str());
+			exit(1);
+		}
+		return stod(map.at(key));
 	}
 
 	std::vector<std::string> valueList(const std::string &key, const std::string delim = " ") const {

@@ -14,14 +14,14 @@ public:
 	RRTConnect(const Workspace &workspace, const Agent &agent, TreeInterface &treeInterface, const InstanceFileMap &args) :
 		workspace(workspace), agent(agent), treeInterface(treeInterface), solutionCost(-1),
 		samplesGenerated(0), edgesAdded(0), edgesRejected(0) {
-			steeringDT = stod(args.value("Steering Delta t"));
-			collisionCheckDT = stod(args.value("Collision Check Delta t"));
+		steeringDT = args.doubleVal("Steering Delta t");
+		collisionCheckDT = args.doubleVal("Collision Check Delta t");
 
-			maxExtensions = stod(args.value("RRTConnect Max Extensions"));
+		maxExtensions = args.doubleVal("RRTConnect Max Extensions");
 
-			dfpair(stdout, "steering dt", "%g", steeringDT);
-			dfpair(stdout, "collision check dt", "%g", collisionCheckDT);
-		}
+		dfpair(stdout, "steering dt", "%g", steeringDT);
+		dfpair(stdout, "collision check dt", "%g", collisionCheckDT);
+	}
 
 
 	void query(const State &start, const State &goal, int iterationsAtATime = -1, bool firstInvocation = true) {
@@ -65,7 +65,7 @@ public:
 				treeInterface.insertIntoTree(e);
 
 #ifdef WITHGRAPHICS
-			treeEdges.push_back(e);
+				treeEdges.push_back(e);
 #endif
 
 				if(agent.isGoal(edge.end, goal)) {
@@ -84,7 +84,7 @@ public:
 		}
 
 #ifdef WITHGRAPHICS
-		for(const Edge* edge : treeEdges) {
+		for(const Edge *edge : treeEdges) {
 			edge->draw(OpenGLWrapper::Color::Red());
 		}
 
@@ -105,14 +105,14 @@ public:
 #endif
 
 #ifdef VREPPLUGIN
-	if(solution.size() > 0) {
-		if(agent.validateSolution(solution, goal)) {
-			fprintf(stderr, "VALID SOLUTION!\n");
-		} else {
-			fprintf(stderr, "INVALID SOLUTION!\n");
+		if(solution.size() > 0) {
+			if(agent.validateSolution(solution, goal)) {
+				fprintf(stderr, "VALID SOLUTION!\n");
+			} else {
+				fprintf(stderr, "INVALID SOLUTION!\n");
+			}
+			agent.animateSolution(solution);
 		}
-		agent.animateSolution(solution);
-	}
 #endif
 	}
 
@@ -127,8 +127,8 @@ private:
 	const Agent &agent;
 	TreeInterface &treeInterface;
 	boost::object_pool<Edge> pool;
-	std::vector<const Edge*> solution;
-	std::vector<const Edge*> treeEdges;
+	std::vector<const Edge *> solution;
+	std::vector<const Edge *> treeEdges;
 	std::vector<State> samples;
 	double solutionCost;
 	double steeringDT, collisionCheckDT;
