@@ -208,16 +208,16 @@ public:
 	};
 
 	Blimp(const InstanceFileMap &args) : mesh(args.value("Agent Mesh")) {
-		blimpLength = stod(args.value("Blimp Length"));
+		blimpLength = args.doubleVal("Blimp Length");
 
-		minimumVelocity = stod(args.value("Minimum Velocity"));
-		maximumVelocity = stod(args.value("Maximum Velocity"));
+		minimumVelocity = args.doubleVal("Minimum Velocity");
+		maximumVelocity = args.doubleVal("Maximum Velocity");
 
-		minimumTurning = stod(args.value("Minimum Turning"));
-		maximumTurning = stod(args.value("Maximum Turning"));
+		minimumTurning = args.doubleVal("Minimum Turning");
+		maximumTurning = args.doubleVal("Maximum Turning");
 
-		minimumVelocityZ = stod(args.value("Minimum Velocity Z"));
-		maximumVelocityZ = stod(args.value("Maximum Velocity Z"));
+		minimumVelocityZ = args.doubleVal("Minimum Velocity Z");
+		maximumVelocityZ = args.doubleVal("Maximum Velocity Z");
 
 		auto environmentBoundingBox = args.doubleList("Environment Bounding Box");
 
@@ -232,15 +232,15 @@ public:
 		NormalizeStateVars.emplace_back(-minimumTurning, 1. / (maximumTurning - minimumTurning)); //psi
 		NormalizeStateVars.emplace_back(-minimumVelocityZ, 1. / (maximumVelocityZ - minimumVelocityZ)); //vz
 
-		integrationStepSize = stod(args.value("Integration Step Size"));
+		integrationStepSize = args.doubleVal("Integration Step Size");
 
-		linearAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Forward Acceleration")), stod(args.value("Maximum Forward Acceleration")));
-		zLinearAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Z Acceleration")), stod(args.value("Maximum Z Acceleration")));
-		angularAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Angular Acceleration")), stod(args.value("Maximum Angular Acceleration")));
+		linearAccelerations = std::uniform_real_distribution<double>(args.doubleVal("Minimum Forward Acceleration"), args.doubleVal("Maximum Forward Acceleration"));
+		zLinearAccelerations = std::uniform_real_distribution<double>(args.doubleVal("Minimum Z Acceleration"), args.doubleVal("Maximum Z Acceleration"));
+		angularAccelerations = std::uniform_real_distribution<double>(args.doubleVal("Minimum Angular Acceleration"), args.doubleVal("Maximum Angular Acceleration"));
 
-		controlBounds.emplace_back(stod(args.value("Minimum Forward Acceleration")), stod(args.value("Maximum Forward Acceleration")));
-		controlBounds.emplace_back(stod(args.value("Minimum Z Acceleration")), stod(args.value("Maximum Z Acceleration")));
-		controlBounds.emplace_back(stod(args.value("Minimum Angular Acceleration")), stod(args.value("Maximum Angular Acceleration")));
+		controlBounds.emplace_back(args.doubleVal("Minimum Forward Acceleration"), args.doubleVal("Maximum Forward Acceleration"));
+		controlBounds.emplace_back(args.doubleVal("Minimum Z Acceleration"), args.doubleVal("Maximum Z Acceleration"));
+		controlBounds.emplace_back(args.doubleVal("Minimum Angular Acceleration"), args.doubleVal("Maximum Angular Acceleration"));
 
 		boost::char_separator<char> sep(" ");
 		boost::tokenizer< boost::char_separator<char> > tokens(args.value("Goal Thresholds"), sep);

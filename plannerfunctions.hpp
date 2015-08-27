@@ -1,9 +1,5 @@
 #pragma once
 
-#include "workspaces/planarlinkage.hpp"
-#include <chrono>
-#include <thread>
-
 unsigned int GraphicsIterations = 1000;
 
 template<class Workspace, class Agent>
@@ -101,13 +97,13 @@ void go_PPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &w
 
 	unsigned int numberOfPRMVertices = stol(args.value("Number Of PRM Vertices"));
 	unsigned int numberOfNearestNeighborEdgeConsiderations = stol(args.value("Nearest Neighbors To Consider In PRM Edge Construction"));
-	double prmCollisionCheckDT = stod(args.value("PRM Collision Check DT"));
+	double prmCollisionCheckDT = args.doubleVal("PRM Collision Check DT");
 
 	PRMLite prmLite(workspace, agent, numberOfPRMVertices, numberOfNearestNeighborEdgeConsiderations, prmCollisionCheckDT);
 
-	double alpha = stod(args.value("Plaku Alpha Value"));
-	double b = stod(args.value("Plaku b Value"));
-	double stateRadius = stod(args.value("Plaku PRM State Selection Radius"));
+	double alpha = args.doubleVal("Plaku Alpha Value");
+	double b = args.doubleVal("Plaku b Value");
+	double stateRadius = args.doubleVal("Plaku PRM State Selection Radius");
 
 	PlakuTreeInterfaceT plakuTreeInterface(workspace, agent, prmLite, start, goal, alpha, b, stateRadius);
 
@@ -132,6 +128,45 @@ void go_PPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &w
 #endif
 }
 
+// template<class Workspace, class Agent>
+// void go_SST(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+//                    const typename Agent::State &start, const typename Agent::State &goal) {
+// 	dfpair(stdout, "planner", "%s", "SST");
+
+// 	// typedef flann::KDTreeSingleIndexParams KDTreeType;
+// 	typedef flann::KDTreeIndexParams KDTreeType;
+// 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
+// 	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
+// 	typedef SST<Agent, KDTree, Sampler> TreeInterface;
+// 	typedef RRTConnect<Workspace, Agent, TreeInterface> Planner;
+
+// 	/* planner config */
+
+// 	KDTreeType kdtreeType(2);
+// 	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
+// 	Sampler sampler(workspace, agent, kdtree);
+
+// 	double sstRadius = args.doubleVal("SST Radius");
+
+// 	TreeInterface treeInterface(kdtree, sampler, sstRadius);
+// 	Planner planner(workspace, agent, treeInterface, args);
+
+// #ifdef WITHGRAPHICS
+// 	bool firstInvocation = true;
+// 	auto lambda = [&]() {
+// 		workspace.draw();
+// 		agent.drawMesh(start);
+// 		agent.drawMesh(goal);
+// 		planner.query(start, goal, GraphicsIterations, firstInvocation);
+// 		firstInvocation = false;
+// 	};
+// 	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
+// #else
+// 	planner.query(start, goal);
+// 	planner.dfpairs();
+// #endif
+// }
+
 template<class Workspace, class Agent>
 void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &agent,
         const typename Agent::State &start, const typename Agent::State &goal) {
@@ -147,6 +182,8 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 		go_PPRM<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("KPIECE") == 0) {
 		go_KPIECE<Workspace, Agent>(args, agent, workspace, start, goal);
+//	} else if(planner.compare("SST") == 0) {
+//		go_SST<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else {
 		fprintf(stderr, "unreocognized planner: %s\n", planner.c_str());
 	}

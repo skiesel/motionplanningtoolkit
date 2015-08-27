@@ -138,16 +138,16 @@ public:
 		Connexion3DMouse::createConnexion3DMouse();
 
 		if(args.exists("Zoom"))
-			zoom(1, stod(args.value("Zoom")));
+			zoom(1, args.doubleVal("Zoom"));
 
 		if(args.exists("Rotate X"))
-			rotate(0, stod(args.value("Rotate X")));
+			rotate(0, args.doubleVal("Rotate X"));
 
 		if(args.exists("Rotate Y"))
-			rotate(1, stod(args.value("Rotate Y")));
+			rotate(1, args.doubleVal("Rotate Y"));
 
 		if(args.exists("Rotate Z"))
-			rotate(2, stod(args.value("Rotate Z")));
+			rotate(2, args.doubleVal("Rotate Z"));
 
 		while(!glfwWindowShouldClose(window)) {
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

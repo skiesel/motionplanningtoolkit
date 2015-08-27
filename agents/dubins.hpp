@@ -418,7 +418,7 @@ public:
 	} Errors;
 
 	Dubins(const InstanceFileMap &args) : dubins_words(6),
-		mesh(args.value("Agent Mesh")), turningRadius(stod(args.value("Turning Radius"))) {
+		mesh(args.value("Agent Mesh")), turningRadius(args.doubleVal("Turning Radius")) {
 		dubins_words[0] = &dubins_LSL;
 		dubins_words[1] = &dubins_LSR;
 		dubins_words[2] = &dubins_RSL;

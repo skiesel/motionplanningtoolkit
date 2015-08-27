@@ -55,7 +55,7 @@ public:
 	KPIECE(const Workspace &workspace, const Agent &agent, const InstanceFileMap &args) :
 		workspace(workspace), agent(agent), goalEdge(NULL), samplesGenerated(0), edgesAdded(0), edgesRejected(0) {
 
-		collisionCheckDT = stod(args.value("Collision Check Delta t"));
+		collisionCheckDT = args.doubleVal("Collision Check Delta t");
 		dfpair(stdout, "collision check dt", "%g", collisionCheckDT);
 
 		const typename Workspace::WorkspaceBounds &agentStateVarRanges = agent.getStateVarRanges(workspace.getBounds());
@@ -94,8 +94,8 @@ public:
 
 		pdef = ompl::base::ProblemDefinitionPtr(new ompl::base::ProblemDefinition(spaceInfoPtr));
 
-		spaceInfoPtr->setPropagationStepSize(stod(args.value("Steering Delta t")));
-		dfpair(stdout, "steering dt", "%g", stod(args.value("Steering Delta t")));
+		spaceInfoPtr->setPropagationStepSize(args.doubleVal("Steering Delta t"));
+		dfpair(stdout, "steering dt", "%g", args.doubleVal("Steering Delta t"));
 		spaceInfoPtr->setMinMaxControlDuration(stol(args.value("KPIECE Min Control Steps")),stol(args.value("KPIECE Max Control Steps")));
 		dfpair(stdout, "min control duration", "%u", stol(args.value("KPIECE Min Control Steps")));
 		dfpair(stdout, "max control duration", "%u", stol(args.value("KPIECE Max Control Steps")));
@@ -104,15 +104,15 @@ public:
 
 		kpiece = new ompl::control::KPIECE1(spaceInfoPtr);
 
-		kpiece->setGoalBias(stod(args.value("KPIECE Goal Bias")));
-		dfpair(stdout, "goal bias", "%g", stod(args.value("KPIECE Goal Bias")));
+		kpiece->setGoalBias(args.doubleVal("KPIECE Goal Bias"));
+		dfpair(stdout, "goal bias", "%g", args.doubleVal("KPIECE Goal Bias"));
 
-		kpiece->setBorderFraction(stod(args.value("KPIECE Border Fraction")));
-		dfpair(stdout, "border fraction", "%g", stod(args.value("KPIECE Border Fraction")));
+		kpiece->setBorderFraction(args.doubleVal("KPIECE Border Fraction"));
+		dfpair(stdout, "border fraction", "%g", args.doubleVal("KPIECE Border Fraction"));
 
-		kpiece->setCellScoreFactor(stod(args.value("KPIECE Cell Score Good")), stod(args.value("KPIECE Cell Score Bad")));
-		dfpair(stdout, "cell score good", "%g", stod(args.value("KPIECE Cell Score Good")));
-		dfpair(stdout, "cell score bad", "%g", stod(args.value("KPIECE Cell Score Bad")));
+		kpiece->setCellScoreFactor(args.doubleVal("KPIECE Cell Score Good"), args.doubleVal("KPIECE Cell Score Bad"));
+		dfpair(stdout, "cell score good", "%g", args.doubleVal("KPIECE Cell Score Good"));
+		dfpair(stdout, "cell score bad", "%g", args.doubleVal("KPIECE Cell Score Bad"));
 
 		kpiece->setMaxCloseSamplesCount(stol(args.value("KPIECE Max Close Samples")));
 		dfpair(stdout, "max closed samples", "%u", stol(args.value("KPIECE Max Close Samples")));

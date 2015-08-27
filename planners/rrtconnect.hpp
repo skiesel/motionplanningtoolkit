@@ -14,10 +14,10 @@ public:
 	RRTConnect(const Workspace &workspace, const Agent &agent, TreeInterface &treeInterface, const InstanceFileMap &args) :
 		workspace(workspace), agent(agent), treeInterface(treeInterface), solutionCost(-1),
 		samplesGenerated(0), edgesAdded(0), edgesRejected(0) {
-		steeringDT = stod(args.value("Steering Delta t"));
-		collisionCheckDT = stod(args.value("Collision Check Delta t"));
+		steeringDT = args.doubleVal("Steering Delta t");
+		collisionCheckDT = args.doubleVal("Collision Check Delta t");
 
-		maxExtensions = stod(args.value("RRTConnect Max Extensions"));
+		maxExtensions = args.doubleVal("RRTConnect Max Extensions");
 
 		dfpair(stdout, "steering dt", "%g", steeringDT);
 		dfpair(stdout, "collision check dt", "%g", collisionCheckDT);

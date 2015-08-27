@@ -291,21 +291,21 @@ public:
 	SnakeTrailers(const InstanceFileMap &args) {
 
 		trailerCount = State::trailerCount = stoi(args.value("Trailer Count"));
-		trailerWidth = stod(args.value("Trailer Width"));
-		trailerLength = State::trailerLength = stod(args.value("Trailer Length"));
-		hitchLength = State::hitchLength = stod(args.value("Hitch Length"));
+		trailerWidth = args.doubleVal("Trailer Width");
+		trailerLength = State::trailerLength = args.doubleVal("Trailer Length");
+		hitchLength = State::hitchLength = args.doubleVal("Hitch Length");
 
-		minimumVelocity = stod(args.value("Minimum Velocity"));
-		maximumVelocity = stod(args.value("Maximum Velocity"));
+		minimumVelocity = args.doubleVal("Minimum Velocity");
+		maximumVelocity = args.doubleVal("Maximum Velocity");
 
-		minimumTurning = stod(args.value("Minimum Turning"));
-		maximumTurning = stod(args.value("Maximum Turning"));
+		minimumTurning = args.doubleVal("Minimum Turning");
+		maximumTurning = args.doubleVal("Maximum Turning");
 
-		linearAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Velocity")), stod(args.value("Maximum Velocity")));
-		angularAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Angular Acceleration")), stod(args.value("Maximum Angular Acceleration")));
+		linearAccelerations = std::uniform_real_distribution<double>(args.doubleVal("Minimum Velocity"), args.doubleVal("Maximum Velocity"));
+		angularAccelerations = std::uniform_real_distribution<double>(args.doubleVal("Minimum Angular Acceleration"), args.doubleVal("Maximum Angular Acceleration"));
 
-		controlBounds.emplace_back(stod(args.value("Minimum Velocity")), stod(args.value("Maximum Velocity")));
-		controlBounds.emplace_back(stod(args.value("Minimum Angular Acceleration")), stod(args.value("Maximum Angular Acceleration")));
+		controlBounds.emplace_back(args.doubleVal("Minimum Velocity"), args.doubleVal("Maximum Velocity"));
+		controlBounds.emplace_back(args.doubleVal("Minimum Angular Acceleration"), args.doubleVal("Maximum Angular Acceleration"));
 
 
 		auto environmentBoundingBox = args.doubleList("Environment Bounding Box");

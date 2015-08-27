@@ -8,7 +8,6 @@ std::default_random_engine GlobalRandomGenerator;
 #include "utilities/math.hpp"
 
 #include "workspaces/map3d.hpp"
-
 #include "workspaces/planarlinkage.hpp"
 
 #include "agents/omnidirectional.hpp"
@@ -27,6 +26,7 @@ std::default_random_engine GlobalRandomGenerator;
 
 #include "tree_interfaces/treeinterface.hpp"
 #include "tree_interfaces/plakutreeinterface.hpp"
+#include "tree_interfaces/sst.hpp"
 
 #include "discretizations/workspace/griddiscretization.hpp"
 #include "discretizations/workspace/prmlite.hpp"
@@ -59,8 +59,8 @@ int main(int argc, char *argv[]) {
 		args.append(argv[i]);
 	}
 
-	GlobalRandomGenerator.seed(stod(args.value("Seed")));
-	ompl::RNG::setSeed(stod(args.value("Seed")));
+	GlobalRandomGenerator.seed(args.doubleVal("Seed"));
+	ompl::RNG::setSeed(args.doubleVal("Seed"));
 
 	dfheader(stdout);
 

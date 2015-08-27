@@ -207,7 +207,7 @@ public:
 		NormalizeStateVars.emplace_back(0, 1);
 		NormalizeStateVars.emplace_back(0, 1);
 
-		integrationStepSize = stod(args.value("Integration Step Size"));
+		integrationStepSize = args.doubleVal("Integration Step Size");
 
 		boost::char_separator<char> sep(" ");
 		boost::tokenizer< boost::char_separator<char> > tokens(args.value("Goal Thresholds"), sep);
