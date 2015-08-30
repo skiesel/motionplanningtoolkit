@@ -27,6 +27,7 @@ std::default_random_engine GlobalRandomGenerator;
 #include "tree_interfaces/treeinterface.hpp"
 #include "tree_interfaces/plakutreeinterface.hpp"
 #include "tree_interfaces/sst.hpp"
+#include "tree_interfaces/sst_grid.hpp"
 
 #include "discretizations/workspace/griddiscretization.hpp"
 #include "discretizations/workspace/prmlite.hpp"

@@ -89,6 +89,10 @@ public:
 		return result;
 	}
 
+	KNNResult nearestWithin(const Element *elem, double radius, double epsilon=0.0) const {
+		return kNearestWithin(elem, radius, 1, epsilon);
+	}
+
 	KNNResult kNearestWithin(const Element *elem, double radius, int max_neighbors=-1, double epsilon=0.0) const {
 		auto stateVars = elem->getTreeStateVars();
 		flann::Matrix<double> point(stateVars.data(), 1, stateVars.size());
