@@ -128,44 +128,83 @@ void go_PPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &w
 #endif
 }
 
-// template<class Workspace, class Agent>
-// void go_SST(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
-//                    const typename Agent::State &start, const typename Agent::State &goal) {
-// 	dfpair(stdout, "planner", "%s", "SST");
+template<class Workspace, class Agent>
+void go_SST(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+                   const typename Agent::State &start, const typename Agent::State &goal) {
+	dfpair(stdout, "planner", "%s", "SST");
 
-// 	// typedef flann::KDTreeSingleIndexParams KDTreeType;
-// 	typedef flann::KDTreeIndexParams KDTreeType;
-// 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
-// 	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
-// 	typedef SST<Agent, KDTree, Sampler> TreeInterface;
-// 	typedef RRTConnect<Workspace, Agent, TreeInterface> Planner;
+	// typedef flann::KDTreeSingleIndexParams KDTreeType;
+	typedef flann::KDTreeIndexParams KDTreeType;
+	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
+	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
+	typedef SST<Workspace, Agent, KDTree, Sampler> TreeInterface;
+	typedef RRTConnect<Workspace, Agent, TreeInterface> Planner;
 
-// 	/* planner config */
+	/* planner config */
 
-// 	KDTreeType kdtreeType(2);
-// 	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
-// 	Sampler sampler(workspace, agent, kdtree);
+	KDTreeType kdtreeType(2);
+	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
+	Sampler sampler(workspace, agent, kdtree);
 
-// 	double sstRadius = args.doubleVal("SST Radius");
+	double sstRadius = args.doubleVal("SST Radius");
 
-// 	TreeInterface treeInterface(kdtree, sampler, sstRadius);
-// 	Planner planner(workspace, agent, treeInterface, args);
+	TreeInterface treeInterface(workspace, agent, kdtree, sampler, sstRadius);
+	Planner planner(workspace, agent, treeInterface, args);
 
-// #ifdef WITHGRAPHICS
-// 	bool firstInvocation = true;
-// 	auto lambda = [&]() {
-// 		workspace.draw();
-// 		agent.drawMesh(start);
-// 		agent.drawMesh(goal);
-// 		planner.query(start, goal, GraphicsIterations, firstInvocation);
-// 		firstInvocation = false;
-// 	};
-// 	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
-// #else
-// 	planner.query(start, goal);
-// 	planner.dfpairs();
-// #endif
-// }
+#ifdef WITHGRAPHICS
+	bool firstInvocation = true;
+	auto lambda = [&]() {
+		workspace.draw();
+		agent.drawMesh(start);
+		agent.drawMesh(goal);
+		planner.query(start, goal, GraphicsIterations, firstInvocation);
+		firstInvocation = false;
+	};
+	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
+#else
+	planner.query(start, goal);
+	planner.dfpairs();
+#endif
+}
+
+template<class Workspace, class Agent>
+void go_SSTGrid(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+                   const typename Agent::State &start, const typename Agent::State &goal) {
+	dfpair(stdout, "planner", "%s", "SST Grid");
+
+	// typedef flann::KDTreeSingleIndexParams KDTreeType;
+	typedef flann::KDTreeIndexParams KDTreeType;
+	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
+	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
+	typedef SST_Grid<Workspace, Agent, KDTree, Sampler> TreeInterface;
+	typedef RRTConnect<Workspace, Agent, TreeInterface> Planner;
+
+	/* planner config */
+
+	KDTreeType kdtreeType(2);
+	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
+	Sampler sampler(workspace, agent, kdtree);
+
+	double sstRadius = args.doubleVal("SST Radius");
+
+	TreeInterface treeInterface(workspace, agent, kdtree, sampler, sstRadius);
+	Planner planner(workspace, agent, treeInterface, args);
+
+#ifdef WITHGRAPHICS
+	bool firstInvocation = true;
+	auto lambda = [&]() {
+		workspace.draw();
+		agent.drawMesh(start);
+		agent.drawMesh(goal);
+		planner.query(start, goal, GraphicsIterations, firstInvocation);
+		firstInvocation = false;
+	};
+	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
+#else
+	planner.query(start, goal);
+	planner.dfpairs();
+#endif
+}
 
 template<class Workspace, class Agent>
 void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &agent,
@@ -182,8 +221,10 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 		go_PPRM<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("KPIECE") == 0) {
 		go_KPIECE<Workspace, Agent>(args, agent, workspace, start, goal);
-//	} else if(planner.compare("SST") == 0) {
-//		go_SST<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("SST") == 0) {
+		go_SST<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("SST Grid") == 0) {
+		go_SSTGrid<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else {
 		fprintf(stderr, "unreocognized planner: %s\n", planner.c_str());
 	}

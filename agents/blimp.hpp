@@ -164,6 +164,10 @@ public:
 			}
 		}
 
+		double gCost() const {
+			return 0;
+		}
+
 		/* needed for being inserted into NN datastructure */
 		const StateVars &getTreeStateVars() const {
 			return treeVars;

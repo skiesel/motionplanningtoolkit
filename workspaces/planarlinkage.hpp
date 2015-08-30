@@ -373,6 +373,10 @@ public:
 
 		Edge &operator=(Edge &&) = default;
 
+		double gCost() const {
+			return 0;
+		}
+
 		void print() {
 			start.print();
 			end.print();
