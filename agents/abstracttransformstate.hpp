@@ -9,6 +9,10 @@ public:
 		return std::vector<fcl::Transform3f>();
 	}
 
+	const std::vector<double>& getTreeStateVars() const {
+		return treeStateVars;
+	}
+
 	static std::vector<fcl::Transform3f> interpolate(const AbstractTransformState &a, const AbstractTransformState &b, double dt) {
 		return std::vector<fcl::Transform3f>();
 	}

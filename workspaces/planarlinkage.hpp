@@ -209,6 +209,10 @@ public:
 			return treeStateVars;
 		}
 
+		const StateVars &getTreeStateVars() const {
+			return treeStateVars;
+		}
+
 		bool equals(const State &s) const {
 			for (unsigned int i = 0; i < getStateVars().size(); ++i) {
 				if (fabs(getStateVars()[i] - s.getStateVars()[i]) > 0.000001) {

@@ -23,7 +23,7 @@ protected:
 		Vertex(const AbstractState &state, unsigned int id) : state(state), id(id) {}
 
 		const std::vector<double> &getTreeStateVars() const {
-			return state.treeStateVars;
+			return state.getTreeStateVars();
 		}
 
 		void setPointIndex(unsigned int index) {
