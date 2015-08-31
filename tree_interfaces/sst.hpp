@@ -32,11 +32,11 @@ public:
 		witnessInterface(KDTreeType(2), agent.getTreeStateSize()), radius(startingRadius), resizeThreshold(resizeThreshold),
 		history(historySize), historyIndex(0), historyFails(0), historyFilled(false) {}
 
-	State getTreeSample() {
+	Edge* getTreeSample() {
 		return queryInterface.getTreeSample();
 	}
 
-	void insertIntoTree(Edge *edge) {
+	bool insertIntoTree(Edge *edge) {
 		Witness *newWitness = new Witness(edge, edge);
 		auto nearest = witnessInterface.nearestWithin(newWitness, radius);
 
@@ -61,6 +61,8 @@ public:
 			radius *= 0.5;
 			resetHistory();
 		}
+
+		return didAddNewEdge;
 	}
 
 private:

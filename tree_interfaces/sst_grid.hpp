@@ -17,11 +17,11 @@ public:
 			rebuildDiscretizationSizes(discretizationPercent);
 		}
 
-	State getTreeSample() {
+	Edge* getTreeSample() {
 		return queryInterface.getTreeSample();
 	}
 
-	void insertIntoTree(Edge *edge) {
+	bool insertIntoTree(Edge *edge) {
 		unsigned int key = computeLookup(edge);
 
 		auto prevBestPair = witnessInterface.find(key);
@@ -47,6 +47,8 @@ public:
 			rebuildDiscretizationSizes(discretizationPercent * 0.5);
 			rehashData();
 		}
+
+		return didAddNewEdge;
 	}
 
 private:

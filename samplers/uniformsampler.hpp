@@ -17,11 +17,11 @@ public:
 		}
 	}
 
-	State getTreeSample() const {
+	Edge* getTreeSample() const {
 		auto sample = sampleConfiguration();
 		auto sampleEdge = Edge(sample);
 		typename NN::KNNResult result = nn.nearest(&sampleEdge, 0, 1);
-		return result.elements[0]->end;
+		return result.elements[0];
 	}
 
 	Edge *getTreeEdge(const State &s) const {

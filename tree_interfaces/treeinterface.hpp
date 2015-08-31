@@ -8,12 +8,13 @@ public:
 	TreeInterface(InsertionInteface &insertionInterface, QueryInterface &queryInterface) :
 		insertionInterface(insertionInterface), queryInterface(queryInterface) {}
 
-	State getTreeSample() {
+	Edge* getTreeSample() {
 		return queryInterface.getTreeSample();
 	}
 
-	void insertIntoTree(Edge *edge) {
+	bool insertIntoTree(Edge *edge) {
 		insertionInterface.insertPoint(edge);
+		return true;
 	}
 
 	Edge *getTreeEdge(const State &s) const {

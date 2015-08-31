@@ -77,11 +77,11 @@ class PlakuTreeInterface {
 			return regionPath[randomIndex];
 		}
 
-		State getNearestStateInRegion(const State &s) const {
+		Edge* getNearestEdgeInRegion(const State &s) const {
 			Edge e(s);
 			auto res = edgesInRegion->nearest(&e, 0, 1);
 			assert(res.elements.size() > 0);
-			return res.elements[0]->end;
+			return res.elements[0];
 		}
 
 		/* used for initial heuristic computation */
@@ -178,7 +178,7 @@ public:
 		discretization.draw(true, false, colorLookup);
 	}
 
-	State getTreeSample() {
+	Edge* getTreeSample() {
 		if(activeRegion != NULL) {
 			activeRegion->selected(alpha);
 
@@ -201,13 +201,13 @@ public:
 			unsigned int regionAlongPath = activeRegion->getRandomRegionAlongPathToGoal(distribution);
 			State p = discretization.getRandomStateNearRegionCenter(regionAlongPath, stateRadius);
 
-			return activeRegion->getNearestStateInRegion(p);
+			return activeRegion->getNearestEdgeInRegion(p);
 		} else {
 			return uniformSampler->getTreeSample();
 		}
 	}
 
-	void insertIntoTree(Edge *edge) {
+	bool insertIntoTree(Edge *edge) {
 		unsigned int newCellId = discretization.getCellId(edge->end);
 
 		if(!regions[newCellId]->onOpen) {
@@ -218,6 +218,8 @@ public:
 
 		regions[newCellId]->edgesInRegion->insertPoint(edge);
 		uniformSamplerBackingKDTree->insertPoint(edge);
+
+		return true;
 	}
 
 	Edge *getTreeEdge(const State &s) const {
