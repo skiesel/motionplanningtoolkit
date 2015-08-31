@@ -93,19 +93,12 @@ public:
 		return IntersectResult::NOT_INTERESECTING;
 	}
 
-<<<<<<< HEAD
-		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
-			OpenGLWrapper::getOpenGLWrapper()
-					.drawLine(begin.x, begin.y, 0, end.x, end.y, 0, color);
-		}
-=======
 #ifdef WITHGRAPHICS
 
 	void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
 		OpenGLWrapper::getOpenGLWrapper()
 		.drawLine(begin.x, begin.y, 0, end.x, end.y, 0, OpenGLWrapper::Color::Blue());
 	}
->>>>>>> skiesel/master
 
 #endif
 };
@@ -281,15 +274,8 @@ public:
 #ifdef WITHGRAPHICS
 
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
-<<<<<<< HEAD
-
-			OpenGLWrapper::Color c = OpenGLWrapper::Color(0, 1, 0, 0.01);
-			for (Link link : links) {
-				link.draw(c);
-=======
 			for(Link link : links) {
 				link.draw(color);
->>>>>>> skiesel/master
 			}
 		}
 
