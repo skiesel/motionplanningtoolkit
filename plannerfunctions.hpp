@@ -147,8 +147,9 @@ void go_SST(const InstanceFileMap &args, const Agent &agent, const Workspace &wo
 	Sampler sampler(workspace, agent, kdtree);
 
 	double sstRadius = args.doubleVal("SST Radius");
+	double sstResize = args.doubleVal("SST Resize Threshold");
 
-	TreeInterface treeInterface(workspace, agent, kdtree, sampler, sstRadius);
+	TreeInterface treeInterface(workspace, agent, kdtree, sampler, sstRadius, sstResize);
 	Planner planner(workspace, agent, treeInterface, args);
 
 #ifdef WITHGRAPHICS
@@ -186,8 +187,9 @@ void go_SSTGrid(const InstanceFileMap &args, const Agent &agent, const Workspace
 	Sampler sampler(workspace, agent, kdtree);
 
 	double sstRadius = args.doubleVal("SST Radius");
+	double sstResize = args.doubleVal("SST Resize Threshold");
 
-	TreeInterface treeInterface(workspace, agent, kdtree, sampler, sstRadius);
+	TreeInterface treeInterface(workspace, agent, kdtree, sampler, sstRadius, sstResize);
 	Planner planner(workspace, agent, treeInterface, args);
 
 #ifdef WITHGRAPHICS
