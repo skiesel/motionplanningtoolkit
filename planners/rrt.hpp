@@ -45,15 +45,15 @@ public:
 
 		while(true) {
 
-			State treeSample = treeInterface.getTreeSample();
+			Edge* treeSample = treeInterface.getTreeSample();
 			samplesGenerated++;
 
 #ifdef WITHGRAPHICS
 			// treeSample.print();
-			samples.push_back(treeSample);
+			samples.push_back(treeSample->end);
 #endif
 
-			auto edge = agent.randomSteer(treeSample, steeringDT);
+			auto edge = agent.randomSteer(treeSample->end, steeringDT);
 
 			++iterations;
 
@@ -71,14 +71,11 @@ public:
 				fprintf(stderr, "found goal\n");
 				std::vector<const Edge *> newSolution;
 				double newSolutionCost = 0;
-				State cur = edge.start;
 				newSolution.push_back(pool.construct(edge));
 				newSolutionCost += edge.cost;
-				while(!cur.equals(start)) {
-					auto e = treeInterface.getTreeEdge(cur);
-					newSolution.push_back(e);
-					newSolutionCost += e->cost;
-					cur = e->start;
+				while(newSolution.back()->parent != NULL) {
+					newSolution.push_back(newSolution.back()->parent);
+					newSolutionCost += newSolution.back()->cost;
 				}
 				if(solutionCost < 0 || newSolutionCost < solutionCost) {
 					poseNumber = 0;
@@ -92,7 +89,13 @@ public:
 
 			Edge *e = pool.construct(edge);
 
-			treeInterface.insertIntoTree(e);
+			e->parent = treeSample;
+
+			bool addedToTree = treeInterface.insertIntoTree(e);
+
+			if(!addedToTree) {
+				pool.destroy(e);
+			}
 
 #ifdef WITHGRAPHICS
 			treeEdges.push_back(e);

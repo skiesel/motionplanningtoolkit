@@ -47,22 +47,30 @@ public:
 
 		while(!foundGoal) {
 
-			auto treeSample = treeInterface.getTreeSample();
+			Edge *treeSample = treeInterface.getTreeSample();
 			samplesGenerated++;
 
 #ifdef WITHGRAPHICS
-			samples.push_back(treeSample);
+			samples.push_back(treeSample->end);
 #endif
 
-			auto edge = agent.randomSteer(treeSample, steeringDT);
+			auto edge = agent.randomSteer(treeSample->end, steeringDT);
 
 			unsigned int added = 0;
+			Edge *parent = treeSample;
 
 			while(added < maxExtensions && workspace.safeEdge(agent, edge, collisionCheckDT)) {
 				added++;
 				edgesAdded++;
 				Edge *e = pool.construct(edge);
-				treeInterface.insertIntoTree(e);
+				bool addedIntoTree = treeInterface.insertIntoTree(e);
+				if(!addedIntoTree) {
+					pool.destroy(e);
+					break;
+				}
+
+				e->parent = parent;
+				parent = e;
 
 #ifdef WITHGRAPHICS
 				treeEdges.push_back(e);
@@ -70,6 +78,19 @@ public:
 
 				if(agent.isGoal(edge.end, goal)) {
 					fprintf(stderr, "found goal\n");
+					std::vector<const Edge *> newSolution;
+					double newSolutionCost = 0;
+					newSolution.push_back(pool.construct(edge));
+					newSolutionCost += edge.cost;
+					while(newSolution.back()->parent != NULL) {
+						newSolution.push_back(newSolution.back()->parent);
+						newSolutionCost += newSolution.back()->cost;
+					}
+					if(solutionCost < 0 || newSolutionCost < solutionCost) {
+						std::reverse(newSolution.begin(), newSolution.end());
+						solution.clear();
+						solution.insert(solution.begin(), newSolution.begin(), newSolution.end());
+					}
 					foundGoal = true;
 					break;
 				}

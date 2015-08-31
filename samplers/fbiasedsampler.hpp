@@ -5,6 +5,7 @@
 template <class Workspace, class Agent, class NN, class WorkspaceDiscretization>
 class FBiasedSampler {
 	typedef typename Agent::State State;
+	typedef typename Agent::Edge Edge;
 	typedef typename Agent::StateVars StateVars;
 	typedef typename Agent::StateVarRanges StateVarRanges;
 
@@ -93,11 +94,11 @@ public:
 		}
 	}
 
-	State getTreeSample() const {
+	Edge* getTreeSample() const {
 		auto sample = sampleConfiguration();
 		auto sampleEdge = Edge(sample);
 		typename NN::KNNResult result = nn.nearest(&sampleEdge);
-		return result.elements[0]->end;
+		return result.elements[0];
 	}
 
 private:
