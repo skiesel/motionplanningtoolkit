@@ -28,9 +28,9 @@ public:
 
 	SST(const Workspace &workspace, const Agent &agent,
 		InsertionInteface &insertionInterface, QueryInterface &queryInterface, double startingRadius, double resizeThreshold,
-		unsigned int persist = 100) : insertionInterface(insertionInterface), queryInterface(queryInterface),
+		unsigned int historySize = 100) : insertionInterface(insertionInterface), queryInterface(queryInterface),
 		witnessInterface(KDTreeType(2), agent.getTreeStateSize()), radius(startingRadius), resizeThreshold(resizeThreshold),
-		persist(persist) {}
+		history(historySize), historyIndex(0), historyFails(0), historyFilled(false) {}
 
 	State getTreeSample() {
 		return queryInterface.getTreeSample();
@@ -56,23 +56,41 @@ public:
 			}
 		}
 
-		if(didAddNewEdge) {
-			added++;
-			total++;
-		} else {
-			filtered++;
-			total++;
-			if(total > persist && filtered / total >= resizeThreshold) {
-				radius *= 0.5;
-				added = filtered = 0;
-			}
+		double failureRate = updateHistory(didAddNewEdge);
+		if(historyFilled && failureRate >= resizeThreshold) {
+			radius *= 0.5;
+			resetHistory();
 		}
 	}
 
 private:
+	double updateHistory(bool success) {
+		int nextIndex = historyIndex + 1;
+		if(nextIndex >= history.size()) {
+			nextIndex = 0;
+			historyFilled = true;
+		}
+
+		if(historyFilled)
+			historyFails -= history[historyIndex];
+
+		history[historyIndex] = success ? 0 : 1;
+		historyIndex += history[historyIndex];
+
+		historyIndex = nextIndex;
+
+		return (double)historyFails / (double)history.size();
+	}
+
+	void resetHistory() {
+		historyFilled = historyIndex = historyFails = 0;
+	}
+
 	InsertionInteface &insertionInterface;
 	QueryInterface &queryInterface;
 	KDTree witnessInterface;
 	double radius, resizeThreshold;
-	unsigned int added, filtered, total, persist;
+	std::vector<bool> history;
+	int historyIndex, historyFails;
+	bool historyFilled;
 };

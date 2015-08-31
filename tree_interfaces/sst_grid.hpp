@@ -10,9 +10,9 @@ public:
 
 	SST_Grid(const Workspace &workspace, const Agent &agent,
 		InsertionInteface &insertionInterface, QueryInterface &queryInterface, double startingDiscretizationPercent,
-		double resizeThreshold, unsigned int persist = 100) :
+		double resizeThreshold, unsigned int historySize = 100) :
 		insertionInterface(insertionInterface), queryInterface(queryInterface), discretizationPercent(startingDiscretizationPercent),
-		resizeThreshold(resizeThreshold), persist(persist) {
+		resizeThreshold(resizeThreshold), history(historySize), historyIndex(0), historyFails(0), historyFilled(false) {
 			stateVarRanges = agent.getStateVarRanges(workspace.getBounds());
 			rebuildDiscretizationSizes(discretizationPercent);
 		}
@@ -42,20 +42,36 @@ public:
 			}
 		}
 
-		if(didAddNewEdge) {
-			added++;
-			total++;
-		} else {
-			filtered++;
-			total++;
-			if(total >= persist && filtered / total >= resizeThreshold) {
-				rebuildDiscretizationSizes(discretizationPercent * 0.5);
-				rehashData();
-			}
+		double failureRate = updateHistory(didAddNewEdge);
+		if(historyFilled && failureRate >= resizeThreshold) {
+			rebuildDiscretizationSizes(discretizationPercent * 0.5);
+			rehashData();
 		}
 	}
 
 private:
+	double updateHistory(bool success) {
+		int nextIndex = historyIndex + 1;
+		if(nextIndex >= history.size()) {
+			nextIndex = 0;
+			historyFilled = true;
+		}
+
+		if(historyFilled)
+			historyFails -= history[historyIndex];
+
+		history[historyIndex] = success ? 0 : 1;
+		historyIndex += history[historyIndex];
+
+		historyIndex = nextIndex;
+
+		return (double)historyFails / (double)history.size();
+	}
+
+	void resetHistory() {
+		historyFilled = historyIndex = historyFails = 0;
+	}
+
 	void rehashData() {
 		std::vector<Edge*> witnesses(witnessInterface.size());
 		unsigned int index = 0;
@@ -89,7 +105,8 @@ private:
 	}
 
 	void rebuildDiscretizationSizes(double newDiscretizationPercent) {
-		added = filtered = 0;
+		resetHistory();
+
 		discretizationPercent = newDiscretizationPercent;
 		discretizationSizes.clear();
 		gridDimensions.clear();
@@ -111,5 +128,7 @@ private:
 	StateVarRanges stateVarRanges;
 	std::vector<double> discretizationSizes, gridDimensions;
 	double discretizationPercent, resizeThreshold;
-	unsigned int added, filtered, total, persist;
+	std::vector<bool> history;
+	int historyIndex, historyFails;
+	bool historyFilled;
 };
