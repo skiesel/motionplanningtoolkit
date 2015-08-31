@@ -66,6 +66,14 @@ public:
 		return stod(map.at(key));
 	}
 
+	double integerVal(const std::string &key) const {
+		if(!exists(key)) {
+			fprintf(stderr, "Key \"%s\" not bound\n", key.c_str());
+			exit(1);
+		}
+		return stoi(map.at(key));
+	}
+
 	std::vector<std::string> valueList(const std::string &key, const std::string delim = " ") const {
 		if(!exists(key)) {
 			fprintf(stderr, "Key \"%s\" not bound\n", key.c_str());
