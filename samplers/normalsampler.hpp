@@ -14,7 +14,7 @@ public:
 		double mean, stdev;
 	};
 
-	NormalSampler(const Workspace &workspace, const Agent &agent, NN& nn, const std::vector<Normal> &normals) : workspace(workspace), agent(agent), nn(nn) {
+	NormalSampler(const Workspace &workspace, const Agent &agent, NN &nn, const std::vector<Normal> &normals) : workspace(workspace), agent(agent), nn(nn) {
 		for(auto normal : normals) {
 			distributions.emplace_back(normal.mean, normal.stdev);
 		}
@@ -41,6 +41,6 @@ private:
 	NN &nn;
 	StateVarRanges stateVarDomains;
 
-	
+
 	std::vector< std::normal_distribution<double> > distributions;
 };

@@ -6,9 +6,10 @@ set(CMAKE_MODULE_PATH
 )
 set(BUILDGRAPHICS 1)
 
-set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-std=c++11 -Wunused ${CMAKE_CXX_FLAGS}")
 
 add_executable(Planner main.cpp)
+#add_executable(Planner mesh_testing.cpp)
 
 if(IS_DIRECTORY "/Library/Frameworks/3DconnexionClient.framework")
 	add_definitions(-DWITHCONNEXION)
@@ -90,21 +91,21 @@ endif(BUILDGRAPHICS)
 
 
 ######### VREP Plugin ##########
-
-add_library(v_repExtskiesel SHARED dependencies/V-REP_PRO_EDU_V3_2_1_Mac/programming/common/v_repLib.cpp vrep/plugin.cpp)
-
-set_target_properties(v_repExtskiesel PROPERTIES
-	COMPILE_DEFINITIONS "VREPPLUGIN")
-
-ADD_CUSTOM_COMMAND(
-	TARGET v_repExtskiesel
-	POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy ARGS ${CMAKE_BINARY_DIR}/libv_repExtskiesel.dylib
-	${CMAKE_BINARY_DIR}/../dependencies/V-REP_PRO_EDU_V3_2_1_Mac/vrep.app/Contents/MacOS/
-)
-
-target_link_libraries(v_repExtskiesel
-	${Boost_LIBRARIES}
-	${FCL_LIBRARIES}
-	${OMPL_LIBRARIES}
-)
+# 
+# add_library(v_repExtskiesel SHARED dependencies/V-REP_PRO_EDU_V3_2_1_Mac/programming/common/v_repLib.cpp vrep/plugin.cpp)
+# 
+# set_target_properties(v_repExtskiesel PROPERTIES
+# 	COMPILE_DEFINITIONS "VREPPLUGIN")
+# 
+# ADD_CUSTOM_COMMAND(
+# 	TARGET v_repExtskiesel
+# 	POST_BUILD
+# 	COMMAND ${CMAKE_COMMAND} -E copy ARGS ${CMAKE_BINARY_DIR}/libv_repExtskiesel.dylib
+# 	${CMAKE_BINARY_DIR}/../dependencies/V-REP_PRO_EDU_V3_2_1_Mac/vrep.app/Contents/MacOS/
+# )
+# 
+# target_link_libraries(v_repExtskiesel
+# 	${Boost_LIBRARIES}
+# 	${FCL_LIBRARIES}
+#	${OMPL_LIBRARIES}
+# )

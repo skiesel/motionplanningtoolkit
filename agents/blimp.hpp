@@ -21,6 +21,7 @@ class Blimp {
 
 public:
 	typedef AbstractTransformState AbstractState;
+	typedef std::vector<AbstractState> AbstractEdge;
 
 	typedef std::vector< std::pair<double, double> > WorkspaceBounds;
 	typedef std::vector< std::pair<double, double> > StateVarRanges;
@@ -43,7 +44,7 @@ public:
 
 		State(const StateVars &vars) : stateVars(vars.begin(), vars.end()) {}
 
-		State& operator=(const State &s) {
+		State &operator=(const State &s) {
 			stateVars.resize(7);
 			for(unsigned int i = 0; i < s.stateVars.size(); ++i)
 				stateVars[i] = s.stateVars[i];
@@ -57,19 +58,15 @@ public:
 			return true;
 		}
 
-		const StateVars& getStateVars() const { return stateVars; }
+		const StateVars &getStateVars() const {
+			return stateVars;
+		}
 
 		void print() const {
 			for(auto v : stateVars) {
 				fprintf(stderr, "%g ", v);
 			}
 			fprintf(stderr, "\n");
-		}
-
-		AbstractState toAbstractState() const {
-			fprintf(stderr, "toAbstractState not implemented\n");
-			exit(0);
-			return AbstractState();
 		}
 
 #ifdef WITHGRAPHICS
@@ -109,8 +106,8 @@ public:
 			return fcl::Transform3f(rotation, pose);
 		}
 
-		fcl::Transform3f getTransform() const {
-			return toFCLTransform();
+		std::vector<fcl::Transform3f> getMeshPoses() const {
+			return std::vector<fcl::Transform3f>(1, toFCLTransform());
 		}
 
 #ifdef WITHGRAPHICS
@@ -130,7 +127,7 @@ public:
 		}
 #endif
 
-	// private:
+		// private:
 		StateVars stateVars;
 	};
 
@@ -141,13 +138,13 @@ public:
 		}
 		Edge(const State &start, const State &end, double cost, double a, double w, double z) : start(start),
 			end(end), cost(cost), dt(cost), a(a), w(w), z(z), treeIndex(0) {
-				buildTreeVars();
-			}
-		Edge(const Edge& e) : start(e.start), end(e.end), cost(e.cost), dt(e.dt), a(e.a), w(e.w), z(e.z), treeIndex(e.treeIndex) {
+			buildTreeVars();
+		}
+		Edge(const Edge &e) : start(e.start), end(e.end), cost(e.cost), dt(e.dt), a(e.a), w(e.w), z(e.z), treeIndex(e.treeIndex) {
 			buildTreeVars();
 		}
 
-		Edge& operator=(const Edge &e) {
+		Edge &operator=(const Edge &e) {
 			this->start = e.start;
 			this->end = e.end;
 			this->cost = e.cost;
@@ -160,17 +157,27 @@ public:
 		}
 
 		void buildTreeVars() {
-			const auto& vars = end.getStateVars();
+			const auto &vars = end.getStateVars();
 			treeVars.resize(vars.size());
 			for(unsigned int i = 0; i < vars.size(); ++i) {
-				treeVars[i] = (Blimp::NormalizeStateVars[i].first + vars[i]) * Blimp::NormalizeStateVars[i].second;				
+				treeVars[i] = (Blimp::NormalizeStateVars[i].first + vars[i]) * Blimp::NormalizeStateVars[i].second;
 			}
 		}
 
+		double gCost() const {
+			return 0;
+		}
+
 		/* needed for being inserted into NN datastructure */
-		const StateVars& getTreeStateVars() const { return treeVars; }
-		int getPointIndex() const { return treeIndex; }
-		void setPointIndex(int ptInd) { treeIndex = ptInd; }
+		const StateVars &getTreeStateVars() const {
+			return treeVars;
+		}
+		int getPointIndex() const {
+			return treeIndex;
+		}
+		void setPointIndex(int ptInd) {
+			treeIndex = ptInd;
+		}
 
 #ifdef WITHGRAPHICS
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
@@ -205,16 +212,16 @@ public:
 	};
 
 	Blimp(const InstanceFileMap &args) : mesh(args.value("Agent Mesh")) {
-		blimpLength = stod(args.value("Blimp Length"));
+		blimpLength = args.doubleVal("Blimp Length");
 
-		minimumVelocity = stod(args.value("Minimum Velocity"));
-		maximumVelocity = stod(args.value("Maximum Velocity"));
+		minimumVelocity = args.doubleVal("Minimum Velocity");
+		maximumVelocity = args.doubleVal("Maximum Velocity");
 
-		minimumTurning = stod(args.value("Minimum Turning"));
-		maximumTurning = stod(args.value("Maximum Turning"));
+		minimumTurning = args.doubleVal("Minimum Turning");
+		maximumTurning = args.doubleVal("Maximum Turning");
 
-		minimumVelocityZ = stod(args.value("Minimum Velocity Z"));
-		maximumVelocityZ = stod(args.value("Maximum Velocity Z"));
+		minimumVelocityZ = args.doubleVal("Minimum Velocity Z");
+		maximumVelocityZ = args.doubleVal("Maximum Velocity Z");
 
 		auto environmentBoundingBox = args.doubleList("Environment Bounding Box");
 
@@ -223,21 +230,21 @@ public:
 			double term2 = 1. / (environmentBoundingBox[i+1] - environmentBoundingBox[i]);
 			NormalizeStateVars.emplace_back(term1, term2);
 		}
-		
+
 		NormalizeStateVars.emplace_back(M_PI / 2., 1. / (2.*M_PI)); //theta
 		NormalizeStateVars.emplace_back(-minimumVelocity, 1. / (maximumVelocity - minimumVelocity)); //v
 		NormalizeStateVars.emplace_back(-minimumTurning, 1. / (maximumTurning - minimumTurning)); //psi
 		NormalizeStateVars.emplace_back(-minimumVelocityZ, 1. / (maximumVelocityZ - minimumVelocityZ)); //vz
 
-		integrationStepSize = stod(args.value("Integration Step Size"));
+		integrationStepSize = args.doubleVal("Integration Step Size");
 
-		linearAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Forward Acceleration")), stod(args.value("Maximum Forward Acceleration")));
-		zLinearAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Z Acceleration")), stod(args.value("Maximum Z Acceleration")));
-		angularAccelerations = std::uniform_real_distribution<double>(stod(args.value("Minimum Angular Acceleration")), stod(args.value("Maximum Angular Acceleration")));
+		linearAccelerations = std::uniform_real_distribution<double>(args.doubleVal("Minimum Forward Acceleration"), args.doubleVal("Maximum Forward Acceleration"));
+		zLinearAccelerations = std::uniform_real_distribution<double>(args.doubleVal("Minimum Z Acceleration"), args.doubleVal("Maximum Z Acceleration"));
+		angularAccelerations = std::uniform_real_distribution<double>(args.doubleVal("Minimum Angular Acceleration"), args.doubleVal("Maximum Angular Acceleration"));
 
-		controlBounds.emplace_back(stod(args.value("Minimum Forward Acceleration")), stod(args.value("Maximum Forward Acceleration")));
-		controlBounds.emplace_back(stod(args.value("Minimum Z Acceleration")), stod(args.value("Maximum Z Acceleration")));
-		controlBounds.emplace_back(stod(args.value("Minimum Angular Acceleration")), stod(args.value("Maximum Angular Acceleration")));
+		controlBounds.emplace_back(args.doubleVal("Minimum Forward Acceleration"), args.doubleVal("Maximum Forward Acceleration"));
+		controlBounds.emplace_back(args.doubleVal("Minimum Z Acceleration"), args.doubleVal("Maximum Z Acceleration"));
+		controlBounds.emplace_back(args.doubleVal("Minimum Angular Acceleration"), args.doubleVal("Maximum Angular Acceleration"));
 
 		boost::char_separator<char> sep(" ");
 		boost::tokenizer< boost::char_separator<char> > tokens(args.value("Goal Thresholds"), sep);
@@ -246,7 +253,7 @@ public:
 		}
 
 #ifdef WITHGRAPHICS
-		OpenGLWrapper::setExternalKeyboardCallback([&](int key){
+		OpenGLWrapper::setExternalKeyboardCallback([&](int key) {
 			this->keyboard(key);
 		});
 #endif
@@ -256,7 +263,7 @@ public:
 		return 7;
 	}
 
-	StateVarRanges getStateVarRanges(const WorkspaceBounds& b) const {
+	StateVarRanges getStateVarRanges(const WorkspaceBounds &b) const {
 		StateVarRanges bounds(b.begin(), b.end());
 		bounds.emplace_back(0, 2*M_PI);
 		bounds.emplace_back(minimumVelocity, maximumVelocity);
@@ -266,7 +273,7 @@ public:
 		return bounds;
 	}
 
-	State buildState(const StateVars& stateVars) const {
+	State buildState(const StateVars &stateVars) const {
 		return State(stateVars);
 	}
 
@@ -274,11 +281,11 @@ public:
 		return controls;
 	}
 
-	const std::vector< std::pair<double, double> >& getControlBounds() const {
+	const std::vector< std::pair<double, double> > &getControlBounds() const {
 		return controlBounds;
 	}
 
-	State getRandomStateNear(const AbstractState &a, const State &s, double radius) const {
+	State getRandomStateNearAbstractState(const AbstractState &a, double radius) const {
 		fprintf(stderr, "getRandomStateNear no implemented\n");
 		exit(0);
 		return State();
@@ -341,37 +348,49 @@ public:
 		return Edge(start, end, dt, a, w, z);
 	}
 
-	std::vector<const SimpleAgentMeshHandler*> getMeshes() const {
-		std::vector<const SimpleAgentMeshHandler*> meshes(1, &mesh);
+	std::vector<const SimpleAgentMeshHandler *> getMeshes() const {
+		std::vector<const SimpleAgentMeshHandler *> meshes(1, &mesh);
 		return meshes;
 	}
 
-	std::vector<fcl::Transform3f> getRepresentivePosesForLocation(const std::vector<double> &loc) const {
-		std::vector<fcl::Transform3f> poses;
-
-		fcl::Vec3f pose(loc[0], loc[1], loc[2]);
-
-		unsigned int rotations = 4;
-		double increment = M_PI / ((double)rotations * 2.);
-		fcl::Matrix3f rotation;
-		rotation.setIdentity();
-
-		for(unsigned int i = 0; i < rotations; ++i) {
-			double cosTheta = cos((double)i * increment);
-			double sinTheta = sin((double)i * increment);
-
-			rotation(0,0) = cosTheta;
-			rotation(1,0) = -sinTheta;
-			rotation(0,1) = sinTheta;
-			rotation(1,1) = cosTheta;
-
-			poses.emplace_back(rotation, pose);
-		}
-
-		return poses;
+	std::vector<const SimpleAgentMeshHandler *> getAbstractMeshes() const {
+		return getMeshes();
 	}
 
-	std::vector<std::vector<fcl::Transform3f> > getPoses(const Edge &edge, double dt) const {
+	AbstractState toAbstractState(const State& state) const {
+		AbstractState s;
+		return s;
+	}
+
+	std::vector<State> getRepresentiveStatesForLocation(const std::vector<double> &loc) const {
+		std::vector<State> states;
+
+		fprintf(stderr, "Blimp::getRepresentiveStatesForLocation not implemented\n");
+		exit(1);
+
+		// fcl::Vec3f pose(loc[0], loc[1], loc[2]);
+
+		// unsigned int rotations = 4;
+		// double increment = M_PI / ((double)rotations * 2.);
+		// fcl::Matrix3f rotation;
+		// rotation.setIdentity();
+
+		// for(unsigned int i = 0; i < rotations; ++i) {
+		// 	double cosTheta = cos((double)i * increment);
+		// 	double sinTheta = sin((double)i * increment);
+
+		// 	rotation(0,0) = cosTheta;
+		// 	rotation(1,0) = -sinTheta;
+		// 	rotation(0,1) = sinTheta;
+		// 	rotation(1,1) = cosTheta;
+
+		// 	poses.emplace_back(rotation, pose);
+		// }
+
+		return states;
+	}
+
+	std::vector<std::vector<fcl::Transform3f> > getMeshPoses(const Edge &edge, double dt) const {
 		std::vector<std::vector<fcl::Transform3f> > retPoses;
 
 		unsigned int steps = std::isinf(dt) ? 0 : edge.dt / dt;
@@ -397,23 +416,54 @@ public:
 		return retPoses;
 	}
 
+	inline bool areAbstractEdgesSymmetric() const {
+		return true;
+	}
+
+	std::vector<std::vector<fcl::Transform3f> > getAbstractMeshPoses(const AbstractEdge &edge, double dt) const {
+		std::vector<std::vector<fcl::Transform3f> > poses;
+
+		fprintf(stderr, "Blimp::getAbstractMeshPoses not implemented\n");
+		exit(1);
+
+		return poses;
+	}
+
+	std::vector<fcl::Transform3f> getAbstractMeshPoses(const AbstractState &state) const {
+		std::vector<fcl::Transform3f> poses;
+
+		fprintf(stderr, "Blimp::getAbstractMeshPoses not implemented\n");
+		exit(1);
+
+		return poses;
+	}
+
+	AbstractEdge generateAbstractEdge(const AbstractState &s1, const AbstractState &s2) const {
+		AbstractEdge edge;
+
+		fprintf(stderr, "Blimp::generateAbstractEdge not implemented\n");
+		exit(1);
+
+		return edge;
+	}
+
 #ifdef WITHGRAPHICS
 	void keyboard(int key) {
 		double a = 0, w = 0, z = 0, dt = 0.1;
 
 		switch(key) {
-			case 'Q':
-				a = 1;
-				break;
-			case 'W':
-				w = 1;
-				break;
-			case 'E':
-				z = 1;
-				break;
+		case 'Q':
+			a = 1;
+			break;
+		case 'W':
+			w = 1;
+			break;
+		case 'E':
+			z = 1;
+			break;
 		}
 
-		const StateVars& vars = state.getStateVars();
+		const StateVars &vars = state.getStateVars();
 		StateVars newState(7);
 
 		newState[X] = vars[X];
@@ -449,7 +499,7 @@ public:
 		drawMesh(transform, color);
 
 	}
-	void drawMesh(const fcl::Transform3f &transform, const OpenGLWrapper::Color& color) const {
+	void drawMesh(const fcl::Transform3f &transform, const OpenGLWrapper::Color &color) const {
 		std::vector<double> glTransform = OpenGLWrapper::getOpenGLWrapper().getIdentity();
 
 		const fcl::Vec3f &translation = transform.getTranslation();
@@ -473,8 +523,8 @@ public:
 		mesh.draw(color, glTransform);
 	}
 
-	void drawSolution(const std::vector<const Edge*> &solution, double dt = std::numeric_limits<double>::infinity()) const {
-		for(const Edge* edge : solution) {
+	void drawSolution(const std::vector<const Edge *> &solution, double dt = std::numeric_limits<double>::infinity()) const {
+		for(const Edge *edge : solution) {
 			unsigned int steps = std::isinf(dt) ? 1 : edge->dt / dt;
 
 			State state = edge->start;
@@ -491,7 +541,7 @@ public:
 		}
 	}
 
-	void animateSolution(const std::vector<const Edge*> &solution, unsigned int poseNumber) const {
+	void animateSolution(const std::vector<const Edge *> &solution, unsigned int poseNumber) const {
 		unsigned int edgeNumber = poseNumber / 2;
 		unsigned int endpoint = poseNumber % 2;
 		const Edge *edge = solution[edgeNumber];
@@ -504,8 +554,8 @@ public:
 
 // private:
 
-	State doSteps(const State& s, double a, double w, double z, double dt, bool ignoreIntegrationStepSize = false) const {
-		const StateVars& vars = s.getStateVars();
+	State doSteps(const State &s, double a, double w, double z, double dt, bool ignoreIntegrationStepSize = false) const {
+		const StateVars &vars = s.getStateVars();
 		StateVars newState = vars;
 
 		unsigned int steps = ignoreIntegrationStepSize ? 0 : dt / integrationStepSize;
@@ -532,14 +582,23 @@ public:
 			newState[PSI] = newState[PSI] + w * stepSize;
 			newState[VZ] = newState[VZ] + z * stepSize;
 
-			if(newState[V] > maximumVelocity) { newState[V] = maximumVelocity; }
-			else if(newState[V] < minimumVelocity ) { newState[V] = minimumVelocity; }
+			if(newState[V] > maximumVelocity) {
+				newState[V] = maximumVelocity;
+			} else if(newState[V] < minimumVelocity) {
+				newState[V] = minimumVelocity;
+			}
 
-			if(newState[PSI] > maximumTurning) { newState[PSI] = maximumTurning; }
-			else if(newState[PSI] < minimumTurning) { newState[PSI] = minimumTurning; }
+			if(newState[PSI] > maximumTurning) {
+				newState[PSI] = maximumTurning;
+			} else if(newState[PSI] < minimumTurning) {
+				newState[PSI] = minimumTurning;
+			}
 
-			if(newState[VZ] > maximumVelocityZ) { newState[VZ] = maximumVelocityZ; }
-			else if(newState[VZ] < minimumVelocityZ ) { newState[VZ] = minimumVelocityZ; }
+			if(newState[VZ] > maximumVelocityZ) {
+				newState[VZ] = maximumVelocityZ;
+			} else if(newState[VZ] < minimumVelocityZ) {
+				newState[VZ] = minimumVelocityZ;
+			}
 		}
 
 		return State(newState);

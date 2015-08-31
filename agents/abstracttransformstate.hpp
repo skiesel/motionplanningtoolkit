@@ -13,7 +13,7 @@ public:
 		return std::vector<fcl::Transform3f>();
 	}
 
-	static AbstractTransformState getRandomAbstractState(const std::vector< std::pair<double, double> >& bounds) {
+	static AbstractTransformState getRandomAbstractState(const std::vector< std::pair<double, double> > &bounds) {
 		return AbstractTransformState();
 	}
 

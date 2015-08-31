@@ -12,6 +12,8 @@ public:
 
 	typedef typename Agent::Edge Edge;
 	typedef typename Agent::State State;
+	typedef typename Agent::AbstractState AbstractState;
+	typedef typename Agent::AbstractEdge AbstractEdge;
 
 	Map3D(const InstanceFileMap &args, const fcl::Transform3f &transform = fcl::Transform3f()) :
 		mesh(args.value("Environment Mesh"), args.value("Environment Location")), bounds(3) {
@@ -27,13 +29,13 @@ public:
 		bounds[2].second = stod(*++token);
 	}
 
-	const WorkspaceBounds& getBounds() const {
+	const WorkspaceBounds &getBounds() const {
 		return bounds;
 	}
 
 	bool safeEdge(const Agent &agent, const Edge &edge, double dt, bool checkSelfCollision = false) const {
 		auto agentMeshes = agent.getMeshes();
-		auto agentPoses = agent.getPoses(edge, dt);
+		auto agentPoses = agent.getMeshPoses(edge, dt);
 
 		for(const auto &poses : agentPoses) {
 			for(const auto &pose : poses) {
@@ -49,28 +51,56 @@ public:
 		return !MeshHandler::isInCollision(mesh, agentMeshes, agentPoses, checkSelfCollision);;
 	}
 
-	bool safePoses(const Agent &agent, const std::vector<fcl::Transform3f> &poses, const State &state=State()) const {
-		auto agentMeshes = agent.getMeshes();
+	bool safeAbstractEdge(const Agent &agent, const AbstractEdge &edge, double dt, bool checkSelfCollision = false) const {
+		auto agentMeshes = agent.getAbstractMeshes();
+		auto agentPoses = agent.getAbstractMeshPoses(edge, dt);
 
-		std::vector<std::vector<fcl::Transform3f>> wrapper(poses.size());
-		for(unsigned int i = 0; i < poses.size(); ++i) {
-			wrapper[i].emplace_back(poses[i]);
+		for(const auto &poses : agentPoses) {
+			for(const auto &pose : poses) {
+				const auto &position = pose.getTranslation();
+				for(unsigned int i = 0; i < 3; ++i) {
+					if(position[i] < bounds[i].first || position[i] > bounds[i].second) {
+						return false;
+					}
+				}
+			}
 		}
 
-		bool safe = !MeshHandler::isInCollision(mesh, agentMeshes, wrapper);
-
-		if(!safe) {
-			fprintf(stderr, "collision\n");
-		}
-
-		return safe;
+		return !MeshHandler::isInCollision(mesh, agentMeshes, agentPoses, checkSelfCollision);;
 	}
 
-	bool safePose(const Agent &agent, const fcl::Transform3f &pose, const State &state=State()) const {
+	bool safeStates(const Agent &agent, const std::vector<State> &states) const {
 		auto agentMeshes = agent.getMeshes();
-		std::vector<std::vector<fcl::Transform3f>> poseWrapper(1);
-		poseWrapper.back().push_back(pose);
-		return !MeshHandler::isInCollision(mesh, agentMeshes, poseWrapper);
+
+		std::vector<std::vector<fcl::Transform3f>> wrapper(states.size());
+		for(unsigned int i = 0; i < states.size(); ++i) {
+			wrapper[i].emplace_back(states[i].getMeshPoses());
+		}
+
+		return !MeshHandler::isInCollision(mesh, agentMeshes, wrapper);
+	}
+
+	bool safeAbstractStates(const Agent &agent, const std::vector<AbstractState> &states) const {
+		auto agentMeshes = agent.getAbstractMeshes();
+
+		std::vector<std::vector<fcl::Transform3f>> wrapper(states.size());
+		for(unsigned int i = 0; i < states.size(); ++i) {
+			wrapper[i].emplace_back(agent.getAbstractMeshPoses(states[i]));
+		}
+
+		return !MeshHandler::isInCollision(mesh, agentMeshes, wrapper);
+	}
+
+	bool safeState(const Agent &agent, const State &state) const {
+		auto agentMeshes = agent.getMeshes();
+		std::vector<std::vector<fcl::Transform3f>> wrapper(1, state.getMeshPoses());
+		return !MeshHandler::isInCollision(mesh, agentMeshes, wrapper);
+	}
+
+	bool safeAbstractState(const Agent &agent, const AbstractState &state) const {
+		auto agentMeshes = agent.getAbstractMeshes();
+		std::vector<std::vector<fcl::Transform3f>> wrapper(1, agent.getAbstractMeshPoses(state));
+		return !MeshHandler::isInCollision(mesh, agentMeshes, wrapper);
 	}
 
 #ifdef WITHGRAPHICS

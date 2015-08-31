@@ -10,13 +10,25 @@ class FBiasedSampler {
 
 	struct Node {
 		Node() : g(-1), h(-1) {}
-		static double getG(const Node &n) { return n.g; }
-		static void setG(Node &n, double c) { n.g = c; }
-		static bool sortG(const Node *n1, const Node *n2) { return n1->g > n2->g; }
+		static double getG(const Node &n) {
+			return n.g;
+		}
+		static void setG(Node &n, double c) {
+			n.g = c;
+		}
+		static bool sortG(const Node *n1, const Node *n2) {
+			return n1->g > n2->g;
+		}
 
-		static double getH(const Node &n) { return n.h; }
-		static void setH(Node &n, double c) { n.h = c; }
-		static bool sortH(const Node *n1, const Node *n2) { return n1->h > n2->h; }
+		static double getH(const Node &n) {
+			return n.h;
+		}
+		static void setH(Node &n, double c) {
+			n.h = c;
+		}
+		static bool sortH(const Node *n1, const Node *n2) {
+			return n1->h > n2->h;
+		}
 
 		unsigned int id;
 		double g, h, f;
@@ -25,61 +37,61 @@ class FBiasedSampler {
 	};
 
 public:
-	FBiasedSampler(const Workspace &workspace, const Agent &agent, NN &nn, const WorkspaceDiscretization& discretization,
-				const State& start, const State& goal, double omega = 4) :
+	FBiasedSampler(const Workspace &workspace, const Agent &agent, NN &nn, const WorkspaceDiscretization &discretization,
+	               const State &start, const State &goal, double omega = 4) :
 		workspace(workspace), agent(agent), nn(nn), discretization(discretization), omega(omega) {
 
-			unsigned int startIndex = discretization.getContainingCellId(start.getStateVars());
-			unsigned int goalIndex = discretization.getContainingCellId(goal.getStateVars());
-			unsigned int discretizationCells = discretization.getCellCount();
+		unsigned int startIndex = discretization.getContainingCellId(start.getStateVars());
+		unsigned int goalIndex = discretization.getContainingCellId(goal.getStateVars());
+		unsigned int discretizationCells = discretization.getCellCount();
 
-			nodes.resize(discretizationCells);
+		nodes.resize(discretizationCells);
 
-			dijkstraG(startIndex, nodes);
-			dijkstraH(goalIndex, nodes);
+		dijkstraG(startIndex, nodes);
+		dijkstraH(goalIndex, nodes);
 
-			double minF = std::numeric_limits<double>::infinity();
-			std::vector<Node*> untouched;
-			for(Node &n : nodes) {
-				n.f = n.g + n.h;
-				if(n.f >= 0){
-					if(n.f < minF) {
-						minF = n.f;
-					}
-				} else {
-					untouched.push_back(&n);
+		double minF = std::numeric_limits<double>::infinity();
+		std::vector<Node *> untouched;
+		for(Node &n : nodes) {
+			n.f = n.g + n.h;
+			if(n.f >= 0) {
+				if(n.f < minF) {
+					minF = n.f;
 				}
-			}
-
-			double numerator = pow(minF, omega);
-			double minScore = std::numeric_limits<double>::infinity();
-			double scoreSum = 0;
-			for(Node &n : nodes) {
-				if(n.f >= 0) {
-					n.score = numerator / pow(n.f, omega);
-					scoreSum += n.score;
-					if(n.score <= minScore) {
-						minScore = n.score;
-					}
-				}
-			}
-
-			minScore /= 2;
-			for(Node *n : untouched) {
-				n->score = minScore;
-			}
-
-			scoreSum += (double)untouched.size() * minScore;
-
-			unsigned int num = 0;
-			double lowerBound = 0;
-			for(Node &n : nodes) {
-				n.min = lowerBound;
-				n.max = lowerBound + n.score / scoreSum;
-				assert(n.max - n.min > 0);
-				lowerBound = n.max;
+			} else {
+				untouched.push_back(&n);
 			}
 		}
+
+		double numerator = pow(minF, omega);
+		double minScore = std::numeric_limits<double>::infinity();
+		double scoreSum = 0;
+		for(Node &n : nodes) {
+			if(n.f >= 0) {
+				n.score = numerator / pow(n.f, omega);
+				scoreSum += n.score;
+				if(n.score <= minScore) {
+					minScore = n.score;
+				}
+			}
+		}
+
+		minScore /= 2;
+		for(Node *n : untouched) {
+			n->score = minScore;
+		}
+
+		scoreSum += (double)untouched.size() * minScore;
+
+		// unsigned int num = 0;
+		double lowerBound = 0;
+		for(Node &n : nodes) {
+			n.min = lowerBound;
+			n.max = lowerBound + n.score / scoreSum;
+			assert(n.max - n.min > 0);
+			lowerBound = n.max;
+		}
+	}
 
 	State getTreeSample() const {
 		auto sample = sampleConfiguration();
@@ -116,7 +128,7 @@ private:
 		}
 	};
 
-	const Node& getNode(double value) const {
+	const Node &getNode(double value) const {
 		unsigned int min = 0;
 		unsigned int max = nodes.size();
 		while(true) {
@@ -132,25 +144,27 @@ private:
 		}
 	}
 
-	void dijkstraG(unsigned int start, std::vector<Node>& nodes) const {
+	void dijkstraG(unsigned int start, std::vector<Node> &nodes) const {
 		dijkstra(start, nodes, Node::getG, Node::setG, Node::sortG);
 	}
 
-	void dijkstraH(unsigned int start, std::vector<Node>& nodes) const {
+	void dijkstraH(unsigned int start, std::vector<Node> &nodes) const {
 		dijkstra(start, nodes, Node::getH, Node::setH, Node::sortH);
 	}
 
-	void dijkstra(unsigned int start, std::vector<Node>& nodes,
-					std::function<double(const Node&)> peek,
-					std::function<void(Node&, double)> update,
-					std::function<bool(const Node*, const Node*)> sort) const {
-		
-		std::vector<const Node*> queue(1, &nodes[start]);
+	void dijkstra(unsigned int start, std::vector<Node> &nodes,
+	              std::function<double(const Node &)> peek,
+	              std::function<void(Node &, double)> update,
+	              std::function<bool(const Node *, const Node *)> sort) const {
+
+		std::vector<const Node *> queue(1, &nodes[start]);
 		nodes[start].id = start;
 		update(nodes[start], 0);
 
 		while(!queue.empty()) {
-			const Node *cur = queue.front(); std::pop_heap(queue.begin(),queue.end(), sort); queue.pop_back();
+			const Node *cur = queue.front();
+			std::pop_heap(queue.begin(),queue.end(), sort);
+			queue.pop_back();
 
 			double curDist = peek(*cur);
 
@@ -160,7 +174,8 @@ private:
 				if(peek(node) >= 0) continue; //duplicate
 				node.id = neighbor;
 				update(node, curDist + discretization.getCostBetweenCells(cur->id, neighbor));
-				queue.push_back(&node); std::push_heap(queue.begin(),queue.end(), sort);
+				queue.push_back(&node);
+				std::push_heap(queue.begin(),queue.end(), sort);
 			}
 		}
 	}

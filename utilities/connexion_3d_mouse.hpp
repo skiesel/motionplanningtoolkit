@@ -16,7 +16,7 @@ public:
 
 
 	static void createConnexion3DMouse() {
-#ifdef WITHCONNEXION		
+#ifdef WITHCONNEXION
 		if(mouseThread == NULL) {
 			mouseThread = new boost::thread(runloop);
 		}
@@ -35,7 +35,7 @@ public:
 	}
 
 	static MouseState getLatestState() {
-#ifdef WITHCONNEXION		
+#ifdef WITHCONNEXION
 		boost::interprocess::scoped_lock<boost::mutex> lock(mutex);
 #endif
 		return mouseState;

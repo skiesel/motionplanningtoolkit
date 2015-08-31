@@ -29,12 +29,12 @@ public:
 
 			const StateType *src = source->as<StateType>();
 			StateType *dest = destination->as<StateType>();
-			
+
 			dest->valid = src->valid;
 			dest->agentEdge = src->agentEdge;
 		}
 
-		ompl::base::State* allocState() const {
+		ompl::base::State *allocState() const {
 			auto state = new StateType();
 			state->values = new double[dimension_];
 			return state;
@@ -55,7 +55,7 @@ public:
 	KPIECE(const Workspace &workspace, const Agent &agent, const InstanceFileMap &args) :
 		workspace(workspace), agent(agent), goalEdge(NULL), samplesGenerated(0), edgesAdded(0), edgesRejected(0) {
 
-		collisionCheckDT = stod(args.value("Collision Check Delta t"));
+		collisionCheckDT = args.doubleVal("Collision Check Delta t");
 		dfpair(stdout, "collision check dt", "%g", collisionCheckDT);
 
 		const typename Workspace::WorkspaceBounds &agentStateVarRanges = agent.getStateVarRanges(workspace.getBounds());
@@ -94,8 +94,8 @@ public:
 
 		pdef = ompl::base::ProblemDefinitionPtr(new ompl::base::ProblemDefinition(spaceInfoPtr));
 
-		spaceInfoPtr->setPropagationStepSize(stod(args.value("Steering Delta t")));
-		dfpair(stdout, "steering dt", "%g", stod(args.value("Steering Delta t")));
+		spaceInfoPtr->setPropagationStepSize(args.doubleVal("Steering Delta t"));
+		dfpair(stdout, "steering dt", "%g", args.doubleVal("Steering Delta t"));
 		spaceInfoPtr->setMinMaxControlDuration(stol(args.value("KPIECE Min Control Steps")),stol(args.value("KPIECE Max Control Steps")));
 		dfpair(stdout, "min control duration", "%u", stol(args.value("KPIECE Min Control Steps")));
 		dfpair(stdout, "max control duration", "%u", stol(args.value("KPIECE Max Control Steps")));
@@ -104,16 +104,16 @@ public:
 
 		kpiece = new ompl::control::KPIECE1(spaceInfoPtr);
 
-		kpiece->setGoalBias(stod(args.value("KPIECE Goal Bias")));
-		dfpair(stdout, "goal bias", "%g", stod(args.value("KPIECE Goal Bias")));
-		
-		kpiece->setBorderFraction(stod(args.value("KPIECE Border Fraction")));
-		dfpair(stdout, "border fraction", "%g", stod(args.value("KPIECE Border Fraction")));
-		
-		kpiece->setCellScoreFactor(stod(args.value("KPIECE Cell Score Good")), stod(args.value("KPIECE Cell Score Bad")));
-		dfpair(stdout, "cell score good", "%g", stod(args.value("KPIECE Cell Score Good")));
-		dfpair(stdout, "cell score bad", "%g", stod(args.value("KPIECE Cell Score Bad")));
-		
+		kpiece->setGoalBias(args.doubleVal("KPIECE Goal Bias"));
+		dfpair(stdout, "goal bias", "%g", args.doubleVal("KPIECE Goal Bias"));
+
+		kpiece->setBorderFraction(args.doubleVal("KPIECE Border Fraction"));
+		dfpair(stdout, "border fraction", "%g", args.doubleVal("KPIECE Border Fraction"));
+
+		kpiece->setCellScoreFactor(args.doubleVal("KPIECE Cell Score Good"), args.doubleVal("KPIECE Cell Score Bad"));
+		dfpair(stdout, "cell score good", "%g", args.doubleVal("KPIECE Cell Score Good"));
+		dfpair(stdout, "cell score bad", "%g", args.doubleVal("KPIECE Cell Score Bad"));
+
 		kpiece->setMaxCloseSamplesCount(stol(args.value("KPIECE Max Close Samples")));
 		dfpair(stdout, "max closed samples", "%u", stol(args.value("KPIECE Max Close Samples")));
 
@@ -131,7 +131,7 @@ public:
 
 		const typename StateSpace::StateType *state = start->as<typename StateSpace::StateType>();
 		const ompl::control::RealVectorControlSpace::ControlType *realVectorControl = control->as<ompl::control::RealVectorControlSpace::ControlType>();
-		
+
 		std::vector<double> controls(controlSpaceDim);
 		for(unsigned int i = 0; i < controlSpaceDim; i++) {
 			controls[i] = realVectorControl->values[i];
@@ -143,7 +143,7 @@ public:
 
 		const typename Agent::StateVars &endStateVars = edge.getTreeStateVars();
 
-		typename StateSpace::StateType* resultState = result->as<typename StateSpace::StateType>();
+		typename StateSpace::StateType *resultState = result->as<typename StateSpace::StateType>();
 
 		resultState->agentEdge = new typename Agent::Edge(edge);
 
@@ -202,11 +202,11 @@ public:
 		kpiece->setup();
 
 		ompl::base::PlannerTerminationCondition tc = ompl::base::PlannerTerminationCondition(boost::bind(&KPIECE::didFindGoal, this));
-														/*ompl::base::plannerOrTerminationCondition(
-														ompl::base::timedPlannerTerminationCondition(300),
-														ompl::base::PlannerTerminationCondition(boost::bind(&KPIECE::didFindGoal, this))); */
+		/*ompl::base::plannerOrTerminationCondition(
+		ompl::base::timedPlannerTerminationCondition(300),
+		ompl::base::PlannerTerminationCondition(boost::bind(&KPIECE::didFindGoal, this))); */
 
-		ompl::base::PlannerStatus solved = kpiece->solve(tc);
+		// ompl::base::PlannerStatus solved = kpiece->solve(tc);
 
 		// if(solved) {
 		// 	fprintf(stderr, "found goal\n");

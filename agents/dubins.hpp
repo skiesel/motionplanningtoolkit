@@ -47,7 +47,7 @@
 class Dubins {
 	struct DubinsPath {
 		DubinsPath() {}
-		DubinsPath(const DubinsPath& p) {
+		DubinsPath(const DubinsPath &p) {
 			for(unsigned int i = 0; i < 3; ++i) {
 				qi[i] = p.qi[i];
 				param[i] = p.param[i];
@@ -81,15 +81,21 @@ public:
 
 		State(const StateVars &vars) : stateVars(vars.begin(), vars.begin()+3) {}
 
-		State& operator=(const State &s) {
+		State &operator=(const State &s) {
 			stateVars.clear();
 			stateVars.insert(stateVars.begin(), s.stateVars.begin(), s.stateVars.end());
 			return *this;
 		}
 
-		double x() const { return stateVars[0]; }
-		double y() const { return stateVars[1]; }
-		double theta() const { return stateVars[2]; }
+		double x() const {
+			return stateVars[0];
+		}
+		double y() const {
+			return stateVars[1];
+		}
+		double theta() const {
+			return stateVars[2];
+		}
 
 		const bool equals(const State &s) const {
 			for(unsigned int i = 0; i < 3; ++i) {
@@ -97,7 +103,9 @@ public:
 			}
 			return true;
 		}
-		const StateVars& getStateVars() const { return stateVars; }
+		const StateVars &getStateVars() const {
+			return stateVars;
+		}
 
 		void print() const {
 			for(auto v : stateVars) {
@@ -136,12 +144,18 @@ public:
 		Edge(const State &start, const State &end, const DubinsPath &path, double cost) : start(start), end(end),
 			path(path), cost(cost), treeIndex(0) {}
 
-		Edge(const Edge& e) : start(e.start), end(e.end), path(e.path), cost(e.cost), treeIndex(e.treeIndex) {}
+		Edge(const Edge &e) : start(e.start), end(e.end), path(e.path), cost(e.cost), treeIndex(e.treeIndex) {}
 
 		/* needed for being inserted into NN datastructure */
-		const StateVars& getTreeStateVars() const { return end.getStateVars(); }
-		int getPointIndex() const { return treeIndex; }
-		void setPointIndex(int ptInd) { treeIndex = ptInd; }
+		const StateVars &getTreeStateVars() const {
+			return end.getStateVars();
+		}
+		int getPointIndex() const {
+			return treeIndex;
+		}
+		void setPointIndex(int ptInd) {
+			treeIndex = ptInd;
+		}
 
 #ifdef WITHGRAPHICS
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
@@ -192,14 +206,14 @@ public:
 		DubinsPath path;
 		double cost;
 		int treeIndex;
-		static const Dubins* dubins;
+		static const Dubins *dubins;
 	};
 
 	void updateBounds(const WorkspaceBounds &b) {
 		bounds = b;
 	}
 
-	StateVarRanges getStateVarRanges(const WorkspaceBounds& b) const {
+	StateVarRanges getStateVarRanges(const WorkspaceBounds &b) const {
 		StateVarRanges bounds(b.begin(), b.begin() + 2);
 		bounds.push_back(std::make_pair(-M_PI, M_PI));
 		return bounds;
@@ -209,14 +223,14 @@ public:
 		return 3;
 	}
 
-	State buildState(const StateVars& stateVars) const {
+	State buildState(const StateVars &stateVars) const {
 		return State(stateVars);
 	}
 
 	bool isGoal(const State &state, const State &goal) const {
 		return fabs(state.x() - goal.x()) < 0.1 &&
-		fabs(state.y() - goal.y()) < 0.1 &&
-		fabs(state.theta() - goal.theta()) < 0.785; //about 45 degrees
+		       fabs(state.y() - goal.y()) < 0.1 &&
+		       fabs(state.theta() - goal.theta()) < 0.785; //about 45 degrees
 	}
 
 	Edge steer(const State &start, const State &goal, double dt) const {
@@ -249,35 +263,35 @@ public:
 		return steer(start, randomState, dt);
 	}
 
-	std::vector<const SimpleAgentMeshHandler*> getMeshes() const {
-		std::vector<const SimpleAgentMeshHandler*> meshes(1, &mesh);
+	std::vector<const SimpleAgentMeshHandler *> getMeshes() const {
+		std::vector<const SimpleAgentMeshHandler *> meshes(1, &mesh);
 		return meshes;
 	}
 
-	std::vector< std::vector<fcl::Transform3f> > getRepresentivePosesForLocation(const std::vector<double> &loc) const {
-		std::vector<std::vector<fcl::Transform3f> > retPoses;
+	std::vector<State> getRepresentiveStatesForLocation(const std::vector<double> &loc) const {
+		std::vector<State> states;
 
-		fcl::Vec3f pose(loc[0], loc[1], 0);
+		// fcl::Vec3f pose(loc[0], loc[1], 0);
 
-		unsigned int rotations = 4;
-		double increment = M_PI / ((double)rotations * 2.);
-		fcl::Matrix3f rotation;
-		rotation.setIdentity();
+		// unsigned int rotations = 4;
+		// double increment = M_PI / ((double)rotations * 2.);
+		// fcl::Matrix3f rotation;
+		// rotation.setIdentity();
 
-		for(unsigned int i = 0; i < rotations; ++i) {
-			double cosTheta = cos((double)i * increment);
-			double sinTheta = sin((double)i * increment);
+		// for(unsigned int i = 0; i < rotations; ++i) {
+		// 	double cosTheta = cos((double)i * increment);
+		// 	double sinTheta = sin((double)i * increment);
 
-			rotation(0,0) = cosTheta;
-			rotation(1,0) = -sinTheta;
-			rotation(0,1) = sinTheta;
-			rotation(1,1) = cosTheta;
+		// 	rotation(0,0) = cosTheta;
+		// 	rotation(1,0) = -sinTheta;
+		// 	rotation(0,1) = sinTheta;
+		// 	rotation(1,1) = cosTheta;
 
-			retPoses.emplace_back();
-			retPoses.back().emplace_back(rotation, pose);
-		}
+		// 	retPoses.emplace_back();
+		// 	retPoses.back().emplace_back(rotation, pose);
+		// }
 
-		return retPoses;
+		return states;
 	}
 
 	std::vector<std::vector<fcl::Transform3f> > getPoses(const Edge &edge, double dt) const {
@@ -336,7 +350,7 @@ public:
 		mesh.draw();
 	}
 
-	void drawSolution(const std::vector<const Edge*> &solution, double dt = std::numeric_limits<double>::infinity()) const {
+	void drawSolution(const std::vector<const Edge *> &solution, double dt = std::numeric_limits<double>::infinity()) const {
 		for(const Edge *edge : solution) {
 			std::vector< std::vector<fcl::Transform3f> > poses = getPoses(*edge, dt);
 			auto transform = OpenGLWrapper::getOpenGLWrapper().getIdentity();
@@ -364,13 +378,13 @@ public:
 		}
 	}
 
-	void animateSolution(const std::vector<const Edge*> &solution, unsigned int poseNumber) const {
+	void animateSolution(const std::vector<const Edge *> &solution, unsigned int poseNumber) const {
 		auto transform = OpenGLWrapper::getOpenGLWrapper().getIdentity();
 		unsigned int edgeNumber = poseNumber / 2;
 		unsigned int endpoint = poseNumber % 2;
 		const Edge *edge = solution[edgeNumber];
 		std::vector< std::vector<fcl::Transform3f> > poses = getPoses(*edge, std::numeric_limits<double>::infinity());
-		
+
 		const Matrix3f &rotation = poses[endpoint][0].getRotation();
 		transform[0] = rotation(0,0);
 		transform[1] = rotation(1,0);
@@ -404,7 +418,7 @@ public:
 	} Errors;
 
 	Dubins(const InstanceFileMap &args) : dubins_words(6),
-		mesh(args.value("Agent Mesh")), turningRadius(stod(args.value("Turning Radius"))) {
+		mesh(args.value("Agent Mesh")), turningRadius(args.doubleVal("Turning Radius")) {
 		dubins_words[0] = &dubins_LSL;
 		dubins_words[1] = &dubins_LSR;
 		dubins_words[2] = &dubins_RSL;
@@ -412,37 +426,37 @@ public:
 		dubins_words[4] = &dubins_RLR;
 		dubins_words[5] = &dubins_LRL;
 
- 		DIRDATA.emplace_back(3);
- 		DIRDATA.back()[0] = L_SEG;
- 		DIRDATA.back()[1] = S_SEG;
- 		DIRDATA.back()[2] = L_SEG;
+		DIRDATA.emplace_back(3);
+		DIRDATA.back()[0] = L_SEG;
+		DIRDATA.back()[1] = S_SEG;
+		DIRDATA.back()[2] = L_SEG;
 
- 		DIRDATA.emplace_back(3);
- 		DIRDATA.back()[0] = L_SEG;
- 		DIRDATA.back()[1] = S_SEG;
- 		DIRDATA.back()[2] = R_SEG;
+		DIRDATA.emplace_back(3);
+		DIRDATA.back()[0] = L_SEG;
+		DIRDATA.back()[1] = S_SEG;
+		DIRDATA.back()[2] = R_SEG;
 
- 		DIRDATA.emplace_back(3);
- 		DIRDATA.back()[0] = R_SEG;
- 		DIRDATA.back()[1] = S_SEG;
- 		DIRDATA.back()[2] = L_SEG;
+		DIRDATA.emplace_back(3);
+		DIRDATA.back()[0] = R_SEG;
+		DIRDATA.back()[1] = S_SEG;
+		DIRDATA.back()[2] = L_SEG;
 
- 		DIRDATA.emplace_back(3);
- 		DIRDATA.back()[0] = R_SEG;
- 		DIRDATA.back()[1] = S_SEG;
- 		DIRDATA.back()[2] = R_SEG;
+		DIRDATA.emplace_back(3);
+		DIRDATA.back()[0] = R_SEG;
+		DIRDATA.back()[1] = S_SEG;
+		DIRDATA.back()[2] = R_SEG;
 
- 		DIRDATA.emplace_back(3);
- 		DIRDATA.back()[0] = R_SEG;
- 		DIRDATA.back()[1] = L_SEG;
- 		DIRDATA.back()[2] = R_SEG;
+		DIRDATA.emplace_back(3);
+		DIRDATA.back()[0] = R_SEG;
+		DIRDATA.back()[1] = L_SEG;
+		DIRDATA.back()[2] = R_SEG;
 
- 		DIRDATA.emplace_back(3);
- 		DIRDATA.back()[0] = L_SEG;
- 		DIRDATA.back()[1] = R_SEG;
- 		DIRDATA.back()[2] = L_SEG;
+		DIRDATA.emplace_back(3);
+		DIRDATA.back()[0] = L_SEG;
+		DIRDATA.back()[1] = R_SEG;
+		DIRDATA.back()[2] = L_SEG;
 
- 		Edge::dubins = this;
+		Edge::dubins = this;
 	}
 
 	/**
@@ -779,7 +793,7 @@ private:
 	}
 
 	// Iteratable set of functions for creating path types
-	std::vector< std::function<int(double,double,double,double*)> > dubins_words;
+	std::vector< std::function<int(double,double,double,double *)> > dubins_words;
 
 	// The segment types for each of the Path types
 	std::vector< std::vector<int> > DIRDATA;
@@ -791,4 +805,4 @@ private:
 	WorkspaceBounds bounds;
 };
 
-const Dubins* Dubins::Edge::dubins = NULL;
+const Dubins *Dubins::Edge::dubins = NULL;

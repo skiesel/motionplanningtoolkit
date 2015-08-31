@@ -6,12 +6,13 @@ template <class Workspace, class Agent>
 class LazyPRMLite : public PRMLite<Workspace, Agent> {
 	typedef typename Agent::State State;
 	typedef typename Agent::AbstractState AbstractState;
+	typedef typename Agent::AbstractEdge AbstractEdge;
 	typedef typename PRMLite<Workspace, Agent>::Edge Edge;
 
 public:
-	LazyPRMLite(const Workspace &workspace, const Agent &agent, const State &canonicalState, unsigned int numVertices,
-		unsigned int edgeSetSize, double collisionCheckDT) :
-	PRMLite<Workspace, Agent>(workspace, agent, canonicalState, numVertices, edgeSetSize, collisionCheckDT, false) {
+	LazyPRMLite(const Workspace &workspace, const Agent &agent, unsigned int numVertices,
+	            unsigned int edgeSetSize, double collisionCheckDT) :
+		PRMLite<Workspace, Agent>(workspace, agent, numVertices, edgeSetSize, collisionCheckDT, false) {
 
 		// startTime is set in the parent constructor call
 
@@ -21,10 +22,10 @@ public:
 
 		clock_t end = clock();
 
-		double time = (double) (end-edgeStart) / CLOCKS_PER_SEC;
+		double time = (double)(end-edgeStart) / CLOCKS_PER_SEC;
 		dfpair(stdout, "prm edge build time", "%g", time);
 
-		time = (double) (end-this->startTime) / CLOCKS_PER_SEC;
+		time = (double)(end-this->startTime) / CLOCKS_PER_SEC;
 		dfpair(stdout, "prm build time", "%g", time);
 	}
 
@@ -34,18 +35,22 @@ public:
 		auto &edge = this->edges[i][j];
 
 		if(edge.status == Edge::UNKNOWN) {
-			auto edgeCandidate = AbstractState::interpolate(this->vertices[i]->state, this->vertices[j]->state, this->collisionCheckDT);
+			AbstractEdge edgeCandidate = this->agent.generateAbstractEdge(this->vertices[i]->state, this->vertices[j]->state);
 
 			if(edgeCandidate.size() != 0) {
 				this->collisionChecks++;
 			}
 
-			if(edgeCandidate.size() == 0 || this->workspace.safePoses(this->agent, edgeCandidate, this->canonicalState)) {
+			if(edgeCandidate.size() == 0 || this->workspace.safeAbstractEdge(this->agent, edgeCandidate, this->collisionCheckDT)) {
 				this->edges[i][j].status = Edge::VALID;
-				this->edges[j][i].status = Edge::VALID;
+				if(this->agent.areAbstractEdgesSymmetric()) {
+					this->edges[j][i].status = Edge::VALID;
+				}
 			} else {
 				this->edges[i][j].status = Edge::INVALID;
-				this->edges[j][i].status = Edge::INVALID;
+				if(this->agent.areAbstractEdgesSymmetric()) {
+					this->edges[j][i].status = Edge::INVALID;
+				}
 			}
 		}
 
