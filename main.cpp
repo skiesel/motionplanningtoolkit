@@ -17,7 +17,7 @@ std::default_random_engine GlobalRandomGenerator;
 #include "agents/snake_trailers.hpp"
 #include "agents/blimp.hpp"
 #include "agents/geometric.hpp"
-#include "agents/abstract.hpp"
+#include "agents/omnimultid.hpp"
 
 #include "planners/rrt.hpp"
 #include "planners/rrtconnect.hpp"

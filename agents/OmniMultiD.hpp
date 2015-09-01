@@ -1,6 +1,6 @@
 #pragma once
 
-class Abstract {
+class OmniMultiD {
 public:
 	typedef std::vector<double> StateVars;
 	typedef std::vector<double> Control;
@@ -184,7 +184,8 @@ public:
 	public:
 		Edge(const State &s) : start(s),
 							   end(s),
-							   duration(0) {
+							   duration(0),
+							   parent(NULL) {
 		}
 
 		Edge(const State start, const State end, double cost, const std::vector<double> control, double duration)
@@ -193,7 +194,8 @@ public:
 				  cost(cost),
 				  treeIndex(0),
 				  duration(duration),
-				  control(std::move(control)) {
+				  control(std::move(control)),
+				  parent(NULL) {
 		}
 
 		Edge(const Edge &) = default;
@@ -205,7 +207,7 @@ public:
 		Edge &operator=(Edge &&) = default;
 
 		double gCost() const {
-			return 0; //ToDO
+			return 1; //ToDO
 		}
 
 		void print() {
@@ -227,9 +229,9 @@ public:
 						.drawLine(startVars[0], startVars[1], 0, endVars[0], endVars[1], 0, color);
 			}
 
-#endif
-
 		}
+
+#endif
 
 		/* needed for being inserted into NN datastructure */
 		const StateVars &getTreeStateVars() const {
@@ -255,8 +257,8 @@ public:
 		Control control;
 	};
 
-	Abstract(const InstanceFileMap &args) : dimensions(args.integerVal("Dimensions")),
-											workspaceBounds(dimensions) {
+	OmniMultiD(const InstanceFileMap &args) : dimensions(args.integerVal("Dimensions")),
+											  workspaceBounds(dimensions) {
 
 		for (int i = 0; i < dimensions; ++i) {
 			workspaceBounds[i].first = 0;

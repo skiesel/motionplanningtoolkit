@@ -337,7 +337,7 @@ void planarLinkage(const InstanceFileMap &args) {
 }
 
 void kink(const InstanceFileMap &args) {
-	typedef Abstract Agent;
+	typedef OmniMultiD Agent;
 	typedef Kink<Agent> Workspace;
 
 	Agent agent(args);
@@ -366,7 +366,7 @@ void kink(const InstanceFileMap &args) {
 }
 
 void narrowPassage(const InstanceFileMap &args) {
-	typedef Abstract Agent;
+	typedef OmniMultiD Agent;
 	typedef NarrowPassage<Agent> Workspace;
 
 	Agent agent(args);
@@ -378,7 +378,7 @@ void narrowPassage(const InstanceFileMap &args) {
 
 	// x, y coordinates
 	Agent::StateVars startPositionVars = {0, 0};
-	Agent::StateVars goalPositionVars = {0, 1000};
+	Agent::StateVars goalPositionVars = {0, 1};
 
 	for (int i = 2; i < dimensions; ++i) {
 		startPositionVars.push_back(0.5);
