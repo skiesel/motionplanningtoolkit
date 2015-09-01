@@ -5,127 +5,127 @@
 #include <random>
 
 namespace Planar {
-class PlanarVector {
-public:
-	PlanarVector(double f = 0.0f) : x(f),
-		y(f) {
-	}
+	class PlanarVector {
+	public:
+		PlanarVector(double f = 0.0f) : x(f),
+										y(f) {
+		}
 
-	PlanarVector(double x, double y) : x(x),
-		y(y) {
-	}
+		PlanarVector(double x, double y) : x(x),
+										   y(y) {
+		}
 
-	PlanarVector(const PlanarVector &) = default;
+		PlanarVector(const PlanarVector &) = default;
 
-	PlanarVector(PlanarVector &&) = default;
+		PlanarVector(PlanarVector &&) = default;
 
-	PlanarVector &operator=(const PlanarVector &) = default;
+		PlanarVector &operator=(const PlanarVector &) = default;
 
-	PlanarVector &operator=(PlanarVector &&) = default;
+		PlanarVector &operator=(PlanarVector &&) = default;
 
-	bool operator==(PlanarVector &rhs) {
-		return x == rhs.x && y == rhs.y;
-	}
+		bool operator==(PlanarVector &rhs) {
+			return x == rhs.x && y == rhs.y;
+		}
 
-	double x, y;
-};
+		double x, y;
+	};
 
 /**
  * From: http://paulbourke.net/geometry/pointlineplane/
  * Based on the implementation of Damian Coventry
  */
-class LineSegment {
-public:
-	PlanarVector begin;
-	PlanarVector end;
+	class LineSegment {
+	public:
+		PlanarVector begin;
+		PlanarVector end;
 
-	LineSegment() {
-	}
+		LineSegment() {
+		}
 
-	LineSegment(const PlanarVector &begin, const PlanarVector &end) : begin(begin),
-		end(end) {
-	}
+		LineSegment(const PlanarVector &begin, const PlanarVector &end) : begin(begin),
+																		  end(end) {
+		}
 
-	enum class IntersectResult {
-	    PARALLEL, COINCIDENT, NOT_INTERESECTING, INTERESECTING, OVERLAPPING
-	};
+		enum class IntersectResult {
+			PARALLEL, COINCIDENT, NOT_INTERESECTING, INTERESECTING, OVERLAPPING
+		};
 
-	IntersectResult intersect(const LineSegment &segment, PlanarVector &intersection) {
-		double denom = ((segment.end.y - segment.begin.y) * (end.x - begin.x)) -
-		               ((segment.end.x - segment.begin.x) * (end.y - begin.y));
+		IntersectResult intersect(const LineSegment &segment, PlanarVector &intersection) {
+			double denom = ((segment.end.y - segment.begin.y) * (end.x - begin.x)) -
+						   ((segment.end.x - segment.begin.x) * (end.y - begin.y));
 
-		double numerA = ((segment.end.x - segment.begin.x) * (begin.y - segment.begin.y)) -
-		                ((segment.end.y - segment.begin.y) * (begin.x - segment.begin.x));
+			double numerA = ((segment.end.x - segment.begin.x) * (begin.y - segment.begin.y)) -
+							((segment.end.y - segment.begin.y) * (begin.x - segment.begin.x));
 
-		double numberB = ((end.x - begin.x) * (begin.y - segment.begin.y)) -
-		                 ((end.y - begin.y) * (begin.x - segment.begin.x));
+			double numberB = ((end.x - begin.x) * (begin.y - segment.begin.y)) -
+							 ((end.y - begin.y) * (begin.x - segment.begin.x));
 
-		if(denom == 0.0f) {
-			if(numerA == 0.0f && numberB == 0.0f) {
-				// The lines are coincident. Check if the segments are overlapping or not.
-				// It is sufficient to check only one dimension, since the points are on the same line.
+			if (denom == 0.0f) {
+				if (numerA == 0.0f && numberB == 0.0f) {
+					// The lines are coincident. Check if the segments are overlapping or not.
+					// It is sufficient to check only one dimension, since the points are on the same line.
 
-				double localMin = std::min(begin.x, end.x);
-				double localMax = std::max(begin.x, end.x);
+					double localMin = std::min(begin.x, end.x);
+					double localMax = std::max(begin.x, end.x);
 
-				double segmentMin = std::min(segment.begin.x, segment.end.x);
-				double segmentMax = std::max(segment.begin.x, segment.end.x);
+					double segmentMin = std::min(segment.begin.x, segment.end.x);
+					double segmentMax = std::max(segment.begin.x, segment.end.x);
 
-				return (localMax <= segmentMin || segmentMax <= localMin) ? IntersectResult::PARALLEL
-				       : IntersectResult::OVERLAPPING;
+					return (localMax <= segmentMin || segmentMax <= localMin) ? IntersectResult::PARALLEL
+																			  : IntersectResult::OVERLAPPING;
 //					return IntersectResult::COINCIDENT;
+				}
+
+				return IntersectResult::PARALLEL;
 			}
 
-			return IntersectResult::PARALLEL;
+			double ua = numerA / denom;
+			double ub = numberB / denom;
+
+			if (ua >= 0.0f && ua <= 1.0f && ub >= 0.0f && ub <= 1.0f) {
+				// Get the intersection point.
+				intersection.x = begin.x + ua * (end.x - begin.x);
+				intersection.y = begin.y + ua * (end.y - begin.y);
+
+				return IntersectResult::INTERESECTING;
+			}
+
+			return IntersectResult::NOT_INTERESECTING;
 		}
-
-		double ua = numerA / denom;
-		double ub = numberB / denom;
-
-		if(ua >= 0.0f && ua <= 1.0f && ub >= 0.0f && ub <= 1.0f) {
-			// Get the intersection point.
-			intersection.x = begin.x + ua * (end.x - begin.x);
-			intersection.y = begin.y + ua * (end.y - begin.y);
-
-			return IntersectResult::INTERESECTING;
-		}
-
-		return IntersectResult::NOT_INTERESECTING;
-	}
 
 #ifdef WITHGRAPHICS
 
-	void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
-		OpenGLWrapper::getOpenGLWrapper()
-		.drawLine(begin.x, begin.y, 0, end.x, end.y, 0, OpenGLWrapper::Color::Blue());
-	}
+		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
+			OpenGLWrapper::getOpenGLWrapper()
+					.drawLine(begin.x, begin.y, 0, end.x, end.y, 0, OpenGLWrapper::Color::Blue());
+		}
 
 #endif
-};
+	};
 
 /**
  * @return True if the segments are coincident or intersecting.
  */
-bool checkCollision(LineSegment segment1, LineSegment segment2) {
-	PlanarVector intersection;
+	bool checkCollision(LineSegment segment1, LineSegment segment2) {
+		PlanarVector intersection;
 
-	LineSegment::IntersectResult intersectResult = segment1.intersect(segment2, intersection);
+		LineSegment::IntersectResult intersectResult = segment1.intersect(segment2, intersection);
 
-	// Filter out joint collision for neighbor segments.
-	if(segment1.end == segment2.begin || segment2.end == segment1.begin) {
-		return intersectResult == LineSegment::IntersectResult::COINCIDENT;
+		// Filter out joint collision for neighbor segments.
+		if (segment1.end == segment2.begin || segment2.end == segment1.begin) {
+			return intersectResult == LineSegment::IntersectResult::COINCIDENT;
+		}
+
+		return intersectResult == LineSegment::IntersectResult::COINCIDENT ||
+			   intersectResult == LineSegment::IntersectResult::INTERESECTING;
 	}
-
-	return intersectResult == LineSegment::IntersectResult::COINCIDENT ||
-	       intersectResult == LineSegment::IntersectResult::INTERESECTING;
-}
 }
 
 class Link {
 public:
 	Link()
-		: segment(),
-		  angle(0) {
+			: segment(),
+			  angle(0) {
 	}
 
 	Planar::PlanarVector updateLineSegment(const Planar::PlanarVector startPoint, const double absAngle) {
@@ -179,6 +179,7 @@ public:
 	typedef std::vector<std::pair<double, double> > StateVarRanges;
 
 	class State;
+
 	class Edge;
 
 	typedef State AbstractState;
@@ -186,7 +187,8 @@ public:
 
 	class State {
 	public:
-		State() : treeStateVars(3) {
+		State(const int numberOfLinks) : treeStateVars(numberOfLinks),
+										 links(numberOfLinks) {
 			setAngles(treeStateVars);
 		}
 
@@ -198,7 +200,8 @@ public:
 
 		State &operator=(State &&) = default;
 
-		explicit State(StateVars vars) : treeStateVars(std::move(vars)) {
+		explicit State(StateVars vars) : treeStateVars(std::move(vars)),
+										 links(treeStateVars.size()) {
 			setAngles(treeStateVars);
 		}
 
@@ -206,9 +209,13 @@ public:
 			return treeStateVars;
 		}
 
+		const StateVars &getTreeStateVars() const {
+			return treeStateVars;
+		}
+
 		bool equals(const State &s) const {
-			for(unsigned int i = 0; i < getStateVars().size(); ++i) {
-				if(fabs(getStateVars()[i] - s.getStateVars()[i]) > 0.000001) {
+			for (unsigned int i = 0; i < getStateVars().size(); ++i) {
+				if (fabs(getStateVars()[i] - s.getStateVars()[i]) > 0.000001) {
 					return false;
 				}
 			}
@@ -217,7 +224,7 @@ public:
 
 		void print() const {
 			auto stateVars = getStateVars();
-			for(auto v : stateVars) {
+			for (auto v : stateVars) {
 				fprintf(stderr, "%g ", v);
 			}
 			fprintf(stderr, "\n");
@@ -229,7 +236,7 @@ public:
 
 			Planar::PlanarVector currentEnd;
 			double absAngle = 0;
-			for(int i = 0; i < numberOfLinks; ++i) {
+			for (int i = 0; i < numberOfLinks; ++i) {
 				double angle = control[i];
 				links[i].addAngle(angle);
 
@@ -244,7 +251,7 @@ public:
 
 			Planar::PlanarVector currentEnd;
 			double absAngle = 0;
-			for(int i = 0; i < numberOfLinks; ++i) {
+			for (int i = 0; i < numberOfLinks; ++i) {
 				double angle = angles[i];
 				links[i].setAngle(angle);
 
@@ -260,9 +267,9 @@ public:
 		bool hasCollision() const {
 			const int size = links.size();
 
-			for(int i = 0; i < size; ++i) {
-				for(int j = i + 1; j < size; ++j) {
-					if(checkCollision(links[i], links[j])) {
+			for (int i = 0; i < size; ++i) {
+				for (int j = i + 1; j < size; ++j) {
+					if (checkCollision(links[i], links[j])) {
 						return true;
 					}
 				}
@@ -274,7 +281,7 @@ public:
 #ifdef WITHGRAPHICS
 
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
-			for(Link link : links) {
+			for (Link link : links) {
 				link.draw(color);
 			}
 		}
@@ -286,7 +293,7 @@ public:
 		}
 
 		static AbstractEdge generateAbstractEdge(const AbstractState &a, const AbstractState &b, const double dt) {
-			return interpolate(a,b,dt);
+			return interpolate(a, b, dt);
 		}
 
 		static std::vector<State> interpolate(const State &a, const State &b, const double dt) {
@@ -299,9 +306,9 @@ public:
 			// Find largest difference
 			double maxDifference = 0;
 			int maxDifferenceIndex = 0;
-			for(int i = 0; i < dim; ++i) {
+			for (int i = 0; i < dim; ++i) {
 				double difference = std::abs(a.getStateVars()[i] - b.getStateVars()[i]);
-				if(difference > maxDifference) {
+				if (difference > maxDifference) {
 					maxDifference = difference;
 					maxDifferenceIndex = i;
 				}
@@ -310,23 +317,23 @@ public:
 			const int numberOfSteps = maxDifference / dt;
 
 			// If there are no intermediate states
-			if(numberOfSteps == 0) {
+			if (numberOfSteps == 0) {
 				return intermediateStates;
 			}
 
 			// Calculate step sizes
 			std::vector<double> stepSizes(dim);
-			for(int i = 0; i < dim; ++i) {
+			for (int i = 0; i < dim; ++i) {
 				double difference = b.getStateVars()[i] - a.getStateVars()[i];
 				stepSizes[i] = difference / numberOfSteps;
 			}
 
 			// Generate intermediate states;
-			for(int i = 0; i < numberOfSteps; ++i) {
+			for (int i = 0; i < numberOfSteps; ++i) {
 
 				StateVars intermediateStateVars(dim);
 
-				for(int j = 0; j < dim; ++j) {
+				for (int j = 0; j < dim; ++j) {
 					intermediateStateVars[j] = a.getStateVars()[j] + i * stepSizes[j];
 				}
 
@@ -337,32 +344,32 @@ public:
 		}
 
 		static State getRandomAbstractState(const std::vector<std::pair<double, double> > &bounds) {
-			return State();
+			return State(bounds.size());
 		}
 
 		static double evaluateDistance(const State &a, const State &b) {
-			return 0;
+			return 1;
 		}
 
 		StateVars treeStateVars;
 	private:
-		std::vector<Link> links = std::vector<Link>(3);
+		std::vector<Link> links;
 	};
 
 	class Edge {
 	public:
 		Edge(const State &s) : start(s),
-			end(s),
-			duration(0) {
+							   end(s),
+							   duration(0) {
 		}
 
 		Edge(const State start, const State end, double cost, const std::vector<double> control, double duration)
-			: start(std::move(start)),
-			  end(std::move(end)),
-			  cost(cost),
-			  treeIndex(0),
-			  duration(duration),
-			  control(std::move(control)) {
+				: start(std::move(start)),
+				  end(std::move(end)),
+				  cost(cost),
+				  treeIndex(0),
+				  duration(duration),
+				  control(std::move(control)) {
 		}
 
 		Edge(const Edge &) = default;
@@ -409,29 +416,29 @@ public:
 		Control control;
 	};
 
-	PlanarLinkage(const InstanceFileMap &args) : workspaceBounds(3) {
+	PlanarLinkage(const InstanceFileMap &args) : numberOfLinks(args.integerVal("Dimensions")),
+												 workspaceBounds(numberOfLinks) {
 
-		for(int i = 0; i < workspaceBounds.size(); ++i) {
+		for (int i = 0; i < workspaceBounds.size(); ++i) {
 			workspaceBounds[i].first = -M_PI;
 			workspaceBounds[i].second = M_PI;
 		}
 
 		auto stateVarDomains = getStateVarRanges(workspaceBounds);
-		for(auto range : stateVarDomains) {
+		for (auto range : stateVarDomains) {
 			distributions.emplace_back(range.first, range.second);
 		}
 
 		boost::char_separator<char> sep(" ");
 		boost::tokenizer<boost::char_separator<char> > tokens(args.value("Goal Thresholds"), sep);
-		for(auto token : tokens) {
+		for (auto token : tokens) {
 			goalThresholds.push_back(std::stod(token));
 		}
 	}
 
 	unsigned int getTreeStateSize() const {
-		return 3;
+		return numberOfLinks;
 	}
-
 
 	StateVarRanges getStateVarRanges(const WorkspaceBounds &bounds) const {
 		return bounds;
@@ -446,9 +453,9 @@ public:
 
 		double difference = 0;
 
-		for(int i = 0; i < numberOfLinks; ++i) {
+		for (int i = 0; i < numberOfLinks; ++i) {
 			difference = targetStateVars[i] - goalStateVars[i];
-			if(std::abs(difference) > goalThresholds[i]) {
+			if (std::abs(difference) > goalThresholds[i]) {
 				return false;
 			}
 		}
@@ -464,12 +471,11 @@ public:
 		double sum = 0;
 		double max = 0;
 
-		for(int i = 0; i < numberOfLinks; ++i) {
+		for (int i = 0; i < numberOfLinks; ++i) {
 			auto distribution = distributions[i];
 			double v = distribution(generator) / 20;
 			std::cerr << "  " << start.getStateVars()[i];
 			std::cerr << "-> " << v;
-
 
 			sum += v;
 			max = std::max(max, v);
@@ -477,11 +483,7 @@ public:
 			stateVars[i] = start.getStateVars()[i] + v;
 		}
 
-//		stateVars[1] = 0;
-//		stateVars[2] = 0;
-
 		std::cerr << " \nSteer ";
-
 
 		return Edge(start, buildState(stateVars), sum, controls, max);
 	}
@@ -499,7 +501,7 @@ public:
 		double sum = 0;
 		double max = 0;
 
-		for(int i = 0; i < numberOfLinks; ++i) {
+		for (int i = 0; i < numberOfLinks; ++i) {
 			double v = controls[i];
 			sum += v;
 			max = std::max(max, v);
@@ -526,7 +528,7 @@ public:
 	}
 
 	void drawSolution(const std::vector<const Edge *> &solution, double dt = std::numeric_limits<
-	                  double>::infinity()) const {
+			double>::infinity()) const {
 	}
 
 	WorkspaceBounds getControlBounds() const {
@@ -535,6 +537,10 @@ public:
 
 	Control controlFromVector(const Control &controls) const {
 		return controls;
+	}
+
+	State getRandomStateNear(const State &state, const State &canonicalState, double radius) const {
+		return state; //TODO
 	}
 
 	/*** Workspace interface ***/
@@ -547,12 +553,12 @@ public:
 		fprintf(stderr, "PlanarLinkage::getRandomStateNearAbstractState not implemented\n");
 		exit(1);
 
-		return State();
+		return State(numberOfLinks);
 	}
 
 	AbstractState toAbstractState(const State &s) const {
-			return s;
-		}
+		return s;
+	}
 
 
 	bool safeEdge(const PlanarLinkage &agent, const Edge &edge, double dt, bool checkSelfCollision = false) const {
@@ -585,8 +591,8 @@ public:
 	}
 
 	bool safeStates(const std::vector<State> &states) const {
-		for(auto state : states) {
-			if(state.hasCollision()) return false;
+		for (auto state : states) {
+			if (state.hasCollision()) return false;
 		}
 		return true;
 	}
@@ -607,6 +613,7 @@ public:
 	}
 
 private:
+	const int numberOfLinks;
 	std::vector<double> goalThresholds;
 	WorkspaceBounds workspaceBounds;
 
