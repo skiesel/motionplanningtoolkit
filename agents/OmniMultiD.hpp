@@ -317,7 +317,7 @@ public:
 
 		for (int i = 0; i < numberOfLinks; ++i) {
 			auto distribution = distributions[i];
-			double v = distribution(generator) / 10; // TODO magic number
+			double v = distribution(generator) * dt;
 
 			sum += v;
 			max = std::max(max, v);
