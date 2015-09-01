@@ -16,7 +16,7 @@ public:
 	typedef typename Agent::AbstractEdge AbstractEdge;
 
 	Kink(const InstanceFileMap &args) : dimensions(args.integerVal("Dimensions")),
-										width(args.integerVal("Width")),
+										width(args.doubleVal("Width")),
 										workspaceBounds(dimensions) {
 
 		BOOST_ASSERT_MSG(dimensions > 1, "Number of dimensions must be more than 1.");
@@ -77,9 +77,9 @@ public:
 			return false;
 		}
 
-		double const halfWidth = width / 2;
+		const double halfWidth = width / 2;
 		for (int i = 2; i < stateVars.size(); ++i) {
-			if (std::abs(0.50 - stateVars[i]) < halfWidth) {
+			if (std::abs(0.50 - stateVars[i]) > halfWidth) {
 				return false;
 			}
 		}
@@ -87,7 +87,7 @@ public:
 		return true;
 	}
 
-	bool inBounds(typename Agent::StateVars stateVars) {
+	bool inBounds(typename Agent::StateVars stateVars) const {
 		for (auto var : stateVars) {
 			if (var < 0 || var > 1) {
 				return false;
@@ -97,7 +97,7 @@ public:
 	}
 
 	bool safeXYDimensions(const double x, const double y) const {
-		double const halfWidth = width / 2;
+		const double halfWidth = width / 2;
 
 		// Check collision against left and right obstacles
 		if (x < 0.25 - halfWidth || x > 0.75 + halfWidth) {
@@ -132,6 +132,6 @@ public:
 
 private:
 	const int dimensions;
-	const int width;
-	const WorkspaceBounds workspaceBounds;
+	const double width;
+	WorkspaceBounds workspaceBounds;
 };
