@@ -337,7 +337,7 @@ void planarLinkage(const InstanceFileMap &args) {
 }
 
 void kink(const InstanceFileMap &args) {
-	typedef Abstract Agent;
+	typedef OmniMultiD Agent;
 	typedef Kink<Agent> Workspace;
 
 	Agent agent(args);
@@ -366,7 +366,7 @@ void kink(const InstanceFileMap &args) {
 }
 
 void narrowPassage(const InstanceFileMap &args) {
-	typedef Abstract Agent;
+	typedef OmniMultiD Agent;
 	typedef NarrowPassage<Agent> Workspace;
 
 	Agent agent(args);
