@@ -9,12 +9,15 @@ std::default_random_engine GlobalRandomGenerator;
 
 #include "workspaces/map3d.hpp"
 #include "workspaces/planarlinkage.hpp"
+#include "workspaces/kink.hpp"
+#include "workspaces/narrowpassage.hpp"
 
 #include "agents/omnidirectional.hpp"
 #include "agents/dubins.hpp"
 #include "agents/snake_trailers.hpp"
 #include "agents/blimp.hpp"
 #include "agents/geometric.hpp"
+#include "agents/abstract.hpp"
 
 #include "planners/rrt.hpp"
 #include "planners/rrtconnect.hpp"
@@ -73,6 +76,10 @@ int main(int argc, char *argv[]) {
 	// 	dubins(args);
 	else if(domain.compare("Snake") == 0)
 		snake(args);
+	else if(domain.compare("Kink") == 0)
+		kink(args);
+	else if(domain.compare("NarrowPassage") == 0)
+		narrowPassage(args);
 	else if(domain.compare("Blimp") == 0)
 		blimp(args);
 	else if(domain.compare("Geometric") == 0)
