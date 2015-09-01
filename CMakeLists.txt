@@ -7,6 +7,7 @@ set(CMAKE_MODULE_PATH
 set(BUILDGRAPHICS 1)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wunused ${CMAKE_CXX_FLAGS}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build")
 
 add_executable(Planner main.cpp)
 #add_executable(Planner mesh_testing.cpp)
