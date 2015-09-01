@@ -10,7 +10,7 @@ public:
 
 	SST_Grid(const Workspace &workspace, const Agent &agent,
 		InsertionInteface &insertionInterface, QueryInterface &queryInterface, double startingDiscretizationPercent,
-		double resizeThreshold, unsigned int historySize = 100) :
+		double resizeThreshold, unsigned int historySize = 10) :
 		insertionInterface(insertionInterface), queryInterface(queryInterface), discretizationPercent(startingDiscretizationPercent),
 		resizeThreshold(resizeThreshold), history(historySize), historyIndex(0), historyFails(0), historyFilled(false) {
 			stateVarRanges = agent.getStateVarRanges(workspace.getBounds());
@@ -43,6 +43,7 @@ public:
 		}
 
 		double failureRate = updateHistory(didAddNewEdge);
+
 		if(historyFilled && failureRate >= resizeThreshold) {
 			rebuildDiscretizationSizes(discretizationPercent * 0.5);
 			rehashData();
@@ -54,16 +55,18 @@ public:
 private:
 	double updateHistory(bool success) {
 		int nextIndex = historyIndex + 1;
+
+		if(historyFilled) {
+			historyFails -= history[historyIndex];
+		}
+
 		if(nextIndex >= history.size()) {
 			nextIndex = 0;
 			historyFilled = true;
 		}
 
-		if(historyFilled)
-			historyFails -= history[historyIndex];
-
 		history[historyIndex] = success ? 0 : 1;
-		historyIndex += history[historyIndex];
+		historyFails += history[historyIndex];
 
 		historyIndex = nextIndex;
 
@@ -130,7 +133,7 @@ private:
 	StateVarRanges stateVarRanges;
 	std::vector<double> discretizationSizes, gridDimensions;
 	double discretizationPercent, resizeThreshold;
-	std::vector<bool> history;
+	std::vector<int> history;
 	int historyIndex, historyFails;
 	bool historyFilled;
 };

@@ -138,7 +138,7 @@ void go_SST(const InstanceFileMap &args, const Agent &agent, const Workspace &wo
 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
 	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
 	typedef SST<Workspace, Agent, KDTree, Sampler> TreeInterface;
-	typedef RRTConnect<Workspace, Agent, TreeInterface> Planner;
+	typedef RRT<Workspace, Agent, TreeInterface> Planner;
 
 	/* planner config */
 
@@ -178,7 +178,7 @@ void go_SSTGrid(const InstanceFileMap &args, const Agent &agent, const Workspace
 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
 	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
 	typedef SST_Grid<Workspace, Agent, KDTree, Sampler> TreeInterface;
-	typedef RRTConnect<Workspace, Agent, TreeInterface> Planner;
+	typedef RRT<Workspace, Agent, TreeInterface> Planner;
 
 	/* planner config */
 

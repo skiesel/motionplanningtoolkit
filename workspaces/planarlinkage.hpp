@@ -476,16 +476,12 @@ public:
 		for (int i = 0; i < numberOfLinks; ++i) {
 			auto distribution = distributions[i];
 			double v = distribution(generator) / 20;
-			std::cerr << "  " << start.getStateVars()[i];
-			std::cerr << "-> " << v;
 
 			sum += v;
 			max = std::max(max, v);
 			controls[i] = v;
 			stateVars[i] = start.getStateVars()[i] + v;
 		}
-
-		std::cerr << " \nSteer ";
 
 		return Edge(start, buildState(stateVars), sum, controls, max);
 	}
