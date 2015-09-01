@@ -5,15 +5,15 @@ public:
 	typedef std::vector<double> StateVars;
 	typedef std::vector<double> Control;
 
-	typedef std::vector <std::pair<double, double>> WorkspaceBounds;
-	typedef std::vector <std::pair<double, double>> StateVarRanges;
+	typedef std::vector<std::pair<double, double>> WorkspaceBounds;
+	typedef std::vector<std::pair<double, double>> StateVarRanges;
 
 	class State;
 
 	class Edge;
 
 	typedef State AbstractState;
-	typedef std::vector <AbstractState> AbstractEdge;
+	typedef std::vector<AbstractState> AbstractEdge;
 
 	class State {
 	public:
@@ -29,6 +29,10 @@ public:
 		State &operator=(State &&) = default;
 
 		explicit State(StateVars vars) : treeStateVars(std::move(vars)) {
+		}
+
+		const StateVars &getTreeStateVars() const {
+			return treeStateVars;
 		}
 
 		const StateVars &getStateVars() const {
@@ -53,7 +57,7 @@ public:
 		}
 
 		void move(Control control) {
-			const int dimensions = stateVars.size();
+			const int dimensions = treeStateVars.size();
 			assert(control.size() == dimensions);
 
 			for (int i = 0; i < dimensions; ++i) {
@@ -61,26 +65,52 @@ public:
 			}
 		}
 
-
 #ifdef WITHGRAPHICS
 
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
-			// TODO
+			if (treeStateVars.size() > 2) {
+				const auto &identity = OpenGLWrapper::getOpenGLWrapper().getIdentity();
+
+				std::vector<double> pt(treeStateVars.begin(), treeStateVars.begin() + 3);
+				pt.push_back(1);
+				pt.push_back(0);
+				pt.push_back(0);
+				pt.push_back(1);
+				pt.push_back(1);
+				pt.insert(pt.end(), color.getColor().begin(), color.getColor().end());
+				pt.insert(pt.end(), identity.begin(), identity.end());
+
+				OpenGLWrapper::getOpenGLWrapper().drawPoints(pt);
+			} else {
+				const auto &identity = OpenGLWrapper::getOpenGLWrapper().getIdentity();
+
+				std::vector<double> pt(treeStateVars.begin(), treeStateVars.begin() + 2);
+				pt.push_back(0);
+				pt.push_back(1);
+				pt.push_back(0);
+				pt.push_back(0);
+				pt.push_back(1);
+				pt.push_back(1);
+				pt.insert(pt.end(), color.getColor().begin(), color.getColor().end());
+				pt.insert(pt.end(), identity.begin(), identity.end());
+
+				OpenGLWrapper::getOpenGLWrapper().drawPoints(pt);
+			}
 		}
 
 #endif
 
-		std::vector <State> getTransforms() const {
-			return std::vector < State > {*this};
+		std::vector<State> getTransforms() const {
+			return std::vector<State> {*this};
 		}
 
 		static AbstractEdge generateAbstractEdge(const AbstractState &a, const AbstractState &b, const double dt) {
 			return interpolate(a, b, dt);
 		}
 
-		static std::vector <State> interpolate(const State &a, const State &b, const double dt) {
+		static std::vector<State> interpolate(const State &a, const State &b, const double dt) {
 			const int dimensions = a.getStateVars().size();
-			std::vector <State> intermediateStates;
+			std::vector<State> intermediateStates;
 
 			BOOST_ASSERT(dimensions == b.getStateVars().size());
 			BOOST_ASSERT(dimensions > 0);
@@ -88,7 +118,7 @@ public:
 			// Find largest difference
 			double maxDifference = 0;
 			int maxDifferenceIndex = 0;
-			for (int i = 0; i < dim; ++i) {
+			for (int i = 0; i < dimensions; ++i) {
 				double difference = std::abs(a.getStateVars()[i] - b.getStateVars()[i]);
 				if (difference > maxDifference) {
 					maxDifference = difference;
@@ -104,7 +134,7 @@ public:
 			}
 
 			// Calculate step sizes
-			std::vector<double> stepSizes(dim);
+			std::vector<double> stepSizes(dimensions);
 			for (int i = 0; i < dimensions; ++i) {
 				double difference = b.getStateVars()[i] - a.getStateVars()[i];
 				stepSizes[i] = difference / numberOfSteps;
@@ -115,7 +145,7 @@ public:
 
 				StateVars intermediateStateVars(dimensions);
 
-				for (int j = 0; j < dim; ++j) {
+				for (int j = 0; j < dimensions; ++j) {
 					intermediateStateVars[j] = a.getStateVars()[j] + i * stepSizes[j];
 				}
 
@@ -125,8 +155,8 @@ public:
 			return intermediateStates;
 		}
 
-		static State getRandomAbstractState(const std::vector <std::pair<double, double>> &bounds) {
-			return State(); // TODO
+		static State getRandomAbstractState(const std::vector<std::pair<double, double>> &bounds) {
+			return State(bounds.size()); // TODO
 		}
 
 		static double evaluateDistance(const State &rhs, const State &lhs) {
@@ -183,7 +213,22 @@ public:
 			end.print();
 		}
 
+#ifdef WITHGRAPHICS
+
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
+			auto startVars = start.getStateVars();
+			auto endVars = end.getStateVars();
+
+			if (startVars.size() > 2) {
+				OpenGLWrapper::getOpenGLWrapper()
+						.drawLine(startVars[0], startVars[1], startVars[2], endVars[0], endVars[1], endVars[2], color);
+			} else {
+				OpenGLWrapper::getOpenGLWrapper()
+						.drawLine(startVars[0], startVars[1], 0, endVars[0], endVars[1], 0, color);
+			}
+
+#endif
+
 		}
 
 		/* needed for being inserted into NN datastructure */
@@ -210,20 +255,21 @@ public:
 		Control control;
 	};
 
-	Abstract(const InstanceFileMap &args) : dimensions(args.integerVal("Dimensions")) {
+	Abstract(const InstanceFileMap &args) : dimensions(args.integerVal("Dimensions")),
+											workspaceBounds(dimensions) {
 
-		for (int i = 0; i < workspaceBounds.size(); ++i) {
+		for (int i = 0; i < dimensions; ++i) {
 			workspaceBounds[i].first = 0;
 			workspaceBounds[i].second = 1;
 		}
 
 		auto stateVarDomains = getStateVarRanges(workspaceBounds);
 		for (auto range : stateVarDomains) {
-			distributions.emplace_back(range.first, range.second);
+			distributions.emplace_back(-1, 1); // TODO take a look
 		}
 
 		boost::char_separator<char> sep(" ");
-		boost::tokenizer <boost::char_separator<char>> tokens(args.value("Goal Thresholds"), sep);
+		boost::tokenizer<boost::char_separator<char>> tokens(args.value("Goal Thresholds"), sep);
 		for (auto token : tokens) {
 			goalThresholds.push_back(std::stod(token));
 		}
@@ -269,7 +315,7 @@ public:
 
 		for (int i = 0; i < numberOfLinks; ++i) {
 			auto distribution = distributions[i];
-			double v = distribution(generator) / 20; // TODO magic number
+			double v = distribution(generator) / 10; // TODO magic number
 
 			sum += v;
 			max = std::max(max, v);
@@ -336,7 +382,7 @@ public:
 		fprintf(stderr, "PlanarLinkage::getRandomStateNearAbstractState not implemented\n");
 		exit(1);
 
-		return State();
+		return State(dimensions);
 	}
 
 	AbstractState toAbstractState(const State &s) const {
@@ -362,7 +408,8 @@ public:
 private:
 	const int dimensions;
 	std::vector<double> goalThresholds;
+	WorkspaceBounds workspaceBounds; // TODO remove
 
-	std::vector <std::uniform_real_distribution<double>> distributions;
+	std::vector<std::uniform_real_distribution<double>> distributions;
 	mutable std::default_random_engine generator;
 };
