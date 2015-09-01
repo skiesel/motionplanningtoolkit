@@ -23,13 +23,13 @@ public:
 		int treeIndex;
 	};
 
-	typedef flann::KDTreeIndexParams KDTreeType;
+	typedef flann::KDTreeSingleIndexParams KDTreeType;
 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, Witness> KDTree;
 
 	SST(const Workspace &workspace, const Agent &agent,
 		InsertionInteface &insertionInterface, QueryInterface &queryInterface, double startingRadius, double resizeThreshold,
 		unsigned int historySize = 100) : insertionInterface(insertionInterface), queryInterface(queryInterface),
-		witnessInterface(KDTreeType(2), agent.getTreeStateSize()), radius(startingRadius), resizeThreshold(resizeThreshold),
+		witnessInterface(KDTreeType(), agent.getTreeStateSize()), radius(startingRadius), resizeThreshold(resizeThreshold),
 		history(historySize), historyIndex(0), historyFails(0), historyFilled(false) {}
 
 	Edge* getTreeSample() {
@@ -68,16 +68,17 @@ public:
 private:
 	double updateHistory(bool success) {
 		int nextIndex = historyIndex + 1;
+
+		if(historyFilled)
+			historyFails -= history[historyIndex];
+
 		if(nextIndex >= history.size()) {
 			nextIndex = 0;
 			historyFilled = true;
 		}
 
-		if(historyFilled)
-			historyFails -= history[historyIndex];
-
 		history[historyIndex] = success ? 0 : 1;
-		historyIndex += history[historyIndex];
+		historyFails += history[historyIndex];
 
 		historyIndex = nextIndex;
 
