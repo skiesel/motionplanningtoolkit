@@ -360,7 +360,8 @@ public:
 	public:
 		Edge(const State &s) : start(s),
 							   end(s),
-							   duration(0) {
+							   duration(0),
+							   parent(NULL) {
 		}
 
 		Edge(const State start, const State end, double cost, const std::vector<double> control, double duration)
@@ -369,7 +370,8 @@ public:
 				  cost(cost),
 				  treeIndex(0),
 				  duration(duration),
-				  control(std::move(control)) {
+				  control(std::move(control)),
+				  parent(NULL) {
 		}
 
 		Edge(const Edge &) = default;
