@@ -475,7 +475,7 @@ public:
 
 		for (int i = 0; i < numberOfLinks; ++i) {
 			auto distribution = distributions[i];
-			double v = distribution(generator) / 20;
+			double v = distribution(generator) * dt;
 
 			sum += v;
 			max = std::max(max, v);
@@ -537,21 +537,36 @@ public:
 		return controls;
 	}
 
-	State getRandomStateNear(const State &state, const State &canonicalState, double radius) const {
-		return state; //TODO
-	}
-
 	/*** Workspace interface ***/
 	WorkspaceBounds getBounds() const {
 		return workspaceBounds;
 	}
 
 	State getRandomStateNearAbstractState(const AbstractState &state, double radius) const {
+		const auto sourceStateVars = state.getStateVars();
+		const int numberOfLinks = sourceStateVars.size();
+		Control controls(numberOfLinks);
+		StateVars stateVars(numberOfLinks);
 
-		fprintf(stderr, "PlanarLinkage::getRandomStateNearAbstractState not implemented\n");
-		exit(1);
+		double sum = 0;
+		double max = 0;
 
-		return State(numberOfLinks);
+		for (int i = 0; i < numberOfLinks; ++i) {
+			auto distribution = distributions[i];
+			double v = distribution(generator);
+
+			sum += v;
+			max = std::max(max, v);
+			controls[i] = v;
+		}
+
+		const double ratio = sum < radius ? 1 : radius / sum;
+
+		for (int i = 0; i < numberOfLinks; ++i) {
+			stateVars[i] = sourceStateVars[i] + controls[i] * ratio;
+		}
+
+		return State(stateVars);
 	}
 
 	AbstractState toAbstractState(const State &s) const {
