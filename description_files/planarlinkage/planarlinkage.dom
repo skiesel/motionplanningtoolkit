@@ -1,0 +1,32 @@
+Agent Type ? Kink
+Goal Thresholds ? 0.1 0.1 0.1
+
+Steering Delta t ? 0.1
+Collision Check Delta t ? 0.01
+
+Seed ? 2
+
+Dimensions ? 3
+Width ? 0.2
+Thickness ? 0.1
+Zoom ? 50
+
+Planner ? RRT
+
+SST Radius ? 0.1
+SST Resize Threshold ? 0.9
+
+KPIECE Min Control Steps ? 1
+KPIECE Max Control Steps ? 1
+KPIECE Goal Bias ? 0.25
+KPIECE Border Fraction ? 0.9
+KPIECE Cell Score Good ? 0.75
+KPIECE Cell Score Bad ? 0.25
+KPIECE Max Close Samples ? 100
+
+Number Of PRM Vertices ? 10000
+Nearest Neighbors To Consider In PRM Edge Construction ? 10
+PRM Collision Check DT ? 0.025
+Plaku Alpha Value ? 0.5
+Plaku b Value ? 0.85
+Plaku PRM State Selection Radius ? 0.001
