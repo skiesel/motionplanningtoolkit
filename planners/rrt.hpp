@@ -98,7 +98,9 @@ public:
 			}
 
 #ifdef WITHGRAPHICS
-			treeEdges.push_back(e);
+			if(addedToTree) {
+				treeEdges.push_back(e);
+			}
 #endif
 
 			if(iterationsAtATime > 0 && iterations >= iterationsAtATime) break;
