@@ -78,8 +78,10 @@ int main(int argc, char *argv[]) {
 		snake(args);
 	else if(domain.compare("Kink") == 0)
 		kink(args);
-	else if(domain.compare("NarrowPassage") == 0)
-		narrowPassage(args);
+	else if(domain.compare("NarrowPassageFull") == 0)
+		narrowPassage(args, false);
+	else if(domain.compare("NarrowPassageHalf") == 0)
+		narrowPassage(args, true);
 	else if(domain.compare("Blimp") == 0)
 		blimp(args);
 	else if(domain.compare("Geometric") == 0)

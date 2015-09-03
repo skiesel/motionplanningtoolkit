@@ -14,10 +14,11 @@ public:
 	typedef typename Agent::AbstractState AbstractState;
 	typedef typename Agent::AbstractEdge AbstractEdge;
 
-	NarrowPassage(const InstanceFileMap &args) : dimensions(args.integerVal("Dimensions")),
-												 width(args.doubleVal("Width")),
-												 thickness(args.doubleVal("Thickness")),
-												 workspaceBounds(dimensions) {
+	NarrowPassage(const InstanceFileMap &args, const bool scaleSpace) : dimensions(args.integerVal("Dimensions")),
+																		   width(args.doubleVal("Width")),
+																		   thickness(args.doubleVal("Thickness")),
+																		   workspaceBounds(dimensions),
+																		   scaleObstacles(scaleSpace) {
 
 		BOOST_ASSERT_MSG(dimensions > 1, "Number of dimensions must be more than 1.");
 
@@ -71,11 +72,26 @@ public:
 		auto stateVars = state.getTreeStateVars();
 		BOOST_ASSERT_MSG(stateVars.size() > 1, "Number of dimensions must be more than 1.");
 
-		const double x = stateVars[0];
-		const double y = stateVars[1];
 		if (!inBounds(stateVars)) {
 			return false;
 		}
+
+		return scaleObstacles ? isSafeInHalfSpace(stateVars) : isSafeInFullSpace(stateVars);
+	}
+
+	bool inBounds(const typename Agent::StateVars &stateVars) const {
+		for (auto var : stateVars) {
+			if (var < 0 || var > 1) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	bool isSafeInFullSpace(const typename Agent::StateVars &stateVars) const {
+		const double x = stateVars[0];
+		const double y = stateVars[1];
 
 		const double halfWidth = width / 2;
 		const double halfThickness = thickness / 2;
@@ -100,9 +116,26 @@ public:
 		return true;
 	}
 
-	bool inBounds(typename Agent::StateVars stateVars) const {
-		for (auto var : stateVars) {
-			if (var < 0 || var > 1) {
+	bool isSafeInHalfSpace(const typename Agent::StateVars &stateVars) const {
+		const double x = stateVars[0];
+		const double y = stateVars[1];
+
+		const double halfWidth = width / 2;
+		const double halfThickness = thickness / 2;
+
+		// Check: y on belt, else safe
+		if (std::abs(0.50 - y) > halfThickness) {
+			return true;
+		}
+
+		// Check: x in hole
+		if (std::abs(0.25 - x) > halfWidth && x < 0.50) {
+			return false;
+		}
+
+		// Check: every other dimension in hole
+		for (int i = 2; i < stateVars.size(); ++i) {
+			if (std::abs(0.50 - stateVars[i]) > halfWidth) {
 				return false;
 			}
 		}
@@ -125,4 +158,5 @@ private:
 	const double width;
 	const double thickness;
 	WorkspaceBounds workspaceBounds;
+	const bool scaleObstacles;
 };

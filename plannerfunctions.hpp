@@ -365,12 +365,12 @@ void kink(const InstanceFileMap &args) {
 	go<Workspace, Agent>(args, workspace, agent, start, goal);
 }
 
-void narrowPassage(const InstanceFileMap &args) {
+void narrowPassage(const InstanceFileMap &args, const bool scaleObstacles) {
 	typedef OmniMultiD Agent;
 	typedef NarrowPassage<Agent> Workspace;
 
 	Agent agent(args);
-	Workspace workspace(args);
+	Workspace workspace(args, scaleObstacles);
 
 	/* start and goal states */
 	const int dimensions = args.integerVal("Dimensions");
