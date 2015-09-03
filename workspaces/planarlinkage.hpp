@@ -390,9 +390,10 @@ public:
 			start.print();
 			end.print();
 		}
-
+#ifdef WITHGRAPHICS
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
 		}
+#endif
 
 		/* needed for being inserted into NN datastructure */
 		const StateVars &getTreeStateVars() const {
@@ -513,6 +514,7 @@ public:
 		return State(stateVars);
 	}
 
+#ifdef WITHGRAPHICS
 	void drawMesh() {
 	}
 
@@ -528,7 +530,8 @@ public:
 	void drawSolution(const std::vector<const Edge *> &solution, double dt = std::numeric_limits<
 			double>::infinity()) const {
 	}
-
+#endif
+	
 	WorkspaceBounds getControlBounds() const {
 		return workspaceBounds;
 	}
@@ -622,8 +625,10 @@ public:
 		return !state.hasCollision();
 	}
 
+#ifdef WITHGRAPHICS
 	void draw() const {
 	}
+#endif
 
 private:
 	const int numberOfLinks;

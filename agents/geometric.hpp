@@ -192,7 +192,7 @@ public:
 		StateVars treeVars;
 	};
 
-	Geometric(const InstanceFileMap &args) : mesh(args.value("Agent Mesh")), color(OpenGLWrapper::Color::Red()) {
+	Geometric(const InstanceFileMap &args) : mesh(args.value("Agent Mesh")) {
 
 		auto environmentBoundingBox = args.doubleList("Environment Bounding Box");
 
@@ -216,6 +216,7 @@ public:
 		}
 
 #ifdef WITHGRAPHICS
+		color = OpenGLWrapper::Color::Red();
 		OpenGLWrapper::setExternalKeyboardCallback([&](int key) {});
 #endif
 	}

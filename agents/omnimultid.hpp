@@ -355,6 +355,7 @@ public:
 		return State(stateVars);
 	}
 
+#ifdef WITHGRAPHICS
 	void drawMesh() {
 	}
 
@@ -370,6 +371,7 @@ public:
 	void drawSolution(const std::vector<const Edge *> &solution, double dt = std::numeric_limits<
 			double>::infinity()) const {
 	}
+#endif
 
 	WorkspaceBounds getControlBounds() const {
 		return workspaceBounds; // TODO define control bounds
@@ -422,9 +424,10 @@ public:
 
 		return edge;
 	}
-
+#ifdef WITHGRAPHICS
 	void draw() const {
 	}
+#endif
 
 private:
 	const int dimensions;
