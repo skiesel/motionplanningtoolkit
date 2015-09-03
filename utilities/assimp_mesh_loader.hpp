@@ -50,7 +50,13 @@ public:
 				aiVector3D vec(x, y, z);
 				vec *= transform;
 
-				vertices.back().emplace_back(vec.x, vec.y, vec.z);
+				//apparently these are packed on linux and
+				//we can't pass them in directly?
+				x = vec.x;
+				y = vec.y;
+				z = vec.z;
+
+				vertices.back().emplace_back(x,y,z);
 
 				normals.emplace_back(3);
 				if(mesh->HasNormals()) {
