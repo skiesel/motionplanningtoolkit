@@ -211,7 +211,7 @@ public:
 		StateVars treeVars;
 	};
 
-	Blimp(const InstanceFileMap &args) : mesh(args.value("Agent Mesh")) {
+	Blimp(const InstanceFileMap &args) : mesh(args.doubleVal("Blimp Radius"), args.doubleVal("Blimp Length")) {
 		blimpLength = args.doubleVal("Blimp Length");
 
 		minimumVelocity = args.doubleVal("Minimum Velocity");
@@ -608,7 +608,7 @@ public:
 		return (t - 2 * M_PI * std::floor((t + M_PI) / (2 * M_PI)));
 	}
 
-	SimpleAgentMeshHandler mesh;
+	CapsuleHandler mesh;
 	double blimpLength, minimumVelocity, maximumVelocity, minimumTurning, maximumTurning, minimumVelocityZ, maximumVelocityZ, integrationStepSize;
 	mutable std::uniform_real_distribution<double> linearAccelerations, zLinearAccelerations, angularAccelerations;
 
