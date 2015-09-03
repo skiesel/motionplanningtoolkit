@@ -133,14 +133,14 @@ public:
 
 	class Edge {
 	public:
-		Edge(const State &start) : start(start), end(start), cost(0), dt(0), a(0), w(0), z(0), treeIndex(0) {
+		Edge(const State &start) : parent(NULL), start(start), end(start), cost(0), dt(0), a(0), w(0), z(0), g(0), treeIndex(0) {
 			buildTreeVars();
 		}
-		Edge(const State &start, const State &end, double cost, double a, double w, double z) : start(start),
-			end(end), cost(cost), dt(cost), a(a), w(w), z(z), treeIndex(0) {
+		Edge(const State &start, const State &end, double cost, double a, double w, double z) : parent(NULL), start(start),
+			end(end), cost(cost), dt(cost), a(a), w(w), z(z), g(0), treeIndex(0) {
 			buildTreeVars();
 		}
-		Edge(const Edge &e) : start(e.start), end(e.end), cost(e.cost), dt(e.dt), a(e.a), w(e.w), z(e.z), treeIndex(e.treeIndex) {
+		Edge(const Edge &e) : parent(e.parent), start(e.start), end(e.end), cost(e.cost), dt(e.dt), a(e.a), w(e.w), z(e.z), g(e.g), treeIndex(e.treeIndex) {
 			buildTreeVars();
 		}
 
@@ -148,6 +148,7 @@ public:
 			this->start = e.start;
 			this->end = e.end;
 			this->cost = e.cost;
+			this->g = e.g;
 			this->dt = e.dt;
 			this->a = e.a;
 			this->w = e.w;
@@ -165,7 +166,12 @@ public:
 		}
 
 		double gCost() const {
-			return 0;
+			return g;
+		}
+
+		void updateParent(Edge* p) {
+			parent = p;
+			g = p->gCost() + cost;
 		}
 
 		/* needed for being inserted into NN datastructure */
@@ -206,7 +212,7 @@ public:
 
 		Edge *parent;
 		State start, end;
-		double cost, dt, a, w, z;
+		double cost, dt, a, w, z, g;
 		int treeIndex;
 		StateVars treeVars;
 	};

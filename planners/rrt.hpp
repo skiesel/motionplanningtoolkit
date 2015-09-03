@@ -32,7 +32,7 @@ public:
 #endif
 
 		if(agent.isGoal(start, goal)) {
-			fprintf(stderr, "found goal\n");
+			dfpair(stdout, "solution cost", "0");
 			return;
 		}
 
@@ -68,7 +68,8 @@ public:
 			edgesAdded++;
 
 			if(agent.isGoal(edge.end, goal)) {
-				fprintf(stderr, "found goal\n");
+				dfpair(stdout, "solution cost", "%g", edge.gCost());
+
 				std::vector<const Edge *> newSolution;
 				double newSolutionCost = 0;
 				newSolution.push_back(pool.construct(edge));
@@ -88,8 +89,7 @@ public:
 			}
 
 			Edge *e = pool.construct(edge);
-
-			e->parent = treeSample;
+			e->updateParent(treeSample);
 
 			bool addedToTree = treeInterface.insertIntoTree(e);
 

@@ -185,6 +185,7 @@ public:
 		Edge(const State &s) : start(s),
 							   end(s),
 							   duration(0),
+							   g(0),
 							   parent(NULL) {
 		}
 
@@ -192,6 +193,7 @@ public:
 				: start(std::move(start)),
 				  end(std::move(end)),
 				  cost(cost),
+				  g(0),
 				  treeIndex(0),
 				  duration(duration),
 				  control(std::move(control)),
@@ -207,7 +209,12 @@ public:
 		Edge &operator=(Edge &&) = default;
 
 		double gCost() const {
-			return 1; //ToDO
+			return g;
+		}
+
+		void updateParent(Edge* p) {
+			parent = p;
+			g = p->gCost() + cost;
 		}
 
 		void print() {
@@ -251,7 +258,7 @@ public:
 		}
 
 		State start, end;
-		double cost, duration;
+		double cost, duration, g;
 		int treeIndex;
 		Edge *parent;
 		Control control;

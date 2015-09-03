@@ -206,7 +206,8 @@ public:
 		ompl::base::timedPlannerTerminationCondition(300),
 		ompl::base::PlannerTerminationCondition(boost::bind(&KPIECE::didFindGoal, this))); */
 
-		ompl::base::PlannerStatus solved = kpiece->solve(tc);
+		// ompl::base::PlannerStatus solved =
+		kpiece->solve(tc);
 
 		// if(solved) {
 		// 	fprintf(stderr, "found goal\n");
