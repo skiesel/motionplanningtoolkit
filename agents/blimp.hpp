@@ -365,6 +365,10 @@ public:
 
 	AbstractState toAbstractState(const State& state) const {
 		AbstractState s;
+		s.treeStateVars.push_back(state.stateVars[X]);
+		s.treeStateVars.push_back(state.stateVars[Y]);
+		s.treeStateVars.push_back(state.stateVars[Z]);
+		s.treeStateVars.push_back(state.stateVars[THETA]);
 		return s;
 	}
 
