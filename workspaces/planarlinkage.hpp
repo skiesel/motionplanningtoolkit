@@ -345,6 +345,7 @@ public:
 		}
 
 		static State getRandomAbstractState(const std::vector<std::pair<double, double>> &bounds) {
+			std::vector<double> stateVars;
 			for (std::pair<double, double> lowerUpper : bounds) {
 				std::uniform_real_distribution<double> distribution(lowerUpper.first, lowerUpper.second);
 				stateVars.push_back(distribution(GlobalRandomGenerator));
@@ -353,7 +354,7 @@ public:
 			return State(stateVars);
 		}
 
-		static double evaluateDistance(const State &a, const State &b) {
+		static double evaluateDistance(const State &lhs, const State &rhs) {
 			const auto rhsStateVars = rhs.getStateVars();
 			const auto lhsStateVars = lhs.getStateVars();
 

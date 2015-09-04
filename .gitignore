@@ -5,6 +5,5 @@ ok.log
 fail.log
 data
 sketchup_files
-description_files/*/instances
 
 IGNORE*
