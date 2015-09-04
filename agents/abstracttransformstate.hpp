@@ -5,24 +5,29 @@ public:
 	AbstractTransformState() {}
 	AbstractTransformState(const AbstractTransformState &s) {}
 
-	std::vector<fcl::Transform3f> getTransforms() const {
-		return std::vector<fcl::Transform3f>();
-	}
-
 	const std::vector<double>& getTreeStateVars() const {
 		return treeStateVars;
 	}
 
-	static std::vector<fcl::Transform3f> interpolate(const AbstractTransformState &a, const AbstractTransformState &b, double dt) {
-		return std::vector<fcl::Transform3f>();
-	}
-
 	static AbstractTransformState getRandomAbstractState(const std::vector< std::pair<double, double> > &bounds) {
-		return AbstractTransformState();
+		AbstractTransformState newState;
+		for(const auto &bound : bounds) {
+			//It really feels like I'd want this to be created *once* and reused, but I am not sure
+			//we can assume that the bounds will always be the same, so it should handle this generically
+			std::uniform_real_distribution<double> dist(bound.first, bound.second);
+			newState.treeStateVars.emplace_back(dist(GlobalRandomGenerator));
+		}
+		return newState;
 	}
 
 	static double evaluateDistance(const AbstractTransformState &a, const AbstractTransformState &b) {
-		return 0;
+		assert(a.treeStateVars.size() == b.treeStateVars.size());
+		double sum = 0;
+		for(unsigned int i = 0; i < a.treeStateVars.size(); ++i) {
+			double diff = a.treeStateVars[i] - b.treeStateVars[i];
+			sum += diff * diff;
+		}
+		return sqrt(sum);
 	}
 
 	fcl::Transform3f transform;
