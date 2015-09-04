@@ -50,6 +50,11 @@ public:
 			color[2] = b;
 			color[3] = a;
 		}
+		Color& operator=(const Color &c) {
+			color.clear();
+			// color.insert(c.color.begin(), c.color.end());
+			return *this;
+		}
 		const std::vector<double> &getColor() const {
 			return color;
 		}
