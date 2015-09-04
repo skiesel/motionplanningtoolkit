@@ -30,14 +30,14 @@ public:
 
 		if(prevBestPair == witnessInterface.end()) {
 			witnessInterface[key] = edge;
-			insertionInterface.insertPoint(edge);
+			insertionInterface.insertIntoTree(edge);
 			didAddNewEdge = true;
 		} else {
 			Edge *prevBest = prevBestPair->second;
 			if(edge->gCost() < prevBest->gCost()) {
 				witnessInterface[key] = edge;
-				insertionInterface.removePoint(prevBest);
-				insertionInterface.insertPoint(edge);
+				insertionInterface.removeFromTree(prevBest);
+				insertionInterface.insertIntoTree(edge);
 				didAddNewEdge = true;
 			}
 		}

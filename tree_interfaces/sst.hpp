@@ -43,15 +43,15 @@ public:
 		bool didAddNewEdge = false;
 
 		if(nearest.elements.size() == 0 || nearest.distances[0] > radius) {
-			witnessInterface.insertPoint(newWitness);
-			insertionInterface.insertPoint(edge);
+			witnessInterface.insertIntoTree(newWitness);
+			insertionInterface.insertIntoTree(edge);
 			didAddNewEdge = true;
 		} else {
 			Edge* prevBest = nearest.elements[0]->edge;
 			if(edge->gCost() < prevBest->gCost()) {
 				nearest.elements[0]->edge = edge;
-				insertionInterface.removePoint(prevBest);
-				insertionInterface.insertPoint(edge);
+				insertionInterface.removeFromTree(prevBest);
+				insertionInterface.insertIntoTree(edge);
 				didAddNewEdge = true;
 			}
 		}

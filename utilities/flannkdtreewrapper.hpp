@@ -38,6 +38,10 @@ public:
 		++currentPointIndex;
 	}
 
+	void insertIntoTree(Element *elem) {
+		insertPoint(elem);
+	}
+
 	void removePoint(Element *elem) {
 		unsigned int index = elem->getPointIndex();
 		if(index == 0) return;
@@ -46,6 +50,10 @@ public:
 
 		elem->setPointIndex(0);
 		lookup.erase(index);
+	}
+
+	void removeFromTree(Element *elem) {
+		removePoint(elem);
 	}
 
 	struct KNNResult {
