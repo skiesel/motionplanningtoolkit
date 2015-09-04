@@ -2,6 +2,27 @@
 
 unsigned int GraphicsIterations = 1000;
 
+template<class Planner, class Workspace, class Agent>
+void go_COMMON(Planner &planner,
+		const Workspace &workspace, const Agent &agent,
+		const typename Agent::State &start, const typename Agent::State &goal) {
+
+#ifdef WITHGRAPHICS
+	bool firstInvocation = true;
+	auto lambda = [&]() {
+		workspace.draw();
+		agent.drawMesh(start);
+		agent.drawMesh(goal);
+		planner.query(start, goal, GraphicsIterations, firstInvocation);
+		firstInvocation = false;
+	};
+	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
+#else
+	planner.query(start, goal);
+	planner.dfpairs();
+#endif
+}
+
 template<class Workspace, class Agent>
 void go_RRT(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
             const typename Agent::State &start, const typename Agent::State &goal) {
@@ -22,20 +43,7 @@ void go_RRT(const InstanceFileMap &args, const Agent &agent, const Workspace &wo
 	TreeInterface treeInterface(kdtree, sampler);
 	Planner planner(workspace, agent, treeInterface, args);
 
-#ifdef WITHGRAPHICS
-	bool firstInvocation = true;
-	auto lambda = [&]() {
-		workspace.draw();
-		agent.drawMesh(start);
-		agent.drawMesh(goal);
-		planner.query(start, goal, GraphicsIterations, firstInvocation);
-		firstInvocation = false;
-	};
-	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
-#else
-	planner.query(start, goal);
-	planner.dfpairs();
-#endif
+	go_COMMON<Planner, Workspace, Agent>(planner, workspace, agent, start, goal);
 }
 
 template<class Workspace, class Agent>
@@ -58,20 +66,7 @@ void go_RRTConnect(const InstanceFileMap &args, const Agent &agent, const Worksp
 	TreeInterface treeInterface(kdtree, sampler);
 	Planner planner(workspace, agent, treeInterface, args);
 
-#ifdef WITHGRAPHICS
-	bool firstInvocation = true;
-	auto lambda = [&]() {
-		workspace.draw();
-		agent.drawMesh(start);
-		agent.drawMesh(goal);
-		planner.query(start, goal, GraphicsIterations, firstInvocation);
-		firstInvocation = false;
-	};
-	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
-#else
-	planner.query(start, goal);
-	planner.dfpairs();
-#endif
+	go_COMMON<Planner, Workspace, Agent>(planner, workspace, agent, start, goal);
 }
 
 template<class Workspace, class Agent>
@@ -93,7 +88,7 @@ void go_PPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &w
 
 	typedef LazyPRMLite<Workspace, Agent> PRMLite;
 	typedef PlakuTreeInterface<Workspace, Agent, PRMLite> PlakuTreeInterfaceT;
-	typedef RRT<Workspace, Agent, PlakuTreeInterfaceT> Plaku;
+	typedef RRT<Workspace, Agent, PlakuTreeInterfaceT> Planner;
 
 	unsigned int numberOfPRMVertices = stol(args.value("Number Of PRM Vertices"));
 	unsigned int numberOfNearestNeighborEdgeConsiderations = stol(args.value("Nearest Neighbors To Consider In PRM Edge Construction"));
@@ -107,25 +102,9 @@ void go_PPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &w
 
 	PlakuTreeInterfaceT plakuTreeInterface(workspace, agent, prmLite, start, goal, alpha, b, stateRadius);
 
-	Plaku planner(workspace, agent, plakuTreeInterface, args);
-#ifdef WITHGRAPHICS
-	bool firstInvocation = true;
-	auto lambda = [&]() {
-		plakuTreeInterface.draw();
-		workspace.draw();
-		agent.drawMesh(start);
-		agent.drawMesh(goal);
-
-		// plakuTreeInterface.draw();
-
-		planner.query(start, goal, GraphicsIterations, firstInvocation);
-		firstInvocation = false;
-	};
-	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
-#else
-	planner.query(start, goal);
-	planner.dfpairs();
-#endif
+	Planner planner(workspace, agent, plakuTreeInterface, args);
+	
+	go_COMMON<Planner, Workspace, Agent>(planner, workspace, agent, start, goal);
 }
 
 template<class Workspace, class Agent>
@@ -152,20 +131,7 @@ void go_SST(const InstanceFileMap &args, const Agent &agent, const Workspace &wo
 	TreeInterface treeInterface(workspace, agent, kdtree, sampler, sstRadius, sstResize);
 	Planner planner(workspace, agent, treeInterface, args);
 
-#ifdef WITHGRAPHICS
-	bool firstInvocation = true;
-	auto lambda = [&]() {
-		workspace.draw();
-		agent.drawMesh(start);
-		agent.drawMesh(goal);
-		planner.query(start, goal, GraphicsIterations, firstInvocation);
-		firstInvocation = false;
-	};
-	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
-#else
-	planner.query(start, goal);
-	planner.dfpairs();
-#endif
+	go_COMMON<Planner, Workspace, Agent>(planner, workspace, agent, start, goal);
 }
 
 template<class Workspace, class Agent>
@@ -192,20 +158,39 @@ void go_SSTGrid(const InstanceFileMap &args, const Agent &agent, const Workspace
 	TreeInterface treeInterface(workspace, agent, kdtree, sampler, sstRadius, sstResize);
 	Planner planner(workspace, agent, treeInterface, args);
 
-#ifdef WITHGRAPHICS
-	bool firstInvocation = true;
-	auto lambda = [&]() {
-		workspace.draw();
-		agent.drawMesh(start);
-		agent.drawMesh(goal);
-		planner.query(start, goal, GraphicsIterations, firstInvocation);
-		firstInvocation = false;
-	};
-	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
-#else
-	planner.query(start, goal);
-	planner.dfpairs();
-#endif
+	go_COMMON<Planner, Workspace, Agent>(planner, workspace, agent, start, goal);
+}
+
+template<class Workspace, class Agent>
+void go_SSTGridPPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+                   const typename Agent::State &start, const typename Agent::State &goal) {
+	dfpair(stdout, "planner", "%s", "SST Grid + PPRM");
+
+	typedef LazyPRMLite<Workspace, Agent> PRMLite;
+	typedef PlakuTreeInterface<Workspace, Agent, PRMLite> PlakuTreeInterfaceT;
+	typedef SST_Grid<Workspace, Agent, PlakuTreeInterfaceT, PlakuTreeInterfaceT> SSTTreeInterface;
+	typedef RRT<Workspace, Agent, SSTTreeInterface> Planner;
+
+	unsigned int numberOfPRMVertices = stol(args.value("Number Of PRM Vertices"));
+	unsigned int numberOfNearestNeighborEdgeConsiderations = stol(args.value("Nearest Neighbors To Consider In PRM Edge Construction"));
+	double prmCollisionCheckDT = args.doubleVal("PRM Collision Check DT");
+
+	PRMLite prmLite(workspace, agent, numberOfPRMVertices, numberOfNearestNeighborEdgeConsiderations, prmCollisionCheckDT);
+
+	double alpha = args.doubleVal("Plaku Alpha Value");
+	double b = args.doubleVal("Plaku b Value");
+	double stateRadius = args.doubleVal("Plaku PRM State Selection Radius");
+
+	PlakuTreeInterfaceT plakuTreeInterface(workspace, agent, prmLite, start, goal, alpha, b, stateRadius);
+
+	double sstRadius = args.doubleVal("SST Radius");
+	double sstResize = args.doubleVal("SST Resize Threshold");
+
+	SSTTreeInterface sstTreeInterface(workspace, agent, plakuTreeInterface, plakuTreeInterface, sstRadius, sstResize);
+	
+	Planner planner(workspace, agent, sstTreeInterface, args);
+	
+	go_COMMON<Planner, Workspace, Agent>(planner, workspace, agent, start, goal);
 }
 
 template<class Workspace, class Agent>
@@ -227,6 +212,8 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 		go_SST<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("SST Grid") == 0) {
 		go_SSTGrid<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("SST + PPRM") == 0) {
+		go_SSTGridPPRM<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else {
 		fprintf(stderr, "unreocognized planner: %s\n", planner.c_str());
 	}

@@ -361,6 +361,7 @@ public:
 		Edge(const State &s) : start(s),
 							   end(s),
 							   duration(0),
+							   g(0),
 							   parent(NULL) {
 		}
 
@@ -368,6 +369,7 @@ public:
 				: start(std::move(start)),
 				  end(std::move(end)),
 				  cost(cost),
+				  g(0),
 				  treeIndex(0),
 				  duration(duration),
 				  control(std::move(control)),
@@ -383,16 +385,22 @@ public:
 		Edge &operator=(Edge &&) = default;
 
 		double gCost() const {
-			return 0;
+			return g;
+		}
+
+		void updateParent(Edge* p) {
+			parent = p;
+			g = p->gCost() + cost;
 		}
 
 		void print() {
 			start.print();
 			end.print();
 		}
-
+#ifdef WITHGRAPHICS
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
 		}
+#endif
 
 		/* needed for being inserted into NN datastructure */
 		const StateVars &getTreeStateVars() const {
@@ -412,7 +420,7 @@ public:
 		}
 
 		State start, end;
-		double cost, duration;
+		double cost, duration, g;
 		int treeIndex;
 		Edge *parent;
 		Control control;
@@ -513,6 +521,7 @@ public:
 		return State(stateVars);
 	}
 
+#ifdef WITHGRAPHICS
 	void drawMesh() {
 	}
 
@@ -528,7 +537,8 @@ public:
 	void drawSolution(const std::vector<const Edge *> &solution, double dt = std::numeric_limits<
 			double>::infinity()) const {
 	}
-
+#endif
+	
 	WorkspaceBounds getControlBounds() const {
 		return workspaceBounds;
 	}
@@ -622,8 +632,10 @@ public:
 		return !state.hasCollision();
 	}
 
+#ifdef WITHGRAPHICS
 	void draw() const {
 	}
+#endif
 
 private:
 	const int numberOfLinks;

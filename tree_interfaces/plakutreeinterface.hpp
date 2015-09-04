@@ -227,6 +227,12 @@ public:
 		return NULL;
 	}
 
+	void removeFromTree(Edge *edge) {
+		unsigned int cellId = discretization.getCellId(edge->end);
+		regions[cellId]->edgesInRegion->removePoint(edge);
+		uniformSamplerBackingKDTree->removePoint(edge);
+	}
+
 private:
 	void dijkstra(Region *region) {
 		dijkstraRunner.dijkstra(*this, region);

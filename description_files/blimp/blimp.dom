@@ -4,7 +4,9 @@ Agent Type ? Blimp
 Agent Mesh ? ../mesh_models/agent_models/simple_blimp.dxf
 Goal Thresholds ? 0.25 0.25 0.25
 
-Blimp Length ? 0.1
+Blimp Length ? 0.2
+Blimp Radius ? 0.1
+
 Minimum Velocity ? -5
 Maximum Velocity ? 5
 Minimum Turning ? -0.785398
