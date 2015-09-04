@@ -5,15 +5,15 @@ public:
 	typedef std::vector<double> StateVars;
 	typedef std::vector<double> Control;
 
-	typedef std::vector<std::pair<double, double>> WorkspaceBounds;
-	typedef std::vector<std::pair<double, double>> StateVarRanges;
+	typedef std::vector <std::pair<double, double>> WorkspaceBounds;
+	typedef std::vector <std::pair<double, double>> StateVarRanges;
 
 	class State;
 
 	class Edge;
 
 	typedef State AbstractState;
-	typedef std::vector<AbstractState> AbstractEdge;
+	typedef std::vector <AbstractState> AbstractEdge;
 
 	class State {
 	public:
@@ -100,17 +100,17 @@ public:
 
 #endif
 
-		std::vector<State> getTransforms() const {
-			return std::vector<State> {*this};
+		std::vector <State> getTransforms() const {
+			return std::vector < State > {*this};
 		}
 
 		static AbstractEdge generateAbstractEdge(const AbstractState &a, const AbstractState &b, const double dt) {
 			return interpolate(a, b, dt);
 		}
 
-		static std::vector<State> interpolate(const State &a, const State &b, const double dt) {
+		static std::vector <State> interpolate(const State &a, const State &b, const double dt) {
 			const int dimensions = a.getStateVars().size();
-			std::vector<State> intermediateStates;
+			std::vector <State> intermediateStates;
 
 			BOOST_ASSERT(dimensions == b.getStateVars().size());
 			BOOST_ASSERT(dimensions > 0);
@@ -155,8 +155,13 @@ public:
 			return intermediateStates;
 		}
 
-		static State getRandomAbstractState(const std::vector<std::pair<double, double>> &bounds) {
-			return State(bounds.size()); // TODO
+		static State getRandomAbstractState(const std::vector <std::pair<double, double>> &bounds) {
+			for (std::pair<double, double> lowerUpper : bounds) {
+				std::uniform_real_distribution<double> distribution(lowerUpper.first, lowerUpper.second);
+				stateVars.push_back(distribution(GlobalRandomGenerator));
+			}
+
+			return State(stateVars);
 		}
 
 		static double evaluateDistance(const State &rhs, const State &lhs) {
@@ -212,7 +217,7 @@ public:
 			return g;
 		}
 
-		void updateParent(Edge* p) {
+		void updateParent(Edge *p) {
 			parent = p;
 			g = p->gCost() + cost;
 		}
@@ -278,7 +283,7 @@ public:
 		}
 
 		boost::char_separator<char> sep(" ");
-		boost::tokenizer<boost::char_separator<char>> tokens(args.value("Goal Thresholds"), sep);
+		boost::tokenizer <boost::char_separator<char>> tokens(args.value("Goal Thresholds"), sep);
 		for (auto token : tokens) {
 			goalThresholds.push_back(std::stod(token));
 		}
@@ -363,6 +368,7 @@ public:
 	}
 
 #ifdef WITHGRAPHICS
+
 	void drawMesh() {
 	}
 
@@ -378,6 +384,7 @@ public:
 	void drawSolution(const std::vector<const Edge *> &solution, double dt = std::numeric_limits<
 			double>::infinity()) const {
 	}
+
 #endif
 
 	WorkspaceBounds getControlBounds() const {
@@ -431,9 +438,12 @@ public:
 
 		return edge;
 	}
+
 #ifdef WITHGRAPHICS
+
 	void draw() const {
 	}
+
 #endif
 
 private:
@@ -441,6 +451,6 @@ private:
 	std::vector<double> goalThresholds;
 	WorkspaceBounds workspaceBounds; // TODO remove
 
-	std::vector<std::uniform_real_distribution<double>> distributions;
+	std::vector <std::uniform_real_distribution<double>> distributions;
 	mutable std::default_random_engine generator;
 };

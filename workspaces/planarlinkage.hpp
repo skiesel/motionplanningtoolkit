@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../utilities/instancefilemap.hpp"
 #include <vector>
 #include <math.h>
 #include <random>
@@ -343,12 +344,30 @@ public:
 			return intermediateStates;
 		}
 
-		static State getRandomAbstractState(const std::vector<std::pair<double, double> > &bounds) {
-			return State(bounds.size());
+		static State getRandomAbstractState(const std::vector<std::pair<double, double>> &bounds) {
+			for (std::pair<double, double> lowerUpper : bounds) {
+				std::uniform_real_distribution<double> distribution(lowerUpper.first, lowerUpper.second);
+				stateVars.push_back(distribution(GlobalRandomGenerator));
+			}
+
+			return State(stateVars);
 		}
 
 		static double evaluateDistance(const State &a, const State &b) {
-			return 1;
+			const auto rhsStateVars = rhs.getStateVars();
+			const auto lhsStateVars = lhs.getStateVars();
+
+			BOOST_ASSERT_MSG(rhsStateVars.size() == lhsStateVars.size(),
+							 "Cannot evaluate the distance of two states with different dimensionality.");
+
+			const int dimensions = rhsStateVars.size();
+
+			double linearDistance = 0;
+			for (int i = 0; i < dimensions; ++i) {
+				linearDistance += std::abs(rhsStateVars[i] - lhsStateVars[i]);
+			}
+
+			return linearDistance;
 		}
 
 		StateVars treeStateVars;
@@ -388,7 +407,7 @@ public:
 			return g;
 		}
 
-		void updateParent(Edge* p) {
+		void updateParent(Edge *p) {
 			parent = p;
 			g = p->gCost() + cost;
 		}
@@ -397,6 +416,7 @@ public:
 			start.print();
 			end.print();
 		}
+
 #ifdef WITHGRAPHICS
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
 		}
@@ -538,7 +558,7 @@ public:
 			double>::infinity()) const {
 	}
 #endif
-	
+
 	WorkspaceBounds getControlBounds() const {
 		return workspaceBounds;
 	}
@@ -630,6 +650,17 @@ public:
 
 	bool safeState(const State &state) const {
 		return !state.hasCollision();
+	}
+
+	State getRandomAbstractState(const std::vector<std::pair<double, double>> &bounds) {
+		StateVars stateVars;
+
+		for (std::pair<double, double> lowerUpper : bounds) {
+			std::uniform_real_distribution<double> distribution(lowerUpper.first, lowerUpper.second);
+			stateVars.emplace_back(distribution(generator));
+		}
+
+		return State(stateVars); // TODO seed?
 	}
 
 #ifdef WITHGRAPHICS
