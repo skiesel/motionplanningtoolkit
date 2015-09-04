@@ -156,6 +156,7 @@ public:
 		}
 
 		static State getRandomAbstractState(const std::vector <std::pair<double, double>> &bounds) {
+			std::vector<double> stateVars;
 			for (std::pair<double, double> lowerUpper : bounds) {
 				std::uniform_real_distribution<double> distribution(lowerUpper.first, lowerUpper.second);
 				stateVars.push_back(distribution(GlobalRandomGenerator));
