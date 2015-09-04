@@ -35,6 +35,7 @@ public:
 
 		if(agent.isGoal(start, goal)) {
 			dfpair(stdout, "solution cost", "0");
+			dfpair(stdout, "solution length", "0");
 			return;
 		}
 
@@ -83,10 +84,14 @@ public:
 					double newSolutionCost = 0;
 					newSolution.push_back(pool.construct(edge));
 					newSolutionCost += edge.cost;
+					unsigned int edgeCount = 1;
 					while(newSolution.back()->parent != NULL) {
+						edgeCount++;
 						newSolution.push_back(newSolution.back()->parent);
 						newSolutionCost += newSolution.back()->cost;
 					}
+					dfpair(stdout, "solution length", "%u", edgeCount);
+
 					if(solutionCost < 0 || newSolutionCost < solutionCost) {
 						std::reverse(newSolution.begin(), newSolution.end());
 						solution.clear();
