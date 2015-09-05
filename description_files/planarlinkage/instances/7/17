@@ -1,4 +1,4 @@
 Seed ? 17
 Dimensions ? 7
-Agent Start Location ? 2.61799 -1.5708 -0.872665 -1.39626 -1.5708 -1.74533 -2.26893
-Agent Goal Location ? 3.14159 0 0 0 0 0 0
+Agent Start Position ? 2.61799 -1.5708 -0.872665 -1.39626 -1.5708 -1.74533 -2.26893
+Agent Goal Position ? 3.14159 0 0 0 0 0 0
