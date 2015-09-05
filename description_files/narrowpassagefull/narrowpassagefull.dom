@@ -1,1 +1,5 @@
-Domain ? NarrowPassageFull
+Agent Type ? NarrowPassageFull
+Goal Thresholds ? 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1
+
+Steering Delta t ? 0.1
+Collision Check Delta t ? 0.01
