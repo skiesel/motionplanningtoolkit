@@ -3,7 +3,7 @@
 unsigned int GraphicsIterations = 1000;
 
 template<class Planner, class Workspace, class Agent>
-void go_COMMON(Planner &planner,
+void go_COMMON(const InstanceFileMap &args, Planner &planner,
 		const Workspace &workspace, const Agent &agent,
 		const typename Agent::State &start, const typename Agent::State &goal) {
 
@@ -43,7 +43,7 @@ void go_RRT(const InstanceFileMap &args, const Agent &agent, const Workspace &wo
 	TreeInterface treeInterface(kdtree, sampler);
 	Planner planner(workspace, agent, treeInterface, args);
 
-	go_COMMON<Planner, Workspace, Agent>(planner, workspace, agent, start, goal);
+	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
 }
 
 template<class Workspace, class Agent>
@@ -66,7 +66,7 @@ void go_RRTConnect(const InstanceFileMap &args, const Agent &agent, const Worksp
 	TreeInterface treeInterface(kdtree, sampler);
 	Planner planner(workspace, agent, treeInterface, args);
 
-	go_COMMON<Planner, Workspace, Agent>(planner, workspace, agent, start, goal);
+	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
 }
 
 template<class Workspace, class Agent>
@@ -104,7 +104,7 @@ void go_PPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &w
 
 	Planner planner(workspace, agent, plakuTreeInterface, args);
 	
-	go_COMMON<Planner, Workspace, Agent>(planner, workspace, agent, start, goal);
+	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
 }
 
 template<class Workspace, class Agent>
@@ -131,7 +131,7 @@ void go_SST(const InstanceFileMap &args, const Agent &agent, const Workspace &wo
 	TreeInterface treeInterface(workspace, agent, kdtree, sampler, sstRadius, sstResize);
 	Planner planner(workspace, agent, treeInterface, args);
 
-	go_COMMON<Planner, Workspace, Agent>(planner, workspace, agent, start, goal);
+	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
 }
 
 template<class Workspace, class Agent>
@@ -158,7 +158,7 @@ void go_SSTGrid(const InstanceFileMap &args, const Agent &agent, const Workspace
 	TreeInterface treeInterface(workspace, agent, kdtree, sampler, sstRadius, sstResize);
 	Planner planner(workspace, agent, treeInterface, args);
 
-	go_COMMON<Planner, Workspace, Agent>(planner, workspace, agent, start, goal);
+	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
 }
 
 template<class Workspace, class Agent>
@@ -190,7 +190,7 @@ void go_SSTGridPPRM(const InstanceFileMap &args, const Agent &agent, const Works
 	
 	Planner planner(workspace, agent, sstTreeInterface, args);
 	
-	go_COMMON<Planner, Workspace, Agent>(planner, workspace, agent, start, goal);
+	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
 }
 
 template<class Workspace, class Agent>

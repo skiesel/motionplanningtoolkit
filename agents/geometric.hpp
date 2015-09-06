@@ -462,7 +462,7 @@ public:
 	std::vector<double> goalThresholds;
 
 #ifdef WITHGRAPHICS
-	const OpenGLWrapper::Color color;
+	OpenGLWrapper::Color color;
 	mutable State state;
 #endif
 	static std::vector<std::pair<double, double>> NormalizeStateVars;
