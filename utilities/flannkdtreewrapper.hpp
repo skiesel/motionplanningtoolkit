@@ -46,7 +46,7 @@ public:
 		unsigned int index = elem->getPointIndex();
 		if(index == 0) return;
 
-		kdtree.removePoint(index - 1);
+		kdtree.removePoint(index);
 
 		elem->setPointIndex(0);
 		lookup.erase(index);
@@ -88,7 +88,6 @@ public:
 			if(indices[i].size() <= 0) continue;
 
 			for(unsigned int j = 0; j < indices[i].size(); ++j) {
-
 				result.elements.push_back(lookup.at(indices[i][j]).data);
 				result.distances.push_back(distances[i][j]);
 			}
