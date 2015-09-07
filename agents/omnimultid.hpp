@@ -49,7 +49,7 @@ public:
 		}
 
 		void print() const {
-			auto stateVars = getStateVars();
+			const auto &stateVars = getStateVars();
 			for (auto v : stateVars) {
 				fprintf(stderr, "%g ", v);
 			}
@@ -117,12 +117,12 @@ public:
 
 			// Find largest difference
 			double maxDifference = 0;
-			int maxDifferenceIndex = 0;
+//			int maxDifferenceIndex = 0;
 			for (int i = 0; i < dimensions; ++i) {
 				double difference = std::abs(a.getStateVars()[i] - b.getStateVars()[i]);
 				if (difference > maxDifference) {
 					maxDifference = difference;
-					maxDifferenceIndex = i;
+//					maxDifferenceIndex = i;
 				}
 			}
 
@@ -166,8 +166,8 @@ public:
 		}
 
 		static double evaluateDistance(const State &rhs, const State &lhs) {
-			const auto rhsStateVars = rhs.getStateVars();
-			const auto lhsStateVars = lhs.getStateVars();
+			const auto &rhsStateVars = rhs.getStateVars();
+			const auto &lhsStateVars = lhs.getStateVars();
 
 			BOOST_ASSERT_MSG(rhsStateVars.size() == lhsStateVars.size(),
 							 "Cannot evaluate the distance of two states with different dimensionality.");
@@ -235,8 +235,8 @@ public:
 #ifdef WITHGRAPHICS
 
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
-			auto startVars = start.getStateVars();
-			auto endVars = end.getStateVars();
+			const auto &startVars = start.getStateVars();
+			const auto &endVars = end.getStateVars();
 
 			if (startVars.size() > 2) {
 				OpenGLWrapper::getOpenGLWrapper()
@@ -282,14 +282,14 @@ public:
 			workspaceBounds[i].second = 1;
 		}
 
-		auto stateVarDomains = getStateVarRanges(workspaceBounds);
-		for (auto range : stateVarDomains) {
-			distributions.emplace_back(-1, 1);
-		}
+		const auto &stateVarDomains = getStateVarRanges(workspaceBounds);
+		
+		std::uniform_real_distribution<double> distribution(-1, 1);
+		distributions.resize(stateVarDomains.size(), distribution);
 
 		boost::char_separator<char> sep(" ");
 		boost::tokenizer <boost::char_separator<char>> tokens(args.value("Goal Thresholds"), sep);
-		for (auto token : tokens) {
+		for (const auto &token : tokens) {
 			goalThresholds.push_back(std::stod(token));
 		}
 	}
@@ -303,8 +303,8 @@ public:
 	}
 
 	bool isGoal(const State &state, const State &goal) const {
-		auto targetStateVars = state.getStateVars();
-		auto goalStateVars = goal.getStateVars();
+		const auto &targetStateVars = state.getStateVars();
+		const auto &goalStateVars = goal.getStateVars();
 		const int numberOfLinks = targetStateVars.size();
 
 		BOOST_ASSERT_MSG(numberOfLinks == goalStateVars.size(),
@@ -332,7 +332,7 @@ public:
 		double max = 0;
 
 		for (int i = 0; i < dimensions; ++i) {
-			auto distribution = distributions[i];
+			auto &distribution = distributions[i];
 			double v = distribution(GlobalRandomGenerator) * dt;
 
 			max = std::max(max, v);
@@ -340,7 +340,7 @@ public:
 			stateVars[i] = start.getStateVars()[i] + v;
 		}
 
-		const auto newState = buildState(stateVars);
+		State newState = buildState(stateVars);
 		return Edge(start, newState, State::evaluateDistance(start, newState), controls, max);
 	}
 
@@ -362,7 +362,7 @@ public:
 			stateVars[i] = start.getStateVars()[i] + v;
 		}
 
-		const auto newState = buildState(stateVars);
+		State newState = buildState(stateVars);
 		return Edge(start, newState, State::evaluateDistance(start, newState), controls, max);
 	}
 
@@ -399,13 +399,13 @@ public:
 	}
 
 	State getRandomStateNearAbstractState(const AbstractState &state, double radius) const {
-		const auto sourceStateVars = state.getStateVars();
+		const auto &sourceStateVars = state.getStateVars();
 		const int dimensions = sourceStateVars.size();
 		Control controls(dimensions);
 		StateVars stateVars(dimensions);
 
 		for (int i = 0; i < dimensions; ++i) {
-			auto distribution = distributions[i];
+			auto &distribution = distributions[i];
 			double v = distribution(GlobalRandomGenerator);
 			controls[i] = v;
 		}
@@ -451,5 +451,5 @@ private:
 	std::vector<double> goalThresholds;
 	WorkspaceBounds workspaceBounds; // TODO remove
 
-	std::vector <std::uniform_real_distribution<double>> distributions;
+	mutable std::vector <std::uniform_real_distribution<double>> distributions;
 };
