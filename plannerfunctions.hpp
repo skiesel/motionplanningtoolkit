@@ -317,9 +317,6 @@ void planarLinkage(const InstanceFileMap &args) {
 	Agent::State start(startPositionVars);
 	Agent::State goal(goalPositionVars);
 
-	start.print();
-	goal.print();
-
 	go<Workspace, Agent>(args, planarLinkage, planarLinkage, start, goal);
 }
 
@@ -346,9 +343,6 @@ void kink(const InstanceFileMap &args) {
 	Agent::State start(startPositionVars);
 	Agent::State goal(goalPositionVars);
 
-	start.print();
-	goal.print();
-
 	go<Workspace, Agent>(args, workspace, agent, start, goal);
 }
 
@@ -374,9 +368,6 @@ void narrowPassage(const InstanceFileMap &args, const bool scaleObstacles) {
 
 	Agent::State start(startPositionVars);
 	Agent::State goal(goalPositionVars);
-
-	start.print();
-	goal.print();
 
 	go<Workspace, Agent>(args, workspace, agent, start, goal);
 }
