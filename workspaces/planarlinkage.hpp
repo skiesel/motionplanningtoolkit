@@ -293,10 +293,6 @@ public:
 			return std::vector<State> {*this};
 		}
 
-		static AbstractEdge generateAbstractEdge(const AbstractState &a, const AbstractState &b, const double dt) {
-			return interpolate(a, b, dt);
-		}
-
 		static std::vector<State> interpolate(const State &a, const State &b, const double dt) {
 			const int dim = a.getStateVars().size();
 			std::vector<State> intermediateStates;
