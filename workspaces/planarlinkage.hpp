@@ -364,11 +364,15 @@ public:
 			const int dimensions = rhsStateVars.size();
 
 			double linearDistance = 0;
+			double euclideanSum = 0;
+
 			for (int i = 0; i < dimensions; ++i) {
-				linearDistance += std::abs(rhsStateVars[i] - lhsStateVars[i]);
+				double diff = std::abs(rhsStateVars[i] - lhsStateVars[i]);
+				linearDistance += diff;
+				euclideanSum += diff * diff;
 			}
 
-			return linearDistance;
+			return std::sqrt(euclideanSum);
 		}
 
 		StateVars treeStateVars;
@@ -495,24 +499,23 @@ public:
 	}
 
 	Edge randomSteer(const State &start, double dt) const {
-		const int numberOfLinks = start.getStateVars().size();
-		Control controls(numberOfLinks);
-		StateVars stateVars(numberOfLinks);
+		const int dimensions = start.getStateVars().size();
+		Control controls(dimensions);
+		StateVars stateVars(dimensions);
 
-		double sum = 0;
 		double max = 0;
 
-		for (int i = 0; i < numberOfLinks; ++i) {
+		for (int i = 0; i < dimensions; ++i) {
 			auto distribution = distributions[i];
-			double v = distribution(generator) * dt;
+			double v = distribution(GlobalRandomGenerator) * dt;
 
-			sum += v;
 			max = std::max(max, v);
 			controls[i] = v;
 			stateVars[i] = start.getStateVars()[i] + v;
 		}
 
-		return Edge(start, buildState(stateVars), sum, controls, max);
+		const auto newState = buildState(stateVars);
+		return Edge(start, newState, State::evaluateDistance(start, newState), controls, max);
 	}
 
 	Edge steerWithControl(const State &start, const Edge &getControlFromThisEdge, double dt) const {
@@ -525,17 +528,16 @@ public:
 
 		BOOST_ASSERT(numberOfLinks == controls.size());
 
-		double sum = 0;
 		double max = 0;
 
 		for (int i = 0; i < numberOfLinks; ++i) {
 			double v = controls[i];
-			sum += v;
 			max = std::max(max, v);
 			stateVars[i] = start.getStateVars()[i] + v;
 		}
 
-		return Edge(start, buildState(stateVars), sum, controls, max);
+		const auto newState = buildState(stateVars);
+		return Edge(start, newState, State::evaluateDistance(start, newState), controls, max);
 	}
 
 	State buildState(const StateVars &stateVars) const {
@@ -575,25 +577,21 @@ public:
 
 	State getRandomStateNearAbstractState(const AbstractState &state, double radius) const {
 		const auto sourceStateVars = state.getStateVars();
-		const int numberOfLinks = sourceStateVars.size();
-		Control controls(numberOfLinks);
-		StateVars stateVars(numberOfLinks);
+		const int dimensions = sourceStateVars.size();
+		Control controls(dimensions);
+		StateVars stateVars(dimensions);
 
-		double sum = 0;
-		double max = 0;
-
-		for (int i = 0; i < numberOfLinks; ++i) {
+		for (int i = 0; i < dimensions; ++i) {
 			auto distribution = distributions[i];
-			double v = distribution(generator);
-
-			sum += v;
-			max = std::max(max, v);
+			double v = distribution(GlobalRandomGenerator);
 			controls[i] = v;
 		}
 
-		const double ratio = sum < radius ? 1 : radius / sum;
+		State tempState(controls);
+		const double distance = State::evaluateDistance(state, tempState);
+		const double ratio = distance < radius ? 1 : radius / distance; // Not uniform!
 
-		for (int i = 0; i < numberOfLinks; ++i) {
+		for (int i = 0; i < dimensions; ++i) {
 			stateVars[i] = sourceStateVars[i] + controls[i] * ratio;
 		}
 
@@ -618,10 +616,12 @@ public:
 	}
 
 	AbstractEdge generateAbstractEdge(const AbstractState &s1, const AbstractState &s2) const {
-		AbstractEdge edge;
+//		fprintf(stderr, "PlanarLinkage::generateAbstractEdge not implemented\n");
+//		exit(1);
 
-		fprintf(stderr, "PlanarLinkage::generateAbstractEdge not implemented\n");
-		exit(1);
+		std::vector <AbstractState> edge = AbstractState::interpolate(s1, s2, 0.1);
+		// TODO Check whether the edge should include the end points or not
+		// TODO Add dt as parameter
 
 		return edge;
 	}
@@ -658,10 +658,10 @@ public:
 
 		for (std::pair<double, double> lowerUpper : bounds) {
 			std::uniform_real_distribution<double> distribution(lowerUpper.first, lowerUpper.second);
-			stateVars.emplace_back(distribution(generator));
+			stateVars.emplace_back(distribution(GlobalRandomGenerator));
 		}
 
-		return State(stateVars); // TODO seed?
+		return State(stateVars);
 	}
 
 #ifdef WITHGRAPHICS
@@ -675,7 +675,6 @@ private:
 	WorkspaceBounds workspaceBounds;
 
 	std::vector<std::uniform_real_distribution<double> > distributions;
-	mutable std::default_random_engine generator;
 };
 
 
