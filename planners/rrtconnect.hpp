@@ -77,22 +77,20 @@ public:
 				treeEdges.push_back(e);
 #endif
 
-				if(agent.isGoal(edge.end, goal)) {
-					dfpair(stdout, "solution cost", "%g", edge.gCost());
+				if(agent.isGoal(e->end, goal)) {
+					dfpair(stdout, "solution cost", "%g", e->gCost());
 
 					std::vector<const Edge *> newSolution;
-					double newSolutionCost = 0;
-					newSolution.push_back(pool.construct(edge));
-					newSolutionCost += edge.cost;
+					newSolution.push_back(e);
 					unsigned int edgeCount = 1;
 					while(newSolution.back()->parent != NULL) {
 						edgeCount++;
 						newSolution.push_back(newSolution.back()->parent);
-						newSolutionCost += newSolution.back()->cost;
 					}
+
 					dfpair(stdout, "solution length", "%u", edgeCount);
 
-					if(solutionCost < 0 || newSolutionCost < solutionCost) {
+					if(solutionCost < 0 || e->gCost() < solutionCost) {
 						std::reverse(newSolution.begin(), newSolution.end());
 						solution.clear();
 						solution.insert(solution.begin(), newSolution.begin(), newSolution.end());

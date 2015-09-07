@@ -159,10 +159,11 @@ public:
 			edgesRejected++;
 		}
 
-		resultState->agentEdge->parent = state->agentEdge;
+		resultState->agentEdge->updateParent(state->agentEdge);
 
 		if(agent.isGoal(edge.end, *agentGoal)) {
 			goalEdge = new typename Agent::Edge(edge);
+			goalEdge->updateParent(state->agentEdge);
 		}
 	}
 
@@ -219,6 +220,18 @@ public:
 
 		if(goalEdge != NULL) {
 			fprintf(stderr, "found goal\n");
+
+
+			dfpair(stdout, "solution cost", "%g", goalEdge->gCost());
+			std::vector<const typename Agent::Edge *> newSolution;
+			newSolution.push_back(goalEdge);
+
+			unsigned int edgeCount = 1;
+			while(newSolution.back()->parent != NULL) {
+				edgeCount++;
+				newSolution.push_back(newSolution.back()->parent);
+			}
+			dfpair(stdout, "solution length", "%u", edgeCount);
 		}
 	}
 
