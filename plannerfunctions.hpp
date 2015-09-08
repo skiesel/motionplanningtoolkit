@@ -194,6 +194,21 @@ void go_SSTGridPPRM(const InstanceFileMap &args, const Agent &agent, const Works
 }
 
 template<class Workspace, class Agent>
+void go_MRRTPlusS(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+                   const typename Agent::State &start, const typename Agent::State &goal) {
+	dfpair(stdout, "planner", "%s", "MRRT+S");
+
+	typedef SimplePostProcessor<Workspace, Agent> PostProccesor;
+	typedef RestartingRRTWithPostProcessing<Workspace, Agent, PostProccesor> Planner;
+
+	PostProccesor postProccesor(workspace, agent, args);
+
+	Planner planner(workspace, agent, postProccesor, args);
+	
+	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
+}
+
+template<class Workspace, class Agent>
 void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &agent,
         const typename Agent::State &start, const typename Agent::State &goal) {
 	clock_t startT = clock();
@@ -214,6 +229,8 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 		go_SSTGrid<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("SST + PPRM") == 0) {
 		go_SSTGridPPRM<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("MRRT+S") == 0) {
+		go_MRRTPlusS<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else {
 		fprintf(stderr, "unreocognized planner: %s\n", planner.c_str());
 	}

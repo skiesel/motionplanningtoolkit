@@ -171,7 +171,7 @@ public:
 		return goalEdge != NULL;
 	}
 
-	void query(const typename Agent::State &start, const typename Agent::State &goal, int iterationsAtATime = -1, bool firstInvocation = true) {
+	std::vector<const typename Agent::Edge *> query(const typename Agent::State &start, const typename Agent::State &goal, int iterationsAtATime = -1, bool firstInvocation = true) {
 		ompl::base::ScopedState<StateSpace> omplStart(spaceInfoPtr);
 		omplStart->agentEdge = new typename Agent::Edge(start);
 		omplStart->valid = true;
@@ -223,16 +223,21 @@ public:
 
 
 			dfpair(stdout, "solution cost", "%g", goalEdge->gCost());
-			std::vector<const typename Agent::Edge *> newSolution;
-			newSolution.push_back(goalEdge);
+			std::vector<const typename Agent::Edge *> solution;
+			solution.push_back(goalEdge);
 
 			unsigned int edgeCount = 1;
-			while(newSolution.back()->parent != NULL) {
+			while(solution.back()->parent != NULL) {
 				edgeCount++;
-				newSolution.push_back(newSolution.back()->parent);
+				solution.push_back(solution.back()->parent);
 			}
 			dfpair(stdout, "solution length", "%u", edgeCount);
+			return solution;
 		}
+
+		dfpair(stdout, "solution cost", "-1");
+		dfpair(stdout, "solution length", "-1");
+		return std::vector<const typename Agent::Edge *>();
 	}
 
 	void dfpairs() const {

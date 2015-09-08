@@ -22,6 +22,9 @@ std::default_random_engine GlobalRandomGenerator;
 #include "planners/rrt.hpp"
 #include "planners/rrtconnect.hpp"
 #include "planners/kpiece.hpp"
+#include "planners/restartingrrtwithpostprocessing.hpp"
+
+#include "postprocessors/simplepostprocessor.hpp"
 
 #include "samplers/uniformsampler.hpp"
 #include "samplers/normalsampler.hpp"

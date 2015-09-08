@@ -536,6 +536,11 @@ public:
 		return Edge(start, newState, State::evaluateDistance(start, newState), controls, max);
 	}
 
+	Edge constructEdge(const State &start, const State &end) const {
+		fprintf(stderr, "PlanarLinkage::constructEdge not implemented\n");
+		exit(1);
+	}
+
 	State buildState(const StateVars &stateVars) const {
 		return State(stateVars);
 	}

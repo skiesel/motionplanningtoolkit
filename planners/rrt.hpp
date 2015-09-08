@@ -22,7 +22,7 @@ public:
 	}
 
 
-	void query(const State &start, const State &goal, int iterationsAtATime = -1, bool firstInvocation = true) {
+	std::vector<const Edge*> query(const State &start, const State &goal, int iterationsAtATime = -1, bool firstInvocation = true) {
 
 #ifdef WITHGRAPHICS
 		auto green = OpenGLWrapper::Color::Green();
@@ -34,7 +34,7 @@ public:
 		if(agent.isGoal(start, goal)) {
 			dfpair(stdout, "solution cost", "0");
 			dfpair(stdout, "solution length", "0");
-			return;
+			return std::vector<const Edge*>();
 		}
 
 		if(firstInvocation) {
@@ -90,7 +90,7 @@ public:
 					solution.insert(solution.begin(), newSolution.begin(), newSolution.end());
 				}
 
-				break;
+				return solution;
 			}
 
 			bool addedToTree = treeInterface.insertIntoTree(e);
@@ -139,6 +139,10 @@ public:
 		// 	agent.animateSolution(solution);
 		// }
 #endif
+
+		dfpair(stdout, "solution cost", "-1");
+		dfpair(stdout, "solution length", "-1");
+		return std::vector<const Edge*>();
 	}
 
 	void dfpairs() const {
