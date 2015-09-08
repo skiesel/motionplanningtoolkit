@@ -1,4 +1,5 @@
-Seed ? 19
-Dimensions ? 8
-Agent Start Position ? 2.61799 -1.5708 -0.872665 -1.39626 -1.39626 -1.39626 -1.74533 -2.18166
-Agent Goal Position ? 3.14159 0 0 0 0 0 0 0
+Seed ?  20
+Dimensions ?  8
+Agent Start Position ?  2.61799 -1.5708 -0.872665 -1.39626 -1.39626 -1.39626 -1.74533 -2.18166
+Agent Goal Position ?  3.14159 0 0 0 0 0 0 0
+Steering Delta t ?  .56568542494923801952
