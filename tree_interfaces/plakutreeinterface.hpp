@@ -223,8 +223,10 @@ public:
 	}
 
 	Edge *getTreeEdge(const State &s) const {
-		fatal("Not implemented: PlakuTreeInterface::getTreeEdge");
-		return NULL;
+		Edge edge(s);
+		unsigned int cellId = discretization.getCellId(edge.end);
+		typename KDTree::KNNResult result = regions[cellId]->edgesInRegion->nearest(&edge);
+		return result.elements[0];
 	}
 
 	void removeFromTree(Edge *edge) {
