@@ -315,14 +315,20 @@ class CapsuleHandler : public SimpleAgentMeshHandler {
 public:
 	CapsuleHandler(double radius, double length) {
 		capsule = boost::shared_ptr<fcl::Capsule>(new fcl::Capsule(radius, length));
+		fcl::Vec3f axis(0,1,0);
+		double angle = M_PI / 2.;
+		fcl::Quaternion3f quaternion;
+		quaternion.fromAxisAngle(axis, angle);
+		reorientation = fcl::Transform3f(quaternion);
 	}
 
 	virtual fcl::CollisionObject *getMeshPose(const fcl::Transform3f &tf) const {
-		return new fcl::CollisionObject(capsule, tf);
+		return new fcl::CollisionObject(capsule, tf*reorientation);
 	}
 
 private:
 	boost::shared_ptr<fcl::Capsule> capsule;
+	fcl::Transform3f reorientation;
 };
 
 class BoxHandler : public SimpleAgentMeshHandler {
