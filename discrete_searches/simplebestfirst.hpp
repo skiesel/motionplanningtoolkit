@@ -2,32 +2,37 @@
 
 class SimpleBestFirst {
 	struct Node {
-		Node(unsigned int id, double val) : id(id), val(val) {}
+		Node(unsigned int id, double val) : id(id), val(val), heapIndex(std::numeric_limits<unsigned int>::max()) {}
 		
-		static bool HeapCompare(const Node *n1, const Node *n2) {
-			return n1->val < n2->val;
+		int sort(const Node *n) const {
+			return (val - n->val) > 0 ? -1 : 1;
+		}
+		unsigned int getHeapIndex() const {
+			return heapIndex;
+		}
+		void setHeapIndex(unsigned int i) {
+			heapIndex = i;
 		}
 
 		unsigned int id;
 		double val;
+		unsigned int heapIndex;
 	};
 public:
 	SimpleBestFirst() {}
 
 	void insert(unsigned int id, double val) {
-		heap.push_back(new Node(id, val));
-		std::push_heap(heap.begin(), heap.end(), Node::HeapCompare);
+		heap.push(new Node(id, val));
 	}
 
-	unsigned int getBest() {
-		Node *front = heap.front();
-		std::pop_heap(heap.begin(), heap.end(), Node::HeapCompare);
-		heap.pop_back();
-
-		unsigned int id = front->id;
-		delete front;
-		return id;
+	unsigned int peekBest() {
+		return heap.peek()->id;
 	}
 
-	std::vector<Node*> heap;
+	void updateBest(double val) {
+		heap.peek()->val = val;
+		heap.siftFromItem(heap.peek());
+	}
+
+	InPlaceBinaryHeap<Node> heap;
 };

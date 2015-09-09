@@ -6,6 +6,11 @@ std::default_random_engine GlobalRandomGenerator;
 #endif
 
 #include "utilities/math.hpp"
+#include "utilities/flannkdtreewrapper.hpp"
+#include "utilities/instancefilemap.hpp"
+#include "utilities/fcl_helpers.hpp"
+#include "utilities/heap.hpp"
+
 
 #include "workspaces/map3d.hpp"
 #include "workspaces/planarlinkage.hpp"
@@ -42,10 +47,6 @@ std::default_random_engine GlobalRandomGenerator;
 #include "discretizations/workspace/griddiscretization.hpp"
 #include "discretizations/workspace/prmlite.hpp"
 #include "discretizations/workspace/lazyprmlite.hpp"
-
-#include "utilities/flannkdtreewrapper.hpp"
-#include "utilities/instancefilemap.hpp"
-#include "utilities/fcl_helpers.hpp"
 
 #include "plannerfunctions.hpp"
 

@@ -112,7 +112,7 @@ public:
 	}
 
 	Edge* getTreeSample() {
-		return regions[discreteSearch.getBest()]->getSampleFromRegion();
+		return regions[discreteSearch.peekBest()]->getSampleFromRegion();
 	}
 
 	bool insertIntoTree(Edge *edge) {

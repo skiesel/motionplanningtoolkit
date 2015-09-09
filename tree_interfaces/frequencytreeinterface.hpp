@@ -8,11 +8,8 @@ public:
 
 private:
 	struct Node {
-		Node(Edge* e) : edge(e), frequency(0) {}
+		Node(Edge* e) : edge(e), frequency(0), heapIndex(std::numeric_limits<unsigned int>::max()) {}
 
-		Edge* edge;
-
-		unsigned int heapIndex;
 		int sort(const Node *n) const {
 			return (frequency - n->frequency) > 0 ? -1 : 1;
 		}
@@ -23,7 +20,9 @@ private:
 			heapIndex = i;
 		}
 
+		Edge* edge;
 		unsigned int frequency;
+		unsigned int heapIndex;
 	};
 
 public:
