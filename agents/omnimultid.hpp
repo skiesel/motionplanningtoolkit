@@ -80,7 +80,7 @@ public:
 				pt.insert(pt.end(), color.getColor().begin(), color.getColor().end());
 				pt.insert(pt.end(), identity.begin(), identity.end());
 
-				OpenGLWrapper::getOpenGLWrapper().drawPoints(pt);
+				OpenGLWrapper::getOpenGLWrapper().drawPoints(std::move(pt));
 			} else {
 				const auto &identity = OpenGLWrapper::getOpenGLWrapper().getIdentity();
 
@@ -94,7 +94,7 @@ public:
 				pt.insert(pt.end(), color.getColor().begin(), color.getColor().end());
 				pt.insert(pt.end(), identity.begin(), identity.end());
 
-				OpenGLWrapper::getOpenGLWrapper().drawPoints(pt);
+				OpenGLWrapper::getOpenGLWrapper().drawPoints(std::move(pt));
 			}
 		}
 
@@ -104,9 +104,9 @@ public:
 			return std::vector < State > {*this};
 		}
 
-		static AbstractEdge generateAbstractEdge(const AbstractState &a, const AbstractState &b, const double dt) {
-			return interpolate(a, b, dt);
-		}
+//		static AbstractEdge generateAbstractEdge(const AbstractState &a, const AbstractState &b, const double dt) {
+//			return interpolate(a, b, dt);
+//		}
 
 		static std::vector <State> interpolate(const State &a, const State &b, const double dt) {
 			const int dimensions = a.getStateVars().size();
@@ -430,12 +430,7 @@ public:
 	}
 
 	AbstractEdge generateAbstractEdge(const AbstractState &s1, const AbstractState &s2) const {
-//		fprintf(stderr, "OmniMultiD::generateAbstractEdge not implemented\n");
-//		exit(1);
-
-		std::vector <AbstractState> edge = AbstractState::interpolate(s1, s2, 0.1);
-		// TODO Check whether the edge should include the end points or not
-		// TODO Add dt as parameter
+		std::vector <AbstractState> edge = {s1, s2};
 		return edge;
 	}
 
