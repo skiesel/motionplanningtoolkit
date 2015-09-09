@@ -3,6 +3,7 @@
 #include "../utilities/flannkdtreewrapper.hpp"
 #include "../tree_interfaces/treeinterface.hpp"
 #include "../samplers/uniformsampler.hpp"
+#include "../samplers/goalbiassampler.hpp"
 
 template<class Workspace, class Agent, class PostProcessor>
 class RestartingRRTWithPostProcessing {
@@ -18,18 +19,26 @@ public:
 	std::vector<const Edge*> query(const State &start, const State &goal) {
 		typedef flann::KDTreeIndexParams KDTreeType;
 		typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
-		typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
-		typedef TreeInterface<Agent, KDTree, Sampler> TreeInterface;
+		typedef UniformSampler<Workspace, Agent, KDTree> USampler;
+		typedef GoalBiasSampler<Agent, USampler> GBSampler;
+		typedef TreeInterface<Agent, KDTree, GBSampler> TreeInterface;
 		typedef RRT<Workspace, Agent, TreeInterface> Planner;
+
+		double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
+		dfpair(stdout, "goal bias", "%g", goalBias);
 
 		std::vector<const Edge*> best;
 		double bestCost = std::numeric_limits<double>::infinity();
+
 		while(true) {
 
-			KDTreeType kdtreeType(3);
+			KDTreeType kdtreeType(1);
 			KDTree kdtree(kdtreeType, agent.getTreeStateSize());
-			Sampler sampler(workspace, agent, kdtree);
-			TreeInterface treeInterface(kdtree, sampler);
+			USampler uniformsampler(workspace, agent, kdtree);
+
+			GBSampler goalbiassampler(uniformsampler, goal, goalBias);
+
+			TreeInterface treeInterface(kdtree, goalbiassampler);
 			Planner planner(workspace, agent, treeInterface, args);
 
 			std::vector<const Edge*> incumbent = planner.query(start, goal);

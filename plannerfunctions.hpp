@@ -31,16 +31,22 @@ void go_RRT(const InstanceFileMap &args, const Agent &agent, const Workspace &wo
 	// typedef flann::KDTreeSingleIndexParams KDTreeType;
 	typedef flann::KDTreeIndexParams KDTreeType;
 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
-	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
-	typedef TreeInterface<Agent, KDTree, Sampler> TreeInterface;
+	typedef UniformSampler<Workspace, Agent, KDTree> USampler;
+	typedef GoalBiasSampler<Agent, USampler> GBSampler;
+	typedef TreeInterface<Agent, KDTree, GBSampler> TreeInterface;
 	typedef RRT<Workspace, Agent, TreeInterface> Planner;
 
 	/* planner config */
 
-	KDTreeType kdtreeType(3);
+	KDTreeType kdtreeType(1);
 	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
-	Sampler sampler(workspace, agent, kdtree);
-	TreeInterface treeInterface(kdtree, sampler);
+	USampler uniformsampler(workspace, agent, kdtree);
+
+	double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
+	dfpair(stdout, "goal bias", "%g", goalBias);
+
+	GBSampler goalbiassampler(uniformsampler, goal, goalBias);
+	TreeInterface treeInterface(kdtree, goalbiassampler);
 	Planner planner(workspace, agent, treeInterface, args);
 
 	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
@@ -54,16 +60,22 @@ void go_RRTConnect(const InstanceFileMap &args, const Agent &agent, const Worksp
 	// typedef flann::KDTreeSingleIndexParams KDTreeType;
 	typedef flann::KDTreeIndexParams KDTreeType;
 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
-	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
-	typedef TreeInterface<Agent, KDTree, Sampler> TreeInterface;
+	typedef UniformSampler<Workspace, Agent, KDTree> USampler;
+	typedef GoalBiasSampler<Agent, USampler> GBSampler;
+	typedef TreeInterface<Agent, KDTree, GBSampler> TreeInterface;
 	typedef RRTConnect<Workspace, Agent, TreeInterface> Planner;
 
 	/* planner config */
 
-	KDTreeType kdtreeType(2);
+	KDTreeType kdtreeType(1);
 	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
-	Sampler sampler(workspace, agent, kdtree);
-	TreeInterface treeInterface(kdtree, sampler);
+	USampler uniformsampler(workspace, agent, kdtree);
+
+	double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
+	dfpair(stdout, "goal bias", "%g", goalBias);
+
+	GBSampler goalbiassampler(uniformsampler, goal, goalBias);
+	TreeInterface treeInterface(kdtree, goalbiassampler);
 	Planner planner(workspace, agent, treeInterface, args);
 
 	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
@@ -115,20 +127,27 @@ void go_SST(const InstanceFileMap &args, const Agent &agent, const Workspace &wo
 	// typedef flann::KDTreeSingleIndexParams KDTreeType;
 	typedef flann::KDTreeIndexParams KDTreeType;
 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
-	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
-	typedef SST<Workspace, Agent, KDTree, Sampler> TreeInterface;
+	typedef UniformSampler<Workspace, Agent, KDTree> USampler;
+	typedef GoalBiasSampler<Agent, USampler> GBSampler;
+	typedef SST<Workspace, Agent, KDTree, GBSampler> TreeInterface;
 	typedef RRT<Workspace, Agent, TreeInterface> Planner;
 
 	/* planner config */
 
-	KDTreeType kdtreeType(2);
+	KDTreeType kdtreeType(1);
 	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
-	Sampler sampler(workspace, agent, kdtree);
+	USampler uniformsampler(workspace, agent, kdtree);
+
+	double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
+	dfpair(stdout, "goal bias", "%g", goalBias);
+
+	GBSampler goalbiassampler(uniformsampler, goal, goalBias);
+
 
 	double sstRadius = args.doubleVal("SST Radius");
 	double sstResize = args.doubleVal("SST Resize Threshold");
 
-	TreeInterface treeInterface(workspace, agent, kdtree, sampler, sstRadius, sstResize);
+	TreeInterface treeInterface(workspace, agent, kdtree, goalbiassampler, sstRadius, sstResize);
 	Planner planner(workspace, agent, treeInterface, args);
 
 	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
@@ -142,20 +161,26 @@ void go_SSTGrid(const InstanceFileMap &args, const Agent &agent, const Workspace
 	// typedef flann::KDTreeSingleIndexParams KDTreeType;
 	typedef flann::KDTreeIndexParams KDTreeType;
 	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
-	typedef UniformSampler<Workspace, Agent, KDTree> Sampler;
-	typedef SST_Grid<Workspace, Agent, KDTree, Sampler> TreeInterface;
+	typedef UniformSampler<Workspace, Agent, KDTree> USampler;
+	typedef GoalBiasSampler<Agent, USampler> GBSampler;
+	typedef SST_Grid<Workspace, Agent, KDTree, GBSampler> TreeInterface;
 	typedef RRT<Workspace, Agent, TreeInterface> Planner;
 
 	/* planner config */
 
-	KDTreeType kdtreeType(2);
+	KDTreeType kdtreeType(1);
 	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
-	Sampler sampler(workspace, agent, kdtree);
+	USampler uniformsampler(workspace, agent, kdtree);
+
+	double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
+	dfpair(stdout, "goal bias", "%g", goalBias);
+
+	GBSampler goalbiassampler(uniformsampler, goal, goalBias);
 
 	double sstRadius = args.doubleVal("SST Radius");
 	double sstResize = args.doubleVal("SST Resize Threshold");
 
-	TreeInterface treeInterface(workspace, agent, kdtree, sampler, sstRadius, sstResize);
+	TreeInterface treeInterface(workspace, agent, kdtree, goalbiassampler, sstRadius, sstResize);
 	Planner planner(workspace, agent, treeInterface, args);
 
 	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);

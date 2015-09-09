@@ -34,6 +34,7 @@ std::default_random_engine GlobalRandomGenerator;
 #include "samplers/uniformsampler.hpp"
 #include "samplers/normalsampler.hpp"
 #include "samplers/fbiasedsampler.hpp"
+#include "samplers/goalbiassampler.hpp"
 
 #include "discrete_searches/simplebestfirst.hpp"
 
