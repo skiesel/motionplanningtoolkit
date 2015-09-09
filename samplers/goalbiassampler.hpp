@@ -8,9 +8,9 @@ public:
 
 	GoalBiasSampler(BackupSampler &backupSampler, const State &goal, double goalBias) : backupSampler(backupSampler), goal(goal), goalBias(goalBias) {}
 
-	Edge* getTreeSample() const {
+	std::pair<Edge*, State> getTreeSample() const {
 		if(distribution(GlobalRandomGenerator) < goalBias) {
-			return backupSampler.getTreeEdge(goal);
+			return std::make_pair(backupSampler.getTreeEdge(goal), goal);
 		} else {
 			return backupSampler.getTreeSample();
 		}

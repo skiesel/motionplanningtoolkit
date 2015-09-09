@@ -46,15 +46,14 @@ public:
 
 		while(true) {
 
-			Edge* treeSample = treeInterface.getTreeSample();
+			std::pair<Edge*, State> treeSample = treeInterface.getTreeSample();
 			samplesGenerated++;
 
 #ifdef WITHGRAPHICS
-			// treeSample.print();
-			samples.push_back(treeSample->end);
+			samples.push_back(treeSample.second);
 #endif
 
-			auto edge = agent.randomSteer(treeSample->end, steeringDT);
+			auto edge = agent.steer(treeSample.first->end, treeSample.second, steeringDT);
 
 			++iterations;
 
@@ -69,7 +68,7 @@ public:
 			edgesAdded++;
 
 			Edge *e = pool.construct(edge);
-			e->updateParent(treeSample);
+			e->updateParent(treeSample.first);
 
 			if(agent.isGoal(e->end, goal)) {
 

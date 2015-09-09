@@ -486,11 +486,11 @@ public:
 
 		for (int i = 0; i < numberOfLinks; ++i) {
 			difference = targetStateVars[i] - goalStateVars[i];
+
 			if (std::abs(difference) > goalThresholds[i]) {
 				return false;
 			}
 		}
-
 		return true;
 	}
 
@@ -512,6 +512,10 @@ public:
 
 		auto newState = buildState(stateVars);
 		return Edge(start, newState, State::evaluateDistance(start, newState), controls, max);
+	}
+
+	Edge steer(const State &start, const State &goal, double dt) const {
+		return randomSteer(start, dt);
 	}
 
 	Edge steerWithControl(const State &start, const Edge &getControlFromThisEdge, double dt) const {

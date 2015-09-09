@@ -49,17 +49,17 @@ public:
 
 		while(!foundGoal) {
 
-			Edge* treeSample = treeInterface.getTreeSample();
+			std::pair<Edge*, State> treeSample = treeInterface.getTreeSample();
 			samplesGenerated++;
 
 #ifdef WITHGRAPHICS
-			samples.push_back(treeSample->end);
+			samples.push_back(treeSample.second);
 #endif
 
-			auto edge = agent.randomSteer(treeSample->end, steeringDT);
+			auto edge = agent.steer(treeSample.first->end, treeSample.second, steeringDT);
 
 			unsigned int added = 0;
-			Edge *parent = treeSample;
+			Edge *parent = treeSample.first;
 
 			while(added < maxExtensions && workspace.safeEdge(agent, edge, collisionCheckDT)) {
 				added++;

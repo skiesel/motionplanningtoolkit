@@ -16,7 +16,7 @@ public:
 			//manager.removePoint(edge);
 		}
 
-		Edge* getSampleFromRegion() {
+		std::pair<Edge*, State> getSampleFromRegion() {
 			return manager.getTreeSample();
 		}
 
@@ -111,7 +111,7 @@ public:
 		}
 	}
 
-	Edge* getTreeSample() {
+	std::pair<Edge*, State> getTreeSample() {
 		return regions[discreteSearch.peekBest()]->getSampleFromRegion();
 	}
 

@@ -16,7 +16,7 @@ public:
 		workspace(workspace), agent(agent), postProcessor(postProcessor), args(args) {}
 
 
-	std::vector<const Edge*> query(const State &start, const State &goal) {
+	std::vector<const Edge*> query(const State &start, const State &goal, int iterationsAtATime = -1, bool firstInvocation = true) {
 		typedef flann::KDTreeIndexParams KDTreeType;
 		typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
 		typedef UniformSampler<Workspace, Agent, KDTree> USampler;

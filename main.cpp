@@ -84,8 +84,8 @@ int main(int argc, char *argv[]) {
 		planarLinkage(args);
 	// else if(args.value("Agent Type").compare("Dubins") == 0)
 	// 	dubins(args);
-	else if(domain.compare("Snake") == 0)
-		snake(args);
+	// else if(domain.compare("Snake") == 0)
+	// 	snake(args);
 	else if(domain.compare("Kink") == 0)
 		kink(args);
 	else if(domain.compare("NarrowPassageFull") == 0)
@@ -94,8 +94,8 @@ int main(int argc, char *argv[]) {
 		narrowPassage(args, true);
 	else if(domain.compare("Blimp") == 0)
 		blimp(args);
-	else if(domain.compare("Geometric") == 0)
-		geometric(args);
+	// else if(domain.compare("Geometric") == 0)
+	// 	geometric(args);
 	else
 		fprintf(stderr, "unrecognized Agent Type: %s\n", domain.c_str());
 

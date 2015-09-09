@@ -29,11 +29,12 @@ public:
 
 	FrequencyTreeInterface() {}
 
-	Edge* getTreeSample() {
+	std::pair<Edge*, State> getTreeSample() {
 		Node *best = heap.peek();
 		best->frequency++;
 		heap.siftFromItem(best);
-		return best->edge;
+		fprintf(stderr, "FrequencyTreeInterface::getTreeSample returning edge->end as state to steer towards!");
+		return std::make_pair(best->edge, best->edge->end);
 	}
 
 	Edge *getTreeEdge(const State &s) const {

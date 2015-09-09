@@ -328,8 +328,7 @@ public:
 		double max = 0;
 
 		for (int i = 0; i < dimensions; ++i) {
-			auto &distribution = distributions[i];
-			double v = distribution(GlobalRandomGenerator) * dt;
+			double v = distributions[i](GlobalRandomGenerator) * dt;
 
 			max = std::max(max, v);
 			controls[i] = v;
@@ -360,6 +359,27 @@ public:
 
 		State newState = buildState(stateVars);
 		return Edge(start, newState, State::evaluateDistance(start, newState), controls, max);
+	}
+
+	Edge steer(const State &start, const State &goal, double dt) const {
+		double dist = State::evaluateDistance(start, goal);
+		double scale = dt / dist;
+		if(scale > 1) scale = 1;
+
+		const auto &startVars = start.getStateVars();
+		const auto &goalVars = goal.getStateVars();
+		
+		StateVars stateVars(startVars.size());
+		Control controls(startVars.size());
+
+		for (int i = 0; i < startVars.size(); ++i) {
+			double diff = goalVars[i] - startVars[i];
+			controls[i] = diff * scale;
+			stateVars[i] = startVars[i] + controls[i];
+		}
+
+		State newState = buildState(stateVars);
+		return Edge(start, newState, State::evaluateDistance(start, newState), controls, scale * dt);
 	}
 
 	Edge constructEdge(const State &start, const State &end) const {

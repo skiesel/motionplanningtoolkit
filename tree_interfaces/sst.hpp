@@ -32,7 +32,7 @@ public:
 		witnessInterface(KDTreeType(), agent.getTreeStateSize()), radius(startingRadius), resizeThreshold(resizeThreshold),
 		history(historySize), historyIndex(0), historyFails(0), historyFilled(false) {}
 
-	Edge* getTreeSample() {
+	std::pair<Edge*, State> getTreeSample() {
 		return queryInterface.getTreeSample();
 	}
 
