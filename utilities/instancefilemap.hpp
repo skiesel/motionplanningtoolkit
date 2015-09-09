@@ -66,7 +66,7 @@ public:
 		return stod(map.at(key));
 	}
 
-	double integerVal(const std::string &key) const {
+	int integerVal(const std::string &key) const {
 		if(!exists(key)) {
 			fprintf(stderr, "Key \"%s\" not bound\n", key.c_str());
 			exit(1);

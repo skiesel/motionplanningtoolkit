@@ -16,9 +16,11 @@ public:
 		samplesGenerated(0), edgesAdded(0), edgesRejected(0) {
 		steeringDT = args.doubleVal("Steering Delta t");
 		collisionCheckDT = args.doubleVal("Collision Check Delta t");
+		goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
 
 		dfpair(stdout, "steering dt", "%g", steeringDT);
 		dfpair(stdout, "collision check dt", "%g", collisionCheckDT);
+		dfpair(stdout, "goal bias", "%g", goalBias);
 	}
 
 
@@ -40,13 +42,14 @@ public:
 		if(firstInvocation) {
 			auto root = pool.construct(start);
 			treeInterface.insertIntoTree(root);
+			goalSample = pool.construct(goal);
 		}
 
 		unsigned int iterations = 0;
 
 		while(true) {
 
-			Edge* treeSample = treeInterface.getTreeSample();
+			Edge* treeSample = useGoalSample() ? goalSample : treeInterface.getTreeSample();
 			samplesGenerated++;
 
 #ifdef WITHGRAPHICS
@@ -152,6 +155,10 @@ public:
 	}
 
 private:
+	bool useGoalSample() {
+		return goalSampling(GlobalRandomGenerator) < goalBias;
+	}
+
 	const Workspace &workspace;
 	const Agent &agent;
 	TreeInterface &treeInterface;
@@ -160,8 +167,10 @@ private:
 	std::vector<const Edge *> treeEdges;
 	std::vector<State> samples;
 	double solutionCost;
-	double steeringDT, collisionCheckDT;
+	double steeringDT, collisionCheckDT, goalBias;
 	int poseNumber;
 
 	unsigned int samplesGenerated, edgesAdded, edgesRejected;
+	std::uniform_real_distribution<double> goalSampling;
+	Edge *goalSample;
 };
