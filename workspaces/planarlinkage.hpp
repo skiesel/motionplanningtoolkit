@@ -517,7 +517,24 @@ public:
 	}
 
 	Edge steer(const State &start, const State &goal, double dt) const {
-		return randomSteer(start, dt);
+		double dist = State::evaluateDistance(start, goal);
+		double scale = dt / dist; // TODO Bence: This is inconsistent!
+		if(scale > 1) scale = 1;
+
+		const auto &startVars = start.getStateVars();
+		const auto &goalVars = goal.getStateVars();
+
+		StateVars stateVars(startVars.size());
+		Control controls(startVars.size());
+
+		for (int i = 0; i < startVars.size(); ++i) {
+			double diff = goalVars[i] - startVars[i];
+			controls[i] = diff * scale;
+			stateVars[i] = startVars[i] + controls[i];
+		}
+
+		State newState = buildState(stateVars);
+		return Edge(start, newState, State::evaluateDistance(start, newState), controls, scale * dt);
 	}
 
 	Edge steerWithControl(const State &start, const Edge &getControlFromThisEdge, double dt) const {

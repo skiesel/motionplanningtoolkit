@@ -108,6 +108,7 @@ public:
 			const int dimensions = a.getStateVars().size();
 			std::vector <State> intermediateStates;
 
+//			std::cerr << "Dim: " << dimensions << std::endl << " VarSize: "<< b.getStateVars().size() << std::endl;
 			BOOST_ASSERT(dimensions == b.getStateVars().size());
 			BOOST_ASSERT(dimensions > 0);
 
@@ -279,7 +280,7 @@ public:
 		}
 
 		const auto &stateVarDomains = getStateVarRanges(workspaceBounds);
-		
+
 		std::uniform_real_distribution<double> distribution(-1, 1);
 		distributions.resize(stateVarDomains.size(), distribution);
 
@@ -322,30 +323,14 @@ public:
 
 	Edge randomSteer(const State &start, double dt) const {
 		const int dimensions = start.getStateVars().size();
-		Control controls(dimensions);
 		StateVars stateVars(dimensions);
 
-		double max = 0;
-
 		for (int i = 0; i < dimensions; ++i) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-			auto &distribution = distributions[i];
-			double v = distribution(GlobalRandomGenerator) * dt;
-=======
-			double v = distributions[i](GlobalRandomGenerator) * dt;
->>>>>>> skiesel/master
-=======
-			double v = distributions[i](GlobalRandomGenerator) * dt;
->>>>>>> skiesel/master
-
-			max = std::max(max, v);
-			controls[i] = v;
+			double v = distributions[i](GlobalRandomGenerator);
 			stateVars[i] = start.getStateVars()[i] + v;
 		}
 
-		State newState = buildState(stateVars);
-		return Edge(start, newState, State::evaluateDistance(start, newState), controls, max);
+		return steer(start, State(std::move(stateVars)), dt);
 	}
 
 	Edge steerWithControl(const State &start, const Edge &getControlFromThisEdge, double dt) const {
@@ -366,40 +351,32 @@ public:
 			stateVars[i] = start.getStateVars()[i] + v;
 		}
 
-		State newState = buildState(stateVars);
-		return Edge(start, newState, State::evaluateDistance(start, newState), controls, max);
+		return steer(start, State(std::move(stateVars)), dt);
 	}
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> skiesel/master
 	Edge steer(const State &start, const State &goal, double dt) const {
-		double dist = State::evaluateDistance(start, goal);
-		double scale = dt / dist;
-		if(scale > 1) scale = 1;
+		const double dist = State::evaluateDistance(start, goal);
+		const double ratio = dt / dist;
+		const double scale = std::min(ratio, 1.0);
 
 		const auto &startVars = start.getStateVars();
 		const auto &goalVars = goal.getStateVars();
-		
-		StateVars stateVars(startVars.size());
-		Control controls(startVars.size());
+		const int dimensions = startVars.size();
 
-		for (int i = 0; i < startVars.size(); ++i) {
+		BOOST_ASSERT(goalVars.size() == dimensions);
+
+		StateVars stateVars(dimensions);
+		Control controls(dimensions);
+
+		for (int i = 0; i < dimensions; ++i) {
 			double diff = goalVars[i] - startVars[i];
 			controls[i] = diff * scale;
 			stateVars[i] = startVars[i] + controls[i];
 		}
 
-		State newState = buildState(stateVars);
-		return Edge(start, newState, State::evaluateDistance(start, newState), controls, scale * dt);
+		return Edge(start, buildState(std::move(stateVars)), dist * scale, controls, dist * scale);
 	}
 
-<<<<<<< HEAD
->>>>>>> skiesel/master
-=======
->>>>>>> skiesel/master
 	Edge constructEdge(const State &start, const State &end) const {
 		fprintf(stderr, "OmniMultiD::constructEdge not implemented\n");
 		exit(1);
@@ -469,7 +446,12 @@ public:
 	}
 
 	AbstractEdge generateAbstractEdge(const AbstractState &s1, const AbstractState &s2) const {
-		std::vector <AbstractState> edge = {s1, s2};
+//		fprintf(stderr, "OmniMultiD::generateAbstractEdge not implemented\n");
+//		exit(1);
+
+		std::vector <AbstractState> edge = AbstractState::interpolate(s1, s2, 0.1);
+		// TODO Check whether the edge should include the end points or not
+		// TODO Add dt as parameter
 		return edge;
 	}
 
