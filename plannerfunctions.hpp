@@ -194,6 +194,46 @@ void go_SSTGridPPRM(const InstanceFileMap &args, const Agent &agent, const Works
 }
 
 template<class Workspace, class Agent>
+void go_MRRTPlusS(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+                   const typename Agent::State &start, const typename Agent::State &goal) {
+	dfpair(stdout, "planner", "%s", "MRRT+S");
+
+	typedef SimplePostProcessor<Workspace, Agent> PostProccesor;
+	typedef RestartingRRTWithPostProcessing<Workspace, Agent, PostProccesor> Planner;
+
+	PostProccesor postProccesor(workspace, agent, args);
+
+	Planner planner(workspace, agent, postProccesor, args);
+	
+	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
+}
+
+template<class Workspace, class Agent>
+void go_NewSearch(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+                   const typename Agent::State &start, const typename Agent::State &goal) {
+	dfpair(stdout, "planner", "%s", "NewSearch");
+	
+	typedef FrequencyTreeInterface<Agent> RegionManager;
+	typedef LazyPRMLite<Workspace, Agent> PRMLite;
+	typedef NewTreeInterface<Workspace, Agent, PRMLite, SimpleBestFirst, RegionManager> TreeInterface;
+	typedef RRT<Workspace, Agent, TreeInterface> Planner;
+
+	unsigned int numberOfPRMVertices = stol(args.value("Number Of PRM Vertices"));
+	unsigned int numberOfNearestNeighborEdgeConsiderations = stol(args.value("Nearest Neighbors To Consider In PRM Edge Construction"));
+	double prmCollisionCheckDT = args.doubleVal("PRM Collision Check DT");
+
+	PRMLite prmLite(workspace, agent, numberOfPRMVertices, numberOfNearestNeighborEdgeConsiderations, prmCollisionCheckDT);
+
+	SimpleBestFirst discreteSearch;
+
+	TreeInterface treeInterface(workspace, agent, prmLite, discreteSearch, start, goal);
+
+	Planner planner(workspace, agent, treeInterface, args);
+
+	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
+}
+
+template<class Workspace, class Agent>
 void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &agent,
         const typename Agent::State &start, const typename Agent::State &goal) {
 	clock_t startT = clock();
@@ -214,6 +254,10 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 		go_SSTGrid<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("SST + PPRM") == 0) {
 		go_SSTGridPPRM<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("MRRT+S") == 0) {
+		go_MRRTPlusS<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("MRRT+S") == 0) {
+		go_NewSearch<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else {
 		fprintf(stderr, "unreocognized planner: %s\n", planner.c_str());
 	}
@@ -317,9 +361,6 @@ void planarLinkage(const InstanceFileMap &args) {
 	Agent::State start(startPositionVars);
 	Agent::State goal(goalPositionVars);
 
-	start.print();
-	goal.print();
-
 	go<Workspace, Agent>(args, planarLinkage, planarLinkage, start, goal);
 }
 
@@ -346,9 +387,6 @@ void kink(const InstanceFileMap &args) {
 	Agent::State start(startPositionVars);
 	Agent::State goal(goalPositionVars);
 
-	start.print();
-	goal.print();
-
 	go<Workspace, Agent>(args, workspace, agent, start, goal);
 }
 
@@ -374,9 +412,6 @@ void narrowPassage(const InstanceFileMap &args, const bool scaleObstacles) {
 
 	Agent::State start(startPositionVars);
 	Agent::State goal(goalPositionVars);
-
-	start.print();
-	goal.print();
 
 	go<Workspace, Agent>(args, workspace, agent, start, goal);
 }

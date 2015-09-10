@@ -354,6 +354,11 @@ public:
 		return Edge(start, end, dt, a, w, z);
 	}
 
+	Edge constructEdge(const State &start, const State &end) const {
+		fprintf(stderr, "Blimp::constructEdge not implemented\n");
+		exit(1);
+	}
+
 	std::vector<const SimpleAgentMeshHandler *> getMeshes() const {
 		std::vector<const SimpleAgentMeshHandler *> meshes(1, &mesh);
 		return meshes;

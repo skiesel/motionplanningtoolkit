@@ -22,15 +22,22 @@ std::default_random_engine GlobalRandomGenerator;
 #include "planners/rrt.hpp"
 #include "planners/rrtconnect.hpp"
 #include "planners/kpiece.hpp"
+#include "planners/restartingrrtwithpostprocessing.hpp"
+
+#include "postprocessors/simplepostprocessor.hpp"
 
 #include "samplers/uniformsampler.hpp"
 #include "samplers/normalsampler.hpp"
 #include "samplers/fbiasedsampler.hpp"
 
+#include "discrete_searches/simplebestfirst.hpp"
+
 #include "tree_interfaces/treeinterface.hpp"
 #include "tree_interfaces/plakutreeinterface.hpp"
 #include "tree_interfaces/sst.hpp"
 #include "tree_interfaces/sst_grid.hpp"
+#include "tree_interfaces/frequencytreeinterface.hpp"
+#include "tree_interfaces/newtreeinterface.hpp"
 
 #include "discretizations/workspace/griddiscretization.hpp"
 #include "discretizations/workspace/prmlite.hpp"
@@ -42,33 +49,34 @@ std::default_random_engine GlobalRandomGenerator;
 
 #include "plannerfunctions.hpp"
 
-std::vector<double> parseDoubles(const std::string &str) {
-	std::vector<double> values;
-	boost::char_separator<char> sep(" ");
-	boost::tokenizer< boost::char_separator<char> > tokens(str, sep);
-	for(auto token : tokens) {
-		values.push_back(std::stod(token));
-	}
-	return values;
-}
-
 int main(int argc, char *argv[]) {
 	if(argc < 2) {
 		fprintf(stderr, "no instance file provided!\n");
 		exit(1);
 	}
 
-	InstanceFileMap args(argv[1]);
-	for(unsigned int i = 2; i < argc; ++i) {
+	InstanceFileMap args;
+	std::string instFileList;
+
+	for(unsigned int i = 1; i < argc; ++i) {
 		args.append(argv[i]);
+		instFileList += std::string(argv[i]) + ";";
 	}
 
-	GlobalRandomGenerator.seed(args.doubleVal("Seed"));
-	ompl::RNG::setSeed(args.doubleVal("Seed"));
+	double seed = args.doubleVal("Seed");
+
+	GlobalRandomGenerator.seed(seed);
+	ompl::RNG::setSeed(seed);
 
 	dfheader(stdout);
 
+	dfpair(stdout, "Instance File List", "%s", instFileList.c_str());
+
+	dfpair(stdout, "Seed", "%g", seed);
+
 	std::string domain = args.value("Agent Type");
+
+	dfpair(stdout, "Agent Type", "%s", domain.c_str());
 
 	if(domain.compare("PlanarLinkage") == 0)
 		planarLinkage(args);

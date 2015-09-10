@@ -1,5 +1,4 @@
 Agent Type ? Kink
 Goal Thresholds ? 0.01 0.01 0.01 0.01 0.01
 
-Steering Delta t ? 0.1
 Collision Check Delta t ? 0.01

@@ -45,7 +45,7 @@ public:
 	}
 
 	bool safeStates(const Agent &agent, const std::vector<State> &states) const {
-		for (auto state : states) {
+		for (const auto &state : states) {
 			if (!safeAbstractState(agent, state)) {
 				return false;
 			}
@@ -55,7 +55,7 @@ public:
 	}
 
 	bool safeAbstractStates(const Agent &agent, const std::vector<AbstractState> &states) const {
-		for (auto state : states) {
+		for (const auto &state : states) {
 			if (!safeAbstractState(agent, state)) {
 				return false;
 			}
@@ -69,7 +69,7 @@ public:
 	}
 
 	bool safeAbstractState(const Agent &agent, const AbstractState &state) const {
-		auto stateVars = state.getTreeStateVars();
+		const auto &stateVars = state.getTreeStateVars();
 		BOOST_ASSERT_MSG(stateVars.size() > 1, "Number of dimensions must be more than 1.");
 
 		if (!inBounds(stateVars)) {

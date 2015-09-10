@@ -1,4 +1,5 @@
-Seed ? 13
+Seed ? 14
+Steering Delta t ?  .34641016151377545870
 Dimensions ? 3
 Width ? 0.01
-Thickness ?
+Thickness ? 0.1
