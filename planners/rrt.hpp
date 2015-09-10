@@ -68,23 +68,10 @@ public:
 			edgesAdded++;
 
 			Edge *e = pool.construct(edge);
-<<<<<<< HEAD
-<<<<<<< HEAD
-			e->updateParent(treeSample);
-
-			if(agent.isGoal(e->end, goal)) {
-
-=======
-=======
->>>>>>> skiesel/master
 			e->updateParent(treeSample.first);
 
 			if(agent.isGoal(e->end, goal)) {
 
-<<<<<<< HEAD
->>>>>>> skiesel/master
-=======
->>>>>>> skiesel/master
 				dfpair(stdout, "solution cost", "%g", e->gCost());
 				std::vector<const Edge *> newSolution;
 				newSolution.push_back(e);
