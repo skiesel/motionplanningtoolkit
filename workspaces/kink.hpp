@@ -113,7 +113,7 @@ public:
 		// Left vertical path
 		if (std::abs(0.25 - x) < halfWidth) {
 			// first section from the top || second section
-			return y > 0.75 + halfWidth || (y < 0.5 + halfWidth && y > 0.25 - halfWidth);
+			return y > 0.75 - halfWidth || (y < 0.5 + halfWidth && y > 0.25 - halfWidth);
 		}
 
 		// x is on the middle path check whether y is on one of the three horizontal paths
