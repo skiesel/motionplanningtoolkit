@@ -419,8 +419,10 @@ public:
 		}
 
 #ifdef WITHGRAPHICS
+
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
 		}
+
 #endif
 
 		/* needed for being inserted into NN datastructure */
@@ -515,7 +517,24 @@ public:
 	}
 
 	Edge steer(const State &start, const State &goal, double dt) const {
-		return randomSteer(start, dt);
+		double dist = State::evaluateDistance(start, goal);
+		double scale = dt / dist; // TODO Bence: This is inconsistent!
+		if(scale > 1) scale = 1;
+
+		const auto &startVars = start.getStateVars();
+		const auto &goalVars = goal.getStateVars();
+
+		StateVars stateVars(startVars.size());
+		Control controls(startVars.size());
+
+		for (int i = 0; i < startVars.size(); ++i) {
+			double diff = goalVars[i] - startVars[i];
+			controls[i] = diff * scale;
+			stateVars[i] = startVars[i] + controls[i];
+		}
+
+		State newState = buildState(stateVars);
+		return Edge(start, newState, State::evaluateDistance(start, newState), controls, scale * dt);
 	}
 
 	Edge steerWithControl(const State &start, const Edge &getControlFromThisEdge, double dt) const {
@@ -550,6 +569,7 @@ public:
 	}
 
 #ifdef WITHGRAPHICS
+
 	void drawMesh() {
 	}
 
@@ -565,6 +585,7 @@ public:
 	void drawSolution(const std::vector<const Edge *> &solution, double dt = std::numeric_limits<
 			double>::infinity()) const {
 	}
+
 #endif
 
 	WorkspaceBounds getControlBounds() const {
@@ -621,18 +642,16 @@ public:
 	}
 
 	AbstractEdge generateAbstractEdge(const AbstractState &s1, const AbstractState &s2) const {
-//		fprintf(stderr, "PlanarLinkage::generateAbstractEdge not implemented\n");
-//		exit(1);
-
-		std::vector <AbstractState> edge = AbstractState::interpolate(s1, s2, 0.1);
-		// TODO Check whether the edge should include the end points or not
-		// TODO Add dt as parameter
-
+		std::vector<AbstractState> edge = {s1, s2};
 		return edge;
 	}
 
 	bool safeAbstractEdge(const PlanarLinkage &agent, const AbstractEdge &edge, double dt) const {
-		return safeStates(edge);
+		auto intermediateStates = PlanarLinkage::State::interpolate(edge[0], edge[1], dt);
+		intermediateStates.push_back(edge[0]);
+		intermediateStates.push_back(edge[1]);
+
+		return safeStates(agent, intermediateStates);
 	}
 
 	bool safeStates(const PlanarLinkage &agent, const std::vector<State> &states) const {
@@ -670,8 +689,10 @@ public:
 	}
 
 #ifdef WITHGRAPHICS
+
 	void draw() const {
 	}
+
 #endif
 
 private:
