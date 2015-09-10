@@ -178,7 +178,7 @@ public:
 		discretization.draw(true, false, colorLookup);
 	}
 
-	Edge* getTreeSample() {
+	std::pair<Edge*, State> getTreeSample() {
 		if(activeRegion != NULL) {
 			activeRegion->selected(alpha);
 
@@ -201,7 +201,7 @@ public:
 			unsigned int regionAlongPath = activeRegion->getRandomRegionAlongPathToGoal(distribution);
 			State p = discretization.getRandomStateNearRegionCenter(regionAlongPath, stateRadius);
 
-			return activeRegion->getNearestEdgeInRegion(p);
+			return std::make_pair(activeRegion->getNearestEdgeInRegion(p), p);
 		} else {
 			return uniformSampler->getTreeSample();
 		}

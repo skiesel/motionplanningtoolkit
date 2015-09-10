@@ -8,7 +8,7 @@ public:
 	TreeInterface(InsertionInteface &insertionInterface, QueryInterface &queryInterface) :
 		insertionInterface(insertionInterface), queryInterface(queryInterface) {}
 
-	Edge* getTreeSample() {
+	std::pair<Edge*, State> getTreeSample() {
 		return queryInterface.getTreeSample();
 	}
 

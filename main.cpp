@@ -6,6 +6,11 @@ std::default_random_engine GlobalRandomGenerator;
 #endif
 
 #include "utilities/math.hpp"
+#include "utilities/flannkdtreewrapper.hpp"
+#include "utilities/instancefilemap.hpp"
+#include "utilities/fcl_helpers.hpp"
+#include "utilities/heap.hpp"
+
 
 #include "workspaces/map3d.hpp"
 #include "workspaces/planarlinkage.hpp"
@@ -29,6 +34,9 @@ std::default_random_engine GlobalRandomGenerator;
 #include "samplers/uniformsampler.hpp"
 #include "samplers/normalsampler.hpp"
 #include "samplers/fbiasedsampler.hpp"
+#include "samplers/goalbiassampler.hpp"
+
+#include "discrete_searches/simplebestfirst.hpp"
 
 #include "discrete_searches/simplebestfirst.hpp"
 
@@ -42,10 +50,6 @@ std::default_random_engine GlobalRandomGenerator;
 #include "discretizations/workspace/griddiscretization.hpp"
 #include "discretizations/workspace/prmlite.hpp"
 #include "discretizations/workspace/lazyprmlite.hpp"
-
-#include "utilities/flannkdtreewrapper.hpp"
-#include "utilities/instancefilemap.hpp"
-#include "utilities/fcl_helpers.hpp"
 
 #include "plannerfunctions.hpp"
 
@@ -82,8 +86,8 @@ int main(int argc, char *argv[]) {
 		planarLinkage(args);
 	// else if(args.value("Agent Type").compare("Dubins") == 0)
 	// 	dubins(args);
-	else if(domain.compare("Snake") == 0)
-		snake(args);
+	// else if(domain.compare("Snake") == 0)
+	// 	snake(args);
 	else if(domain.compare("Kink") == 0)
 		kink(args);
 	else if(domain.compare("NarrowPassageFull") == 0)
@@ -92,8 +96,8 @@ int main(int argc, char *argv[]) {
 		narrowPassage(args, true);
 	else if(domain.compare("Blimp") == 0)
 		blimp(args);
-	else if(domain.compare("Geometric") == 0)
-		geometric(args);
+	// else if(domain.compare("Geometric") == 0)
+	// 	geometric(args);
 	else
 		fprintf(stderr, "unrecognized Agent Type: %s\n", domain.c_str());
 

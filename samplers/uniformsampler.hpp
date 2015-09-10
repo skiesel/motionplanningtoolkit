@@ -17,11 +17,11 @@ public:
 		}
 	}
 
-	Edge* getTreeSample() const {
-		auto sample = sampleConfiguration();
-		auto sampleEdge = Edge(sample);
+	std::pair<Edge*, State> getTreeSample() const {
+		State sample = sampleConfiguration();
+		Edge sampleEdge = Edge(sample);
 		typename NN::KNNResult result = nn.nearest(&sampleEdge, 0, 1);
-		return result.elements[0];
+		return std::make_pair(result.elements[0], sample);
 	}
 
 	Edge *getTreeEdge(const State &s) const {

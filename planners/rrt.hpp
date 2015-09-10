@@ -46,15 +46,14 @@ public:
 
 		while(true) {
 
-			Edge* treeSample = treeInterface.getTreeSample();
+			std::pair<Edge*, State> treeSample = treeInterface.getTreeSample();
 			samplesGenerated++;
 
 #ifdef WITHGRAPHICS
-			// treeSample.print();
-			samples.push_back(treeSample->end);
+			samples.push_back(treeSample.second);
 #endif
 
-			auto edge = agent.randomSteer(treeSample->end, steeringDT);
+			auto edge = agent.steer(treeSample.first->end, treeSample.second, steeringDT);
 
 			++iterations;
 
@@ -69,10 +68,17 @@ public:
 			edgesAdded++;
 
 			Edge *e = pool.construct(edge);
+<<<<<<< HEAD
 			e->updateParent(treeSample);
 
 			if(agent.isGoal(e->end, goal)) {
 
+=======
+			e->updateParent(treeSample.first);
+
+			if(agent.isGoal(e->end, goal)) {
+
+>>>>>>> skiesel/master
 				dfpair(stdout, "solution cost", "%g", e->gCost());
 				std::vector<const Edge *> newSolution;
 				newSolution.push_back(e);

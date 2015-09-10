@@ -17,7 +17,7 @@ public:
 			rebuildDiscretizationSizes(discretizationPercent);
 		}
 
-	Edge* getTreeSample() {
+	std::pair<Edge*, State> getTreeSample() {
 		return queryInterface.getTreeSample();
 	}
 

@@ -16,7 +16,11 @@ public:
 			//manager.removePoint(edge);
 		}
 
+<<<<<<< HEAD
 		Edge* getSampleFromRegion() {
+=======
+		std::pair<Edge*, State> getSampleFromRegion() {
+>>>>>>> skiesel/master
 			return manager.getTreeSample();
 		}
 
@@ -111,8 +115,13 @@ public:
 		}
 	}
 
+<<<<<<< HEAD
 	Edge* getTreeSample() {
 		return regions[discreteSearch.getBest()]->getSampleFromRegion();
+=======
+	std::pair<Edge*, State> getTreeSample() {
+		return regions[discreteSearch.peekBest()]->getSampleFromRegion();
+>>>>>>> skiesel/master
 	}
 
 	bool insertIntoTree(Edge *edge) {

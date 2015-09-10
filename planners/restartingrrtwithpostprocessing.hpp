@@ -3,6 +3,10 @@
 #include "../utilities/flannkdtreewrapper.hpp"
 #include "../tree_interfaces/treeinterface.hpp"
 #include "../samplers/uniformsampler.hpp"
+<<<<<<< HEAD
+=======
+#include "../samplers/goalbiassampler.hpp"
+>>>>>>> skiesel/master
 
 template<class Workspace, class Agent, class PostProcessor>
 class RestartingRRTWithPostProcessing {
@@ -15,6 +19,7 @@ public:
 		workspace(workspace), agent(agent), postProcessor(postProcessor), args(args) {}
 
 
+<<<<<<< HEAD
 	std::vector<const Edge*> query(const State &start, const State &goal) {
 		typedef flann::KDTreeIndexParams KDTreeType;
 		typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
@@ -30,6 +35,31 @@ public:
 			KDTree kdtree(kdtreeType, agent.getTreeStateSize());
 			Sampler sampler(workspace, agent, kdtree);
 			TreeInterface treeInterface(kdtree, sampler);
+=======
+	std::vector<const Edge*> query(const State &start, const State &goal, int iterationsAtATime = -1, bool firstInvocation = true) {
+		typedef flann::KDTreeIndexParams KDTreeType;
+		typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
+		typedef UniformSampler<Workspace, Agent, KDTree> USampler;
+		typedef GoalBiasSampler<Agent, USampler> GBSampler;
+		typedef TreeInterface<Agent, KDTree, GBSampler> TreeInterface;
+		typedef RRT<Workspace, Agent, TreeInterface> Planner;
+
+		double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
+		dfpair(stdout, "goal bias", "%g", goalBias);
+
+		std::vector<const Edge*> best;
+		double bestCost = std::numeric_limits<double>::infinity();
+
+		while(true) {
+
+			KDTreeType kdtreeType(1);
+			KDTree kdtree(kdtreeType, agent.getTreeStateSize());
+			USampler uniformsampler(workspace, agent, kdtree);
+
+			GBSampler goalbiassampler(uniformsampler, goal, goalBias);
+
+			TreeInterface treeInterface(kdtree, goalbiassampler);
+>>>>>>> skiesel/master
 			Planner planner(workspace, agent, treeInterface, args);
 
 			std::vector<const Edge*> incumbent = planner.query(start, goal);
