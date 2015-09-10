@@ -329,8 +329,12 @@ public:
 
 		for (int i = 0; i < dimensions; ++i) {
 <<<<<<< HEAD
+<<<<<<< HEAD
 			auto &distribution = distributions[i];
 			double v = distribution(GlobalRandomGenerator) * dt;
+=======
+			double v = distributions[i](GlobalRandomGenerator) * dt;
+>>>>>>> skiesel/master
 =======
 			double v = distributions[i](GlobalRandomGenerator) * dt;
 >>>>>>> skiesel/master
@@ -367,7 +371,10 @@ public:
 	}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> skiesel/master
 	Edge steer(const State &start, const State &goal, double dt) const {
 		double dist = State::evaluateDistance(start, goal);
 		double scale = dt / dist;
@@ -389,6 +396,9 @@ public:
 		return Edge(start, newState, State::evaluateDistance(start, newState), controls, scale * dt);
 	}
 
+<<<<<<< HEAD
+>>>>>>> skiesel/master
+=======
 >>>>>>> skiesel/master
 	Edge constructEdge(const State &start, const State &end) const {
 		fprintf(stderr, "OmniMultiD::constructEdge not implemented\n");

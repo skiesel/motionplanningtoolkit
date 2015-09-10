@@ -37,8 +37,11 @@ std::default_random_engine GlobalRandomGenerator;
 #include "samplers/goalbiassampler.hpp"
 
 #include "discrete_searches/simplebestfirst.hpp"
+<<<<<<< HEAD
 
 #include "discrete_searches/simplebestfirst.hpp"
+=======
+>>>>>>> skiesel/master
 
 #include "tree_interfaces/treeinterface.hpp"
 #include "tree_interfaces/plakutreeinterface.hpp"

@@ -4,6 +4,10 @@
 #include "../tree_interfaces/treeinterface.hpp"
 #include "../samplers/uniformsampler.hpp"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+#include "../samplers/goalbiassampler.hpp"
+>>>>>>> skiesel/master
 =======
 #include "../samplers/goalbiassampler.hpp"
 >>>>>>> skiesel/master
@@ -19,6 +23,7 @@ public:
 		workspace(workspace), agent(agent), postProcessor(postProcessor), args(args) {}
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 	std::vector<const Edge*> query(const State &start, const State &goal) {
 		typedef flann::KDTreeIndexParams KDTreeType;
@@ -36,6 +41,8 @@ public:
 			Sampler sampler(workspace, agent, kdtree);
 			TreeInterface treeInterface(kdtree, sampler);
 =======
+=======
+>>>>>>> skiesel/master
 	std::vector<const Edge*> query(const State &start, const State &goal, int iterationsAtATime = -1, bool firstInvocation = true) {
 		typedef flann::KDTreeIndexParams KDTreeType;
 		typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
@@ -59,6 +66,9 @@ public:
 			GBSampler goalbiassampler(uniformsampler, goal, goalBias);
 
 			TreeInterface treeInterface(kdtree, goalbiassampler);
+<<<<<<< HEAD
+>>>>>>> skiesel/master
+=======
 >>>>>>> skiesel/master
 			Planner planner(workspace, agent, treeInterface, args);
 
