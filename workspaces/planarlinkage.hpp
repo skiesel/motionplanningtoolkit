@@ -287,6 +287,10 @@ public:
 			}
 		}
 
+		void draw2DAbstractEdge(const AbstractState &state, const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
+				
+		}
+
 #endif
 
 		std::vector<State> getTransforms() const {
