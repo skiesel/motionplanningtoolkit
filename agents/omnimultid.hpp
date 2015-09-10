@@ -98,6 +98,30 @@ public:
 			}
 		}
 
+		void draw2DAbstractEdge(const AbstractState &state, const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
+			const auto &identity = OpenGLWrapper::getOpenGLWrapper().getIdentity();
+
+			std::vector<double> line(treeStateVars.begin(), treeStateVars.begin() + 3);
+			line.push_back(1);
+			line.push_back(0);
+			line.push_back(0);
+			line.push_back(1);
+			line.push_back(1);
+			line.insert(line.end(), color.getColor().begin(), color.getColor().end());
+			line.insert(line.end(), identity.begin(), identity.end());
+
+			line.insert(line.end(), state.treeStateVars.begin(), state.treeStateVars.begin() + 3);
+			line.push_back(1);
+			line.push_back(0);
+			line.push_back(0);
+			line.push_back(1);
+			line.push_back(1);
+			line.insert(line.end(), color.getColor().begin(), color.getColor().end());
+			line.insert(line.end(), identity.begin(), identity.end());
+
+			OpenGLWrapper::getOpenGLWrapper().drawLines(line);
+		}
+
 #endif
 
 		std::vector <State> getTransforms() const {
