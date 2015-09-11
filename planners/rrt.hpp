@@ -89,6 +89,9 @@ public:
 					solution.insert(solution.begin(), newSolution.begin(), newSolution.end());
 				}
 
+#ifdef WITHGRAPHICS
+				break;
+#endif
 				return solution;
 			}
 
@@ -112,9 +115,9 @@ public:
 			edge->draw(OpenGLWrapper::Color::Red());
 		}
 
-		for(const State &sample : samples) {
-			sample.draw();
-		}
+		// for(const State &sample : samples) {
+		// 	sample.draw();
+		// }
 
 		if(solution.size() > 0) {
 			auto red = OpenGLWrapper::Color::Red();
@@ -125,6 +128,7 @@ public:
 			// if(poseNumber >= solution.size() * 2) poseNumber = -1;
 			// if(poseNumber >= 0)
 			// 	agent.animateSolution(solution, poseNumber++);
+			return solution;
 		}
 #endif
 
