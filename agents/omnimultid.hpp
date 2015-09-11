@@ -175,7 +175,10 @@ public:
 
 		static State getRandomAbstractState(const std::vector <std::pair<double, double>> &bounds) {
 			std::vector<double> stateVars;
-			for (std::pair<double, double> lowerUpper : bounds) {
+
+			//2 is hardcoded right now, it should be using OmniMultiD::abstractDimensions
+			for (unsigned int i = 0; i < 2; i++) {
+				const auto &lowerUpper = bounds[i];
 				std::uniform_real_distribution<double> distribution(lowerUpper.first, lowerUpper.second);
 				stateVars.push_back(distribution(GlobalRandomGenerator));
 			}
@@ -292,7 +295,7 @@ public:
 		Control control;
 	};
 
-	OmniMultiD(const InstanceFileMap &args) : dimensions(args.integerVal("Dimensions")),
+	OmniMultiD(const InstanceFileMap &args) : dimensions(args.integerVal("Dimensions")), abstractDimensions(2),
 											  workspaceBounds(dimensions) {
 
 		for (int i = 0; i < dimensions; ++i) {
@@ -314,6 +317,10 @@ public:
 
 	unsigned int getTreeStateSize() const {
 		return dimensions;
+	}
+
+	unsigned int getTreeAbstractStateSize() const {
+		return abstractDimensions;
 	}
 
 	StateVarRanges getStateVarRanges(const WorkspaceBounds &bounds) const {
@@ -453,7 +460,7 @@ public:
 
 	AbstractState toAbstractState(const State &s) const {
 		StateVars stateVars = s.getStateVars();
-		stateVars.resize(2);
+		stateVars.resize(abstractDimensions);
 
 		return State(std::move(stateVars));
 	}
@@ -475,7 +482,7 @@ public:
 #endif
 
 private:
-	const int dimensions;
+	const int dimensions, abstractDimensions;
 	std::vector<double> goalThresholds;
 	WorkspaceBounds workspaceBounds; // TODO remove
 	ControlBounds controlBounds;

@@ -98,7 +98,7 @@ void go_PPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &w
              const typename Agent::State &start, const typename Agent::State &goal) {
 	dfpair(stdout, "planner", "%s", "PPRM");
 
-	typedef LazyPRMLite<Workspace, Agent> PRMLite;
+	typedef PRMLite<Workspace, Agent> PRMLite;
 	typedef PlakuTreeInterface<Workspace, Agent, PRMLite> PlakuTreeInterfaceT;
 	typedef RRT<Workspace, Agent, PlakuTreeInterfaceT> Planner;
 
@@ -111,8 +111,10 @@ void go_PPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &w
 	double alpha = args.doubleVal("Plaku Alpha Value");
 	double b = args.doubleVal("Plaku b Value");
 	double stateRadius = args.doubleVal("Plaku PRM State Selection Radius");
+	double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
+	dfpair(stdout, "goal bias", "%g", goalBias);
 
-	PlakuTreeInterfaceT plakuTreeInterface(workspace, agent, prmLite, start, goal, alpha, b, stateRadius);
+	PlakuTreeInterfaceT plakuTreeInterface(workspace, agent, prmLite, start, goal, alpha, b, stateRadius, goalBias);
 
 	Planner planner(workspace, agent, plakuTreeInterface, args);
 	
@@ -205,8 +207,10 @@ void go_SSTGridPPRM(const InstanceFileMap &args, const Agent &agent, const Works
 	double alpha = args.doubleVal("Plaku Alpha Value");
 	double b = args.doubleVal("Plaku b Value");
 	double stateRadius = args.doubleVal("Plaku PRM State Selection Radius");
+	double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
+	dfpair(stdout, "goal bias", "%g", goalBias);
 
-	PlakuTreeInterfaceT plakuTreeInterface(workspace, agent, prmLite, start, goal, alpha, b, stateRadius);
+	PlakuTreeInterfaceT plakuTreeInterface(workspace, agent, prmLite, start, goal, alpha, b, stateRadius, goalBias);
 
 	double sstRadius = args.doubleVal("SST Radius");
 	double sstResize = args.doubleVal("SST Resize Threshold");
@@ -291,86 +295,86 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 	dfpair(stdout, "total time solving time", "%g", (double)(endT-startT) / CLOCKS_PER_SEC);
 }
 
-void blimp(const InstanceFileMap &args) {
-	typedef Blimp Agent;
-	typedef Map3D<Agent> Workspace;
+// void blimp(const InstanceFileMap &args) {
+// 	typedef Blimp Agent;
+// 	typedef Map3D<Agent> Workspace;
 
-	Agent agent(args);
-	Workspace workspace(args);
+// 	Agent agent(args);
+// 	Workspace workspace(args);
 
-	/* start and goal states */
+// 	/* start and goal states */
 
-	auto startPosition = args.doubleList("Agent Start Location");
-	auto startOrientation =  args.doubleList("Agent Start Orientation");
-	fcl::Vec3f axis;
-	double theta;
-	fcl::Quaternion3f startQuaternion(startOrientation[0], startOrientation[1], startOrientation[2], startOrientation[3]);
-	startQuaternion.toAxisAngle(axis, theta);
-	theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
+// 	auto startPosition = args.doubleList("Agent Start Location");
+// 	auto startOrientation =  args.doubleList("Agent Start Orientation");
+// 	fcl::Vec3f axis;
+// 	double theta;
+// 	fcl::Quaternion3f startQuaternion(startOrientation[0], startOrientation[1], startOrientation[2], startOrientation[3]);
+// 	startQuaternion.toAxisAngle(axis, theta);
+// 	theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
 
-	Agent::State start(startPosition[0], startPosition[1], startPosition[2], theta);
+// 	Agent::State start(startPosition[0], startPosition[1], startPosition[2], theta);
 
-	auto goalPosition = args.doubleList("Agent Goal Location");
-	auto goalOrientation = args.doubleList("Agent Goal Orientation");
-	fcl::Quaternion3f goalQuaternion(goalOrientation[0], goalOrientation[1], goalOrientation[2], goalOrientation[3]);
-	goalQuaternion.toAxisAngle(axis, theta);
-	theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
+// 	auto goalPosition = args.doubleList("Agent Goal Location");
+// 	auto goalOrientation = args.doubleList("Agent Goal Orientation");
+// 	fcl::Quaternion3f goalQuaternion(goalOrientation[0], goalOrientation[1], goalOrientation[2], goalOrientation[3]);
+// 	goalQuaternion.toAxisAngle(axis, theta);
+// 	theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
 
-	Agent::State goal(goalPosition[0], goalPosition[1], goalPosition[2], theta);
+// 	Agent::State goal(goalPosition[0], goalPosition[1], goalPosition[2], theta);
 
-	go<Workspace, Agent>(args, workspace, agent, start, goal);
-}
+// 	go<Workspace, Agent>(args, workspace, agent, start, goal);
+// }
 
-void snake(const InstanceFileMap &args) {
-	typedef SnakeTrailers Agent;
-	typedef Map3D<Agent> Workspace;
+// void snake(const InstanceFileMap &args) {
+// 	typedef SnakeTrailers Agent;
+// 	typedef Map3D<Agent> Workspace;
 
-	Agent agent(args);
-	Workspace workspace(args);
+// 	Agent agent(args);
+// 	Workspace workspace(args);
 
-	/* start and goal states */
+// 	/* start and goal states */
 
-	auto startPosition = args.doubleList("Agent Start Location");
-	auto startOrientation =  args.doubleList("Agent Start Orientation");
+// 	auto startPosition = args.doubleList("Agent Start Location");
+// 	auto startOrientation =  args.doubleList("Agent Start Orientation");
 
-	Agent::StateVars startStateVars = startPosition;
-	startStateVars.push_back(0); //linear v
-	startStateVars.push_back(0); //angular v
+// 	Agent::StateVars startStateVars = startPosition;
+// 	startStateVars.push_back(0); //linear v
+// 	startStateVars.push_back(0); //angular v
 
-	startStateVars.insert(startStateVars.end(), startOrientation.begin(), startOrientation.end());
+// 	startStateVars.insert(startStateVars.end(), startOrientation.begin(), startOrientation.end());
 
-	Agent::State start(startStateVars);
+// 	Agent::State start(startStateVars);
 
-	auto goalPosition = args.doubleList("Agent Goal Location");
+// 	auto goalPosition = args.doubleList("Agent Goal Location");
 
-	Agent::State goal(goalPosition);
+// 	Agent::State goal(goalPosition);
 
-	// go<Workspace, Agent>(args, workspace, agent, start, goal);
-}
+// 	// go<Workspace, Agent>(args, workspace, agent, start, goal);
+// }
 
-void geometric(const InstanceFileMap &args) {
-	typedef Geometric Agent;
-	typedef Map3D<Agent> Workspace;
+// void geometric(const InstanceFileMap &args) {
+// 	typedef Geometric Agent;
+// 	typedef Map3D<Agent> Workspace;
 
-	Agent agent(args);
-	Workspace workspace(args);
+// 	Agent agent(args);
+// 	Workspace workspace(args);
 
-	/* start and goal states */
+// 	/* start and goal states */
 
-	auto startPosition = args.doubleList("Agent Start Location");
-	auto startOrientation =  args.doubleList("Agent Start Orientation");
+// 	auto startPosition = args.doubleList("Agent Start Location");
+// 	auto startOrientation =  args.doubleList("Agent Start Orientation");
 
-	Agent::StateVars startStateVars = startPosition;
-	startStateVars.insert(startStateVars.end(), startOrientation.begin(), startOrientation.end());
+// 	Agent::StateVars startStateVars = startPosition;
+// 	startStateVars.insert(startStateVars.end(), startOrientation.begin(), startOrientation.end());
 
-	Agent::State start(startStateVars);
+// 	Agent::State start(startStateVars);
 
-	auto goalPosition = args.doubleList("Agent Goal Location");
+// 	auto goalPosition = args.doubleList("Agent Goal Location");
 
-	Agent::State goal(goalPosition);
+// 	Agent::State goal(goalPosition);
 
-	// go<Workspace, Agent>(args, workspace, agent, start, goal);
-}
+// 	// go<Workspace, Agent>(args, workspace, agent, start, goal);
+// }
 
 void planarLinkage(const InstanceFileMap &args) {
 	typedef PlanarLinkage Agent;

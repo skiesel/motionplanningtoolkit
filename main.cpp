@@ -92,8 +92,8 @@ int main(int argc, char *argv[]) {
 		narrowPassage(args, false);
 	else if(domain.compare("NarrowPassageHalf") == 0)
 		narrowPassage(args, true);
-	else if(domain.compare("Blimp") == 0)
-		blimp(args);
+	// else if(domain.compare("Blimp") == 0)
+	// 	blimp(args);
 	// else if(domain.compare("Geometric") == 0)
 	// 	geometric(args);
 	else

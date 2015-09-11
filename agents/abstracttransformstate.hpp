@@ -30,6 +30,16 @@ public:
 		return sqrt(sum);
 	}
 
+#ifdef WITHGRAPHICS
+	void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
+
+	}
+
+	void draw2DAbstractEdge(const AbstractTransformState &state, const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
+
+	}
+#endif
+
 	fcl::Transform3f transform;
 	std::vector<double> treeStateVars;
 };
