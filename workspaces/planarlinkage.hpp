@@ -502,43 +502,37 @@ public:
 
 	Edge randomSteer(const State &start, double dt) const {
 		const int dimensions = start.getStateVars().size();
-		Control controls(dimensions);
 		StateVars stateVars(dimensions);
 
-		double max = 0;
-
 		for (int i = 0; i < dimensions; ++i) {
-			auto &distribution = distributions[i];
-			double v = distribution(GlobalRandomGenerator) * dt;
-
-			max = std::max(max, v);
-			controls[i] = v;
+			double v = distributions[i](GlobalRandomGenerator);
 			stateVars[i] = start.getStateVars()[i] + v;
 		}
 
-		auto newState = buildState(stateVars);
-		return Edge(start, newState, State::evaluateDistance(start, newState), controls, max);
+		return steer(start, State(std::move(stateVars)), dt);
 	}
 
 	Edge steer(const State &start, const State &goal, double dt) const {
-		double dist = State::evaluateDistance(start, goal);
-		double scale = dt / dist; // TODO Bence: This is inconsistent!
-		if(scale > 1) scale = 1;
+		const double dist = State::evaluateDistance(start, goal);
+		const double ratio = dt / dist;
+		const double scale = std::min(ratio, 1.0);
 
 		const auto &startVars = start.getStateVars();
 		const auto &goalVars = goal.getStateVars();
+		const int dimensions = startVars.size();
 
-		StateVars stateVars(startVars.size());
-		Control controls(startVars.size());
+		BOOST_ASSERT(goalVars.size() == dimensions);
 
-		for (int i = 0; i < startVars.size(); ++i) {
+		StateVars stateVars(dimensions);
+		Control controls(dimensions);
+
+		for (int i = 0; i < dimensions; ++i) {
 			double diff = goalVars[i] - startVars[i];
 			controls[i] = diff * scale;
 			stateVars[i] = startVars[i] + controls[i];
 		}
 
-		State newState = buildState(stateVars);
-		return Edge(start, newState, State::evaluateDistance(start, newState), controls, scale * dt);
+		return Edge(start, buildState(std::move(stateVars)), dist * scale, controls, dist * scale);
 	}
 
 	Edge steerWithControl(const State &start, const Edge &getControlFromThisEdge, double dt) const {
@@ -559,8 +553,7 @@ public:
 			stateVars[i] = start.getStateVars()[i] + v;
 		}
 
-		auto newState = buildState(stateVars);
-		return Edge(start, newState, State::evaluateDistance(start, newState), controls, max);
+		return steer(start, State(std::move(stateVars)), dt);
 	}
 
 	Edge constructEdge(const State &start, const State &end) const {
