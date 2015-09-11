@@ -6,6 +6,7 @@ public:
 	typedef std::vector<double> Control;
 
 	typedef std::vector <std::pair<double, double>> WorkspaceBounds;
+	typedef std::vector <std::pair<double, double>> ControlBounds;
 	typedef std::vector <std::pair<double, double>> StateVarRanges;
 
 	class State;
@@ -123,10 +124,6 @@ public:
 		}
 
 #endif
-
-		std::vector <State> getTransforms() const {
-			return std::vector < State > {*this};
-		}
 
 		static std::vector <State> interpolate(const State &a, const State &b, const double dt) {
 			const int dimensions = a.getStateVars().size();
@@ -306,7 +303,7 @@ public:
 		const auto &stateVarDomains = getStateVarRanges(workspaceBounds);
 
 		std::uniform_real_distribution<double> distribution(-1, 1);
-		distributions.resize(stateVarDomains.size(), distribution);
+		workspaceDistributions.resize(stateVarDomains.size(), distribution);
 
 		boost::char_separator<char> sep(" ");
 		boost::tokenizer <boost::char_separator<char>> tokens(args.value("Goal Thresholds"), sep);
@@ -350,7 +347,7 @@ public:
 		StateVars stateVars(dimensions);
 
 		for (int i = 0; i < dimensions; ++i) {
-			double v = distributions[i](GlobalRandomGenerator);
+			double v = workspaceDistributions[i](GlobalRandomGenerator);
 			stateVars[i] = start.getStateVars()[i] + v;
 		}
 
@@ -439,30 +436,26 @@ public:
 	}
 
 	State getRandomStateNearAbstractState(const AbstractState &state, double radius) const {
-		const auto &sourceStateVars = state.getStateVars();
-		const int dimensions = sourceStateVars.size();
-		Control controls(dimensions);
-		StateVars stateVars(dimensions);
+		StateVars sourceStateVars = state.getStateVars();
+		BOOST_ASSERT_MSG(sourceStateVars.size() == 2, "AbstractState should have exactly 2 dimensions");
 
-		for (int i = 0; i < dimensions; ++i) {
-			auto &distribution = distributions[i];
-			double v = distribution(GlobalRandomGenerator);
-			controls[i] = v;
+		sourceStateVars.resize(dimensions);
+		StateVars targetState(dimensions);
+
+		// Extend the abstract state with random coordinates
+		for (int i = 2; i < dimensions; ++i) {
+			sourceStateVars[i]  = workspaceDistributions[i](GlobalRandomGenerator);
 		}
 
-		State tempState(controls);
-		const double distance = State::evaluateDistance(state, tempState);
-		const double ratio = distance < radius ? 1 : radius / distance; // Not uniform!
-
-		for (int i = 0; i < dimensions; ++i) {
-			stateVars[i] = sourceStateVars[i] + controls[i] * ratio;
-		}
-
-		return State(stateVars);
+		Edge edge = randomSteer(buildState(std::move(sourceStateVars)), radius);
+		return edge.end;
 	}
 
 	AbstractState toAbstractState(const State &s) const {
-		return s;
+		StateVars stateVars = s.getStateVars();
+		stateVars.resize(2);
+
+		return State(std::move(stateVars));
 	}
 
 	inline bool areAbstractEdgesSymmetric() const {
@@ -470,12 +463,7 @@ public:
 	}
 
 	AbstractEdge generateAbstractEdge(const AbstractState &s1, const AbstractState &s2) const {
-//		fprintf(stderr, "OmniMultiD::generateAbstractEdge not implemented\n");
-//		exit(1);
-
-		std::vector <AbstractState> edge = AbstractState::interpolate(s1, s2, 0.1);
-		// TODO Check whether the edge should include the end points or not
-		// TODO Add dt as parameter
+		std::vector<AbstractState> edge = {s1, s2};
 		return edge;
 	}
 
@@ -490,6 +478,8 @@ private:
 	const int dimensions;
 	std::vector<double> goalThresholds;
 	WorkspaceBounds workspaceBounds; // TODO remove
+	ControlBounds controlBounds;
 
-	mutable std::vector <std::uniform_real_distribution<double>> distributions;
+	mutable std::vector <std::uniform_real_distribution<double>> workspaceDistributions;
+	mutable std::vector <std::uniform_real_distribution<double>> controlDistributions;
 };

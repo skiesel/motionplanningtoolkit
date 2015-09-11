@@ -154,7 +154,7 @@ public:
 		this->angle += angle;
 	}
 
-	Planar::LineSegment getSegment() {
+	Planar::LineSegment getSegment() const {
 		return segment;
 	}
 
@@ -179,12 +179,41 @@ public:
 	typedef std::vector<std::pair<double, double> > WorkspaceBounds;
 	typedef std::vector<std::pair<double, double> > StateVarRanges;
 
+	class AbstractState;
 	class State;
-
 	class Edge;
 
-	typedef State AbstractState;
+//	typedef State AbstractState;
 	typedef std::vector<AbstractState> AbstractEdge;
+
+	class AbstractState {
+	public:
+		AbstractState(StateVars endEffectorLocation) : endEffectorLocation(endEffectorLocation) {
+		}
+
+		const StateVars &getTreeStateVars() const {
+			return endEffectorLocation;
+		}
+
+		static AbstractState getRandomAbstractState(const std::vector<std::pair<double, double>> &bounds) {
+//			BOOST_ASSERT_MSG(bounds.size() == 2, "The abstracts state's state variable must be two long!");
+
+			std::vector<double> stateVars;
+			for (int i = 0; i < 2; ++i) {
+				std::uniform_real_distribution<double> distribution(bounds[i].first, bounds[i].second);
+				stateVars.push_back(distribution(GlobalRandomGenerator));
+			}
+
+			return AbstractState(std::move(stateVars));
+		}
+
+		static double evaluateDistance(const AbstractState &lhs, const AbstractState &rhs) {
+			return euclideanDistance(lhs.getTreeStateVars(), rhs.getTreeStateVars());
+		}
+
+	private:
+		StateVars endEffectorLocation;
+	};
 
 	class State {
 	public:
@@ -207,10 +236,6 @@ public:
 		}
 
 		const StateVars &getStateVars() const {
-			return treeStateVars;
-		}
-
-		const StateVars &getTreeStateVars() const {
 			return treeStateVars;
 		}
 
@@ -279,6 +304,14 @@ public:
 			return false;
 		}
 
+		StateVars getEndEffectorLocation() const {
+			const Link &lastLink = links.back();
+			const Planar::PlanarVector &endEffector = lastLink.getSegment().end;
+
+			StateVars endEffectorLocation = {endEffector.x, endEffector.y};
+			return endEffectorLocation;
+		}
+
 #ifdef WITHGRAPHICS
 
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
@@ -292,10 +325,6 @@ public:
 		}
 
 #endif
-
-		std::vector<State> getTransforms() const {
-			return std::vector<State> {*this};
-		}
 
 		static std::vector<State> interpolate(const State &a, const State &b, const double dt) {
 			const int dim = a.getStateVars().size();
@@ -344,35 +373,11 @@ public:
 			return intermediateStates;
 		}
 
-		static State getRandomAbstractState(const std::vector<std::pair<double, double>> &bounds) {
-			std::vector<double> stateVars;
-			for (std::pair<double, double> lowerUpper : bounds) {
-				std::uniform_real_distribution<double> distribution(lowerUpper.first, lowerUpper.second);
-				stateVars.push_back(distribution(GlobalRandomGenerator));
-			}
-
-			return State(stateVars);
-		}
-
 		static double evaluateDistance(const State &lhs, const State &rhs) {
 			const auto &rhsStateVars = rhs.getStateVars();
 			const auto &lhsStateVars = lhs.getStateVars();
 
-			BOOST_ASSERT_MSG(rhsStateVars.size() == lhsStateVars.size(),
-							 "Cannot evaluate the distance of two states with different dimensionality.");
-
-			const int dimensions = rhsStateVars.size();
-
-			double linearDistance = 0;
-			double euclideanSum = 0;
-
-			for (int i = 0; i < dimensions; ++i) {
-				double diff = std::abs(rhsStateVars[i] - lhsStateVars[i]);
-				linearDistance += diff;
-				euclideanSum += diff * diff;
-			}
-
-			return std::sqrt(euclideanSum);
+			return PlanarLinkage::euclideanDistance(rhsStateVars, lhsStateVars);
 		}
 
 		StateVars treeStateVars;
@@ -502,43 +507,37 @@ public:
 
 	Edge randomSteer(const State &start, double dt) const {
 		const int dimensions = start.getStateVars().size();
-		Control controls(dimensions);
 		StateVars stateVars(dimensions);
 
-		double max = 0;
-
 		for (int i = 0; i < dimensions; ++i) {
-			auto &distribution = distributions[i];
-			double v = distribution(GlobalRandomGenerator) * dt;
-
-			max = std::max(max, v);
-			controls[i] = v;
+			double v = distributions[i](GlobalRandomGenerator);
 			stateVars[i] = start.getStateVars()[i] + v;
 		}
 
-		auto newState = buildState(stateVars);
-		return Edge(start, newState, State::evaluateDistance(start, newState), controls, max);
+		return steer(start, State(std::move(stateVars)), dt);
 	}
 
 	Edge steer(const State &start, const State &goal, double dt) const {
-		double dist = State::evaluateDistance(start, goal);
-		double scale = dt / dist; // TODO Bence: This is inconsistent!
-		if(scale > 1) scale = 1;
+		const double dist = State::evaluateDistance(start, goal);
+		const double ratio = dt / dist;
+		const double scale = std::min(ratio, 1.0);
 
 		const auto &startVars = start.getStateVars();
 		const auto &goalVars = goal.getStateVars();
+		const int dimensions = startVars.size();
 
-		StateVars stateVars(startVars.size());
-		Control controls(startVars.size());
+		BOOST_ASSERT(goalVars.size() == dimensions);
 
-		for (int i = 0; i < startVars.size(); ++i) {
+		StateVars stateVars(dimensions);
+		Control controls(dimensions);
+
+		for (int i = 0; i < dimensions; ++i) {
 			double diff = goalVars[i] - startVars[i];
 			controls[i] = diff * scale;
 			stateVars[i] = startVars[i] + controls[i];
 		}
 
-		State newState = buildState(stateVars);
-		return Edge(start, newState, State::evaluateDistance(start, newState), controls, scale * dt);
+		return Edge(start, buildState(std::move(stateVars)), dist * scale, controls, dist * scale);
 	}
 
 	Edge steerWithControl(const State &start, const Edge &getControlFromThisEdge, double dt) const {
@@ -559,8 +558,7 @@ public:
 			stateVars[i] = start.getStateVars()[i] + v;
 		}
 
-		auto newState = buildState(stateVars);
-		return Edge(start, newState, State::evaluateDistance(start, newState), controls, max);
+		return steer(start, State(std::move(stateVars)), dt);
 	}
 
 	Edge constructEdge(const State &start, const State &end) const {
@@ -606,32 +604,48 @@ public:
 	}
 
 	State getRandomStateNearAbstractState(const AbstractState &state, double radius) const {
-		const auto &sourceStateVars = state.getStateVars();
-		const int dimensions = sourceStateVars.size();
-		Control controls(dimensions);
-		StateVars stateVars(dimensions);
+//		const auto &sourceStateVars = state.getTreeStateVars();
+//		const int dimensions = sourceStateVars.size();
+//		Control controls(dimensions);
+//		StateVars stateVars(dimensions);
+//
+//		for (int i = 0; i < dimensions; ++i) {
+//			auto &distribution = distributions[i];
+//			double v = distribution(GlobalRandomGenerator);
+//			controls[i] = v;
+//		}
+//
+//		State tempState(controls);
+//		const double distance = State::evaluateDistance(state, tempState);
+//		const double ratio = distance < radius ? 1 : radius / distance; // Not uniform!
+//
+//		for (int i = 0; i < dimensions; ++i) {
+//			stateVars[i] = sourceStateVars[i] + controls[i] * ratio;
+//		}
 
-		for (int i = 0; i < dimensions; ++i) {
-			auto &distribution = distributions[i];
-			double v = distribution(GlobalRandomGenerator);
-			controls[i] = v;
+		while(true) {
+			auto candidateState = generateRandomState();
+			auto candidateAbstractState = toAbstractState(candidateState);
+			if (AbstractState::evaluateDistance(state, candidateAbstractState) <= radius) {
+				return candidateState;
+			}
 		}
 
-		State tempState(controls);
-		const double distance = State::evaluateDistance(state, tempState);
-		const double ratio = distance < radius ? 1 : radius / distance; // Not uniform!
+	}
 
-		for (int i = 0; i < dimensions; ++i) {
-			stateVars[i] = sourceStateVars[i] + controls[i] * ratio;
+	AbstractState toAbstractState(const State &state) const {
+		return AbstractState(state.getEndEffectorLocation());
+	}
+
+	State generateRandomState() const {
+		StateVars stateVars(numberOfLinks);
+
+		for (int i = 0; i < numberOfLinks; ++i) {
+			stateVars[i] = distributions[i](GlobalRandomGenerator);
 		}
 
-		return State(stateVars);
+		return State(std::move(stateVars));
 	}
-
-	AbstractState toAbstractState(const State &s) const {
-		return s;
-	}
-
 
 	bool safeEdge(const PlanarLinkage &agent, const Edge &edge, double dt, bool checkSelfCollision = false) const {
 		auto intermediateStates = PlanarLinkage::State::interpolate(edge.start, edge.end, dt);
@@ -651,11 +665,12 @@ public:
 	}
 
 	bool safeAbstractEdge(const PlanarLinkage &agent, const AbstractEdge &edge, double dt) const {
-		auto intermediateStates = PlanarLinkage::State::interpolate(edge[0], edge[1], dt);
-		intermediateStates.push_back(edge[0]);
-		intermediateStates.push_back(edge[1]);
-
-		return safeStates(agent, intermediateStates);
+		return true;
+//		auto intermediateStates = PlanarLinkage::State::interpolate(edge[0], edge[1], dt);
+//		intermediateStates.push_back(edge[0]);
+//		intermediateStates.push_back(edge[1]);
+//
+//		return safeStates(agent, intermediateStates);
 	}
 
 	bool safeStates(const PlanarLinkage &agent, const std::vector<State> &states) const {
@@ -674,7 +689,8 @@ public:
 	}
 
 	bool safeAbstractState(const PlanarLinkage &pl, const AbstractState &state) const {
-		return !state.hasCollision();
+		return true;
+//		return !state.hasCollision();
 	}
 
 	bool safeState(const State &state) const {
@@ -690,6 +706,24 @@ public:
 		}
 
 		return State(stateVars);
+	}
+
+	static double euclideanDistance(const StateVars &lhsStateVars, const StateVars &rhsStateVars) {
+		BOOST_ASSERT_MSG(rhsStateVars.size() == lhsStateVars.size(),
+						 "Cannot evaluate the distance of two state vector with different dimensionality.");
+
+		const int dimensions = rhsStateVars.size();
+
+		double linearDistance = 0;
+		double euclideanSum = 0;
+
+		for (int i = 0; i < dimensions; ++i) {
+			double diff = std::abs(rhsStateVars[i] - lhsStateVars[i]);
+			linearDistance += diff;
+			euclideanSum += diff * diff;
+		}
+
+		return std::sqrt(euclideanSum);
 	}
 
 #ifdef WITHGRAPHICS
