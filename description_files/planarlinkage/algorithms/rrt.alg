@@ -1,2 +1,2 @@
 Planner ? RRT
-Goal Bias ? 0.05
+Goal Bias ? 0.9
