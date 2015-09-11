@@ -125,10 +125,6 @@ public:
 
 #endif
 
-		std::vector <State> getTransforms() const {
-			return std::vector < State > {*this};
-		}
-
 		static std::vector <State> interpolate(const State &a, const State &b, const double dt) {
 			const int dimensions = a.getStateVars().size();
 			std::vector <State> intermediateStates;
