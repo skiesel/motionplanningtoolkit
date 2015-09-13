@@ -618,7 +618,7 @@ public:
 			sourceStateVars[i]  = distributions[i](GlobalRandomGenerator);
 		}
 
-		Edge edge = randomSteer(buildState(std::move(sourceStateVars)), radius);
+		Edge edge = randomSteer(buildState(std::move(sourceStateVars)), zeroToOne(GlobalRandomGenerator) * radius);
 		return edge.end;
 	}
 
@@ -732,6 +732,7 @@ private:
 	WorkspaceBounds workspaceBounds;
 
 	mutable std::vector<std::uniform_real_distribution<double> > distributions;
+	mutable std::uniform_real_distribution<double> zeroToOne;
 };
 
 
