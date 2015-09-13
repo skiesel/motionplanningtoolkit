@@ -447,7 +447,6 @@ public:
 		BOOST_ASSERT_MSG(sourceStateVars.size() == 2, "AbstractState should have exactly 2 dimensions");
 
 		sourceStateVars.resize(dimensions);
-		StateVars targetState(dimensions);
 
 		// Extend the abstract state with random coordinates
 		for (int i = 2; i < dimensions; ++i) {

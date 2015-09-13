@@ -183,24 +183,21 @@ public:
 	class State;
 	class Edge;
 
-//	typedef State AbstractState;
 	typedef std::vector<AbstractState> AbstractEdge;
 
 	class AbstractState {
 	public:
-		AbstractState(StateVars endEffectorLocation) : endEffectorLocation(endEffectorLocation) {
-			endEffectorLocation.resize(2);
+		AbstractState(StateVars stateVars) : stateVars(std::move(stateVars)) {
+			stateVars.resize(getTreeAbstractStateSize());
 		}
 
 		const StateVars &getTreeStateVars() const {
-			return endEffectorLocation;
+			return stateVars;
 		}
 
 		static AbstractState getRandomAbstractState(const std::vector<std::pair<double, double>> &bounds) {
-//			BOOST_ASSERT_MSG(bounds.size() == 2, "The abstracts state's state variable must be two long!");
-
 			std::vector<double> stateVars;
-			for (int i = 0; i < 2; ++i) {
+			for (int i = 0; i < getTreeAbstractStateSize(); ++i) {
 				std::uniform_real_distribution<double> distribution(bounds[i].first, bounds[i].second);
 				stateVars.push_back(distribution(GlobalRandomGenerator));
 			}
@@ -213,7 +210,7 @@ public:
 		}
 
 	private:
-		StateVars endEffectorLocation;
+		StateVars stateVars;
 	};
 
 	class State {
@@ -305,13 +302,13 @@ public:
 			return false;
 		}
 
-		StateVars getEndEffectorLocation() const {
-			const Link &lastLink = links.back();
-			const Planar::PlanarVector &endEffector = lastLink.getSegment().end;
-
-			StateVars endEffectorLocation = {endEffector.x, endEffector.y};
-			return endEffectorLocation;
-		}
+//		StateVars getEndEffectorLocation() const {
+//			const Link &lastLink = links.back();
+//			const Planar::PlanarVector &endEffector = lastLink.getSegment().end;
+//
+//			StateVars endEffectorLocation = {endEffector.x, endEffector.y};
+//			return endEffectorLocation;
+//		}
 
 #ifdef WITHGRAPHICS
 
@@ -322,7 +319,7 @@ public:
 		}
 
 		void draw2DAbstractEdge(const AbstractState &state, const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
-				
+
 		}
 
 #endif
@@ -482,7 +479,7 @@ public:
 		return numberOfLinks;
 	}
 
-	unsigned int getTreeAbstractStateSize() const {
+	static unsigned int getTreeAbstractStateSize() {
 		//this should at some point not be a hardcoded value but reference
 		//a reasonable place where it is actually defined....
 		return 2;
@@ -610,37 +607,26 @@ public:
 	}
 
 	State getRandomStateNearAbstractState(const AbstractState &state, double radius) const {
-//		const auto &sourceStateVars = state.getTreeStateVars();
-//		const int dimensions = sourceStateVars.size();
-//		Control controls(dimensions);
-//		StateVars stateVars(dimensions);
-//
-//		for (int i = 0; i < dimensions; ++i) {
-//			auto &distribution = distributions[i];
-//			double v = distribution(GlobalRandomGenerator);
-//			controls[i] = v;
-//		}
-//
-//		State tempState(controls);
-//		const double distance = State::evaluateDistance(state, tempState);
-//		const double ratio = distance < radius ? 1 : radius / distance; // Not uniform!
-//
-//		for (int i = 0; i < dimensions; ++i) {
-//			stateVars[i] = sourceStateVars[i] + controls[i] * ratio;
-//		}
+		StateVars sourceStateVars = state.getTreeStateVars();
+		BOOST_ASSERT_MSG(sourceStateVars.size() == getTreeAbstractStateSize(),
+						 "Invalid abstract state.");
 
-		while(true) {
-			auto candidateState = generateRandomState();
-			auto candidateAbstractState = toAbstractState(candidateState);
-			if (AbstractState::evaluateDistance(state, candidateAbstractState) <= radius) {
-				return candidateState;
-			}
+		sourceStateVars.resize(numberOfLinks);
+
+		// Extend the abstract state with random coordinates
+		for (int i = getTreeAbstractStateSize(); i < numberOfLinks; ++i) {
+			sourceStateVars[i]  = distributions[i](GlobalRandomGenerator);
 		}
 
+		Edge edge = randomSteer(buildState(std::move(sourceStateVars)), radius);
+		return edge.end;
 	}
 
 	AbstractState toAbstractState(const State &state) const {
-		return AbstractState(state.getEndEffectorLocation());
+		StateVars stateVars = state.getStateVars();
+		stateVars.resize(getTreeAbstractStateSize());
+
+		return AbstractState(stateVars);
 	}
 
 	State generateRandomState() const {
@@ -710,6 +696,7 @@ public:
 			std::uniform_real_distribution<double> distribution(lowerUpper.first, lowerUpper.second);
 			stateVars.emplace_back(distribution(GlobalRandomGenerator));
 		}
+		BOOST_ASSERT_MSG(getTreeAbstractStateSize() == stateVars.size(), "Invalid abstract state size");
 
 		return State(stateVars);
 	}
