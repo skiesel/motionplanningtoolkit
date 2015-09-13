@@ -189,6 +189,7 @@ public:
 	class AbstractState {
 	public:
 		AbstractState(StateVars endEffectorLocation) : endEffectorLocation(endEffectorLocation) {
+			endEffectorLocation.resize(2);
 		}
 
 		const StateVars &getTreeStateVars() const {
@@ -471,15 +472,20 @@ public:
 			distributions.emplace_back(range.first, range.second);
 		}
 
-		boost::char_separator<char> sep(" ");
-		boost::tokenizer<boost::char_separator<char> > tokens(args.value("Goal Thresholds"), sep);
+		auto tokens = args.doubleList("Goal Thresholds");
 		for (const auto &token : tokens) {
-			goalThresholds.push_back(std::stod(token));
+			goalThresholds.push_back(token);
 		}
 	}
 
 	unsigned int getTreeStateSize() const {
 		return numberOfLinks;
+	}
+
+	unsigned int getTreeAbstractStateSize() const {
+		//this should at some point not be a hardcoded value but reference
+		//a reasonable place where it is actually defined....
+		return 2;
 	}
 
 	StateVarRanges getStateVarRanges(const WorkspaceBounds &bounds) const {

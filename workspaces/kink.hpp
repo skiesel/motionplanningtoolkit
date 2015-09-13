@@ -43,7 +43,6 @@ public:
 		auto intermediateStates = State::interpolate(edge[0], edge[1], dt);
 		intermediateStates.push_back(edge[0]);
 		intermediateStates.push_back(edge[1]);
-
 		return safeAbstractStates(agent, intermediateStates);
 	}
 

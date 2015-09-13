@@ -5,5 +5,5 @@ ok.log
 fail.log
 data
 sketchup_files
-
+populate.bash
 IGNORE*

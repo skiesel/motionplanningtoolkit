@@ -67,7 +67,7 @@ public:
 	PRMLite(const Workspace &workspace, const Agent &agent, unsigned int numVertices, unsigned int edgeSetSize, double collisionCheckDT, bool shouldGenerateEdges = true)
 		: workspace(workspace),
 		  agent(agent),
-		  kdtree(KDTreeType(agent.getTreeStateSize()), agent.getTreeStateSize()),
+		  kdtree(KDTreeType(agent.getTreeAbstractStateSize()), agent.getTreeAbstractStateSize()),
 		  collisionCheckDT(collisionCheckDT),
 		  collisionChecks(0) {
 		initialize(numVertices, edgeSetSize, shouldGenerateEdges);
@@ -229,40 +229,46 @@ protected:
 #ifdef WITHGRAPHICS
 	void drawOpenGL(bool drawPoints, bool drawLines, const std::vector<std::vector<double>> &colors) const {
 		if(drawPoints) {
-			glPointSize(10);
-			// unsigned int curIndex = 0;
-			// std::vector<double> white(3,1);
-			// for(const auto vert : vertices) {
+			glPointSize(1);
+			unsigned int curIndex = 0;
+			std::vector<double> white(3,1);
+			for(const auto vert : vertices) {
 
-			// 	if(colors.size() == 0) {
-			// 		drawOpenGLPoint(vert->transform.getTranslation(), white);
-			// 		agent.drawMesh(vert->transform);
-			// 	} else {
-			// 		drawOpenGLPoint(vert->transform.getTranslation(), colors[curIndex]);
-			// 		OpenGLWrapper::Color color(colors[curIndex][0], colors[curIndex][1], colors[curIndex][2]);
-			// 		agent.drawMesh(vert->transform, color);
-			// 		curIndex++;
-			// 	}
-			// }
+				if(colors.size() == 0) {
+					vert->state.draw();
+					// agent.drawMesh(vert->transform);
+				} else {
+					OpenGLWrapper::Color color(colors[curIndex][0], colors[curIndex][1], colors[curIndex][2]);
+					vert->state.draw(color);
+					// drawOpenGLPoint(vert->transform.getTranslation(), colors[curIndex]);
+					// OpenGLWrapper::Color color(colors[curIndex][0], colors[curIndex][1], colors[curIndex][2]);
+					// agent.drawMesh(vert->transform, color);
+					curIndex++;
+				}
+			}
 			glPointSize(1);
 		}
 
 		if(drawLines) {
 			OpenGLWrapper::Color color;
 
-			// for(const auto& edgeSet : edges) {
-			// 	std::vector<double> edgeForVrep(6);
-			// 	const auto startVertex = vertices[edgeSet.first];
+			for(const auto& edgeSet : edges) {
+				// std::vector<double> edgeForVrep(6);
+				const auto &start = vertices[edgeSet.first]->state;
 
-			// 	const auto& trans = startVertex->transform.getTranslation();
+				for(const auto& edge : edgeSet.second) {
+					const auto &end = vertices[edge.second.endpoint]->state;
 
-			// 	for(const auto& edge : edgeSet.second) {
-			// 		const auto endVertex = vertices[edge.second.endpoint];
-			// 		const auto& trans2 = endVertex->transform.getTranslation();
+					AbstractEdge edgeCandidate = Agent::AbstractState::interpolate(start, end, collisionCheckDT);
 
-			// 		OpenGLWrapper::getOpenGLWrapper().drawLine(trans[0], trans[1], trans[2], trans2[0], trans2[1], trans2[2], color);
-			// 	}
-			// }
+					for(const auto &s : edgeCandidate) {
+						s.draw();
+					}
+
+					// start.draw2DAbstractEdge(end, color);
+					// OpenGLWrapper::getOpenGLWrapper().drawLine(trans[0], trans[1], trans[2], trans2[0], trans2[1], trans2[2], color);
+				}
+			}
 		}
 	}
 

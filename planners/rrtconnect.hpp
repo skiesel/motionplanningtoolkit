@@ -97,6 +97,10 @@ public:
 						solution.insert(solution.begin(), newSolution.begin(), newSolution.end());
 					}
 					foundGoal = true;
+
+#ifdef WITHGRAPHICS
+					break;
+#endif
 					return solution;
 				}
 
@@ -127,6 +131,7 @@ public:
 			// if(poseNumber >= solution.size() * 2) poseNumber = -1;
 			// if(poseNumber >= 0)
 			// 	agent.animateSolution(solution, poseNumber++);
+			return solution;
 		}
 #endif
 

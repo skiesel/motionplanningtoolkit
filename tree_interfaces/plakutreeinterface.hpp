@@ -117,9 +117,9 @@ class PlakuTreeInterface {
 
 public:
 	PlakuTreeInterface(const Workspace &workspace, const Agent &agent, Discretization &discretization,
-	                   const State &start, const State &goal, double alpha, double b, double stateRadius) : agent(agent), workspace(workspace),
+	                   const State &start, const State &goal, double alpha, double b, double stateRadius, double goalBias) : agent(agent), workspace(workspace),
 		discretization(discretization), startRegionId(discretization.getCellId(start)),
-		goalRegionId(discretization.getCellId(goal)), activeRegion(NULL), alpha(alpha), b(b), stateRadius(stateRadius) {
+		goalRegionId(discretization.getCellId(goal)), activeRegion(NULL), alpha(alpha), b(b), stateRadius(stateRadius), goalBias(goalBias), goal(goal) {
 
 		assert(alpha > 0 && alpha < 1);
 
@@ -175,7 +175,7 @@ public:
 			colorLookup[i] = getColor(min, max, regions[i]->heuristic);
 		}
 
-		discretization.draw(true, false, colorLookup);
+		discretization.draw(true, true, colorLookup);
 	}
 
 	std::pair<Edge*, State> getTreeSample() {
@@ -199,6 +199,11 @@ public:
 			activeRegion->onOpen = false;
 
 			unsigned int regionAlongPath = activeRegion->getRandomRegionAlongPathToGoal(distribution);
+
+			if(regionAlongPath == goalRegionId && distribution(GlobalRandomGenerator) < goalBias) {
+				return std::make_pair(activeRegion->getNearestEdgeInRegion(goal), goal);
+			}
+
 			State p = discretization.getRandomStateNearRegionCenter(regionAlongPath, stateRadius);
 
 			return std::make_pair(activeRegion->getNearestEdgeInRegion(p), p);
@@ -281,6 +286,8 @@ private:
 
 	double alpha, b, stateRadius;
 	std::uniform_real_distribution<double> distribution;
+	double goalBias;
+	const State &goal;
 
 
 
