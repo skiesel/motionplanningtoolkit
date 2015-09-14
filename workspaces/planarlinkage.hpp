@@ -98,7 +98,7 @@ namespace Planar {
 
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
 			OpenGLWrapper::getOpenGLWrapper()
-					.drawLine(begin.x, begin.y, 0, end.x, end.y, 0, OpenGLWrapper::Color::Blue());
+					.drawLine(begin.x, begin.y, 0, end.x, end.y, 0, color);
 		}
 
 #endif
@@ -185,6 +185,9 @@ public:
 
 	typedef std::vector<AbstractState> AbstractEdge;
 
+	typedef flann_helpers::Distance DistanceEvaluator;
+	typedef flann_helpers::Distance AbstractDistanceEvaluator;
+
 	class AbstractState {
 	public:
 		AbstractState(StateVars stateVars) : stateVars(std::move(stateVars)) {
@@ -196,17 +199,31 @@ public:
 		}
 
 		static AbstractState getRandomAbstractState(const std::vector<std::pair<double, double>> &bounds) {
-			std::vector<double> stateVars;
-			for (int i = 0; i < getTreeAbstractStateSize(); ++i) {
+			unsigned int numVars = getTreeAbstractStateSize();
+			std::vector<double> stateVars(numVars);
+			for (int i = 0; i < numVars; ++i) {
 				std::uniform_real_distribution<double> distribution(bounds[i].first, bounds[i].second);
-				stateVars.push_back(distribution(GlobalRandomGenerator));
+				stateVars[i] = distribution(GlobalRandomGenerator);
 			}
 
 			return AbstractState(std::move(stateVars));
 		}
 
+#ifdef WITHGRAPHICS
+
+		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
+			State s(stateVars);
+			s.draw(color);
+		}
+
+		void draw2DAbstractEdge(const AbstractState &state, const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
+
+		}
+
+#endif
+
 		static double evaluateDistance(const AbstractState &lhs, const AbstractState &rhs) {
-			return euclideanDistance(lhs.getTreeStateVars(), rhs.getTreeStateVars());
+			return rotationalDistance(lhs.getTreeStateVars(), rhs.getTreeStateVars());
 		}
 
 	private:
@@ -375,7 +392,7 @@ public:
 			const auto &rhsStateVars = rhs.getStateVars();
 			const auto &lhsStateVars = lhs.getStateVars();
 
-			return PlanarLinkage::euclideanDistance(rhsStateVars, lhsStateVars);
+			return PlanarLinkage::rotationalDistance(rhsStateVars, lhsStateVars);
 		}
 
 		StateVars treeStateVars;
@@ -428,6 +445,7 @@ public:
 #ifdef WITHGRAPHICS
 
 		void draw(const OpenGLWrapper::Color &color = OpenGLWrapper::Color()) const {
+			end.draw();
 		}
 
 #endif
@@ -473,6 +491,16 @@ public:
 		for (const auto &token : tokens) {
 			goalThresholds.push_back(token);
 		}
+	}
+
+	DistanceEvaluator getDistanceEvaluator() const {
+		std::vector<bool> rotationalCoordinate(numberOfLinks, true);
+		return flann_helpers::Distance(rotationalCoordinate);
+	}
+
+	AbstractDistanceEvaluator getAbstractDistanceEvaluator() const {
+		std::vector<bool> rotationalCoordinate(2, true);
+		return flann_helpers::Distance(rotationalCoordinate);
 	}
 
 	unsigned int getTreeStateSize() const {
@@ -682,23 +710,21 @@ public:
 
 	bool safeAbstractState(const PlanarLinkage &pl, const AbstractState &state) const {
 		return true;
-//		return !state.hasCollision();
 	}
 
 	bool safeState(const State &state) const {
 		return !state.hasCollision();
 	}
 
-	State getRandomAbstractState(const std::vector<std::pair<double, double>> &bounds) {
-		StateVars stateVars;
-
-		for (std::pair<double, double> lowerUpper : bounds) {
-			std::uniform_real_distribution<double> distribution(lowerUpper.first, lowerUpper.second);
-			stateVars.emplace_back(distribution(GlobalRandomGenerator));
+	static double rotationalDistance(const StateVars &lhsStateVars, const StateVars &rhsStateVars) {
+		const int dimensions = lhsStateVars.size();
+		double diff, sum = 0;
+		for(unsigned int i = 0; i < dimensions; ++i) {
+			diff = lhsStateVars[i] - rhsStateVars[i];
+			diff += (diff > M_PI) ? -2 * M_PI : (diff < -M_PI) ? 2 * M_PI : 0;
+			sum += diff * diff;
 		}
-		BOOST_ASSERT_MSG(getTreeAbstractStateSize() == stateVars.size(), "Invalid abstract state size");
-
-		return State(stateVars);
+		return sum;
 	}
 
 	static double euclideanDistance(const StateVars &lhsStateVars, const StateVars &rhsStateVars) {

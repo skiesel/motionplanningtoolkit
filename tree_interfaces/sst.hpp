@@ -24,12 +24,12 @@ public:
 	};
 
 	typedef flann::KDTreeSingleIndexParams KDTreeType;
-	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, Witness> KDTree;
+	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, Witness> KDTree;
 
 	SST(const Workspace &workspace, const Agent &agent,
 		InsertionInteface &insertionInterface, QueryInterface &queryInterface, double startingRadius, double resizeThreshold,
 		unsigned int historySize = 100) : insertionInterface(insertionInterface), queryInterface(queryInterface),
-		witnessInterface(KDTreeType(), agent.getTreeStateSize()), radius(startingRadius), resizeThreshold(resizeThreshold),
+		witnessInterface(KDTreeType(), agent.getDistanceEvaluator(), agent.getTreeStateSize()), radius(startingRadius), resizeThreshold(resizeThreshold),
 		history(historySize), historyIndex(0), historyFails(0), historyFilled(false) {}
 
 	std::pair<Edge*, State> getTreeSample() {

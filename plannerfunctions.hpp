@@ -30,7 +30,7 @@ void go_RRT(const InstanceFileMap &args, const Agent &agent, const Workspace &wo
 	dfpair(stdout, "planner", "%s", "RRT");
 	// typedef flann::KDTreeSingleIndexParams KDTreeType;
 	typedef flann::KDTreeIndexParams KDTreeType;
-	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
+	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, typename Agent::Edge> KDTree;
 	typedef UniformSampler<Workspace, Agent, KDTree> USampler;
 	typedef GoalBiasSampler<Agent, USampler> GBSampler;
 	typedef TreeInterface<Agent, KDTree, GBSampler> TreeInterface;
@@ -39,7 +39,7 @@ void go_RRT(const InstanceFileMap &args, const Agent &agent, const Workspace &wo
 	/* planner config */
 
 	KDTreeType kdtreeType(1);
-	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
+	KDTree kdtree(kdtreeType, agent.getDistanceEvaluator(), agent.getTreeStateSize());
 	USampler uniformsampler(workspace, agent, kdtree);
 
 	double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
@@ -59,7 +59,7 @@ void go_RRTConnect(const InstanceFileMap &args, const Agent &agent, const Worksp
 
 	// typedef flann::KDTreeSingleIndexParams KDTreeType;
 	typedef flann::KDTreeIndexParams KDTreeType;
-	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
+	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, typename Agent::Edge> KDTree;
 	typedef UniformSampler<Workspace, Agent, KDTree> USampler;
 	typedef GoalBiasSampler<Agent, USampler> GBSampler;
 	typedef TreeInterface<Agent, KDTree, GBSampler> TreeInterface;
@@ -68,7 +68,7 @@ void go_RRTConnect(const InstanceFileMap &args, const Agent &agent, const Worksp
 	/* planner config */
 
 	KDTreeType kdtreeType(1);
-	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
+	KDTree kdtree(kdtreeType, agent.getDistanceEvaluator(), agent.getTreeStateSize());
 	USampler uniformsampler(workspace, agent, kdtree);
 
 	double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
@@ -117,7 +117,7 @@ void go_PPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &w
 	PlakuTreeInterfaceT plakuTreeInterface(workspace, agent, prmLite, start, goal, alpha, b, stateRadius, goalBias);
 
 	Planner planner(workspace, agent, plakuTreeInterface, args);
-	
+
 	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
 }
 
@@ -128,7 +128,7 @@ void go_SST(const InstanceFileMap &args, const Agent &agent, const Workspace &wo
 
 	// typedef flann::KDTreeSingleIndexParams KDTreeType;
 	typedef flann::KDTreeIndexParams KDTreeType;
-	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
+	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, typename Agent::Edge> KDTree;
 	typedef UniformSampler<Workspace, Agent, KDTree> USampler;
 	typedef GoalBiasSampler<Agent, USampler> GBSampler;
 	typedef SST<Workspace, Agent, KDTree, GBSampler> TreeInterface;
@@ -137,7 +137,7 @@ void go_SST(const InstanceFileMap &args, const Agent &agent, const Workspace &wo
 	/* planner config */
 
 	KDTreeType kdtreeType(1);
-	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
+	KDTree kdtree(kdtreeType, agent.getDistanceEvaluator(), agent.getTreeStateSize());
 	USampler uniformsampler(workspace, agent, kdtree);
 
 	double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
@@ -162,7 +162,7 @@ void go_SSTGrid(const InstanceFileMap &args, const Agent &agent, const Workspace
 
 	// typedef flann::KDTreeSingleIndexParams KDTreeType;
 	typedef flann::KDTreeIndexParams KDTreeType;
-	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
+	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, typename Agent::Edge> KDTree;
 	typedef UniformSampler<Workspace, Agent, KDTree> USampler;
 	typedef GoalBiasSampler<Agent, USampler> GBSampler;
 	typedef SST_Grid<Workspace, Agent, KDTree, GBSampler> TreeInterface;
@@ -171,7 +171,7 @@ void go_SSTGrid(const InstanceFileMap &args, const Agent &agent, const Workspace
 	/* planner config */
 
 	KDTreeType kdtreeType(1);
-	KDTree kdtree(kdtreeType, agent.getTreeStateSize());
+	KDTree kdtree(kdtreeType, agent.getDistanceEvaluator(), agent.getTreeStateSize());
 	USampler uniformsampler(workspace, agent, kdtree);
 
 	double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;

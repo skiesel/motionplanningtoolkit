@@ -17,6 +17,12 @@ class FLANN_KDTreeWrapper {
 public:
 	typedef flann::Index<DistanceMetric> KDTree;
 
+	FLANN_KDTreeWrapper(const KDTreeType &type, const DistanceMetric &d, unsigned int dim) : kdtree(type, d), currentPointIndex(1) {
+		flann::Matrix<double> point(new double[dim], 1, dim);
+		kdtree.buildIndex(point);
+		kdtree.removePoint(0);
+	}
+
 	FLANN_KDTreeWrapper(const KDTreeType &type, unsigned int dim) : kdtree(type), currentPointIndex(1) {
 		flann::Matrix<double> point(new double[dim], 1, dim);
 		kdtree.buildIndex(point);

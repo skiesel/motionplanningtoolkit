@@ -27,7 +27,6 @@ public:
 #ifdef WITHGRAPHICS
 		auto green = OpenGLWrapper::Color::Green();
 		start.draw(green);
-		agent.drawMesh(start);
 		goal.draw(green);
 #endif
 
@@ -114,6 +113,8 @@ public:
 		for(const Edge *edge : treeEdges) {
 			edge->draw(OpenGLWrapper::Color::Red());
 		}
+
+		treeEdges.clear();
 
 		// for(const State &sample : samples) {
 		// 	sample.draw();

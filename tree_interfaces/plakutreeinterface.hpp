@@ -15,13 +15,13 @@ class PlakuTreeInterface {
 	typedef typename Agent::Edge Edge;
 
 	typedef flann::KDTreeSingleIndexParams KDTreeType;
-	typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
+	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, typename Agent::Edge> KDTree;
 	typedef UniformSampler<Workspace, Agent, KDTree> UniformSamplerT;
 
 	struct Region {
 		Region(unsigned int id, const Agent &agent) : heapIndex(std::numeric_limits<unsigned int>::max()), id(id), numSelections(0), heuristic(std::numeric_limits<double>::infinity()), weight(0), onOpen(false) {
 			KDTreeType kdtreeType;
-			edgesInRegion = new KDTree(kdtreeType, agent.getTreeStateSize());
+			edgesInRegion = new KDTree(kdtreeType, agent.getDistanceEvaluator(), agent.getTreeStateSize());
 		}
 
 		~Region() {
@@ -124,7 +124,7 @@ public:
 		assert(alpha > 0 && alpha < 1);
 
 		KDTreeType kdtreeType;
-		uniformSamplerBackingKDTree = new KDTree(kdtreeType, agent.getTreeStateSize());
+		uniformSamplerBackingKDTree = new KDTree(kdtreeType, agent.getDistanceEvaluator(), agent.getTreeStateSize());
 
 		uniformSampler = new UniformSamplerT(workspace, agent, *uniformSamplerBackingKDTree);
 
@@ -175,7 +175,7 @@ public:
 			colorLookup[i] = getColor(min, max, regions[i]->heuristic);
 		}
 
-		discretization.draw(true, true, colorLookup);
+		discretization.draw(true, false, colorLookup);
 	}
 
 	std::pair<Edge*, State> getTreeSample() {
@@ -201,6 +201,7 @@ public:
 			unsigned int regionAlongPath = activeRegion->getRandomRegionAlongPathToGoal(distribution);
 
 			if(regionAlongPath == goalRegionId && distribution(GlobalRandomGenerator) < goalBias) {
+
 				return std::make_pair(activeRegion->getNearestEdgeInRegion(goal), goal);
 			}
 
@@ -324,6 +325,9 @@ private:
 		}
 	};
 
+
+	//There is an issue in this code where some edges are being accepted as valid (because of the laziness)
+	//without ever being collision checked 
 	template<class W, class A>
 	class DijkstraRunner<W, A, LazyPRMLite<Workspace, Agent> > {
 		typedef PlakuTreeInterface<Workspace, Agent, LazyPRMLite<Workspace, Agent> > TheBoss;

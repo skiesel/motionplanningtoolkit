@@ -18,7 +18,7 @@ public:
 
 	std::vector<const Edge*> query(const State &start, const State &goal, int iterationsAtATime = -1, bool firstInvocation = true) {
 		typedef flann::KDTreeIndexParams KDTreeType;
-		typedef FLANN_KDTreeWrapper<KDTreeType, flann::L2<double>, typename Agent::Edge> KDTree;
+		typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, typename Agent::Edge> KDTree;
 		typedef UniformSampler<Workspace, Agent, KDTree> USampler;
 		typedef GoalBiasSampler<Agent, USampler> GBSampler;
 		typedef TreeInterface<Agent, KDTree, GBSampler> TreeInterface;
@@ -33,7 +33,7 @@ public:
 		while(true) {
 
 			KDTreeType kdtreeType(1);
-			KDTree kdtree(kdtreeType, agent.getTreeStateSize());
+			KDTree kdtree(kdtreeType, agent.getDistanceEvaluator(), agent.getTreeStateSize());
 			USampler uniformsampler(workspace, agent, kdtree);
 
 			GBSampler goalbiassampler(uniformsampler, goal, goalBias);

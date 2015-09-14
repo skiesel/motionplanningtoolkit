@@ -16,6 +16,9 @@ public:
 	typedef State AbstractState;
 	typedef std::vector <AbstractState> AbstractEdge;
 
+	typedef flann::L2<double> DistanceEvaluator;
+	typedef flann::L2<double> AbstractDistanceEvaluator;
+
 	class State {
 	public:
 		State(const int dimensions) : treeStateVars(dimensions) {
@@ -313,6 +316,14 @@ public:
 		for (const auto &token : tokens) {
 			goalThresholds.push_back(std::stod(token));
 		}
+	}
+
+	DistanceEvaluator getDistanceEvaluator() const {
+		return DistanceEvaluator();
+	}
+
+	AbstractDistanceEvaluator getAbstractDistanceEvaluator() const {
+		return DistanceEvaluator();
 	}
 
 	unsigned int getTreeStateSize() const {

@@ -9,6 +9,7 @@ std::default_random_engine GlobalRandomGenerator;
 #include "utilities/flannkdtreewrapper.hpp"
 #include "utilities/instancefilemap.hpp"
 #include "utilities/fcl_helpers.hpp"
+#include "utilities/flann_helpers.hpp"
 #include "utilities/heap.hpp"
 
 
