@@ -10,14 +10,14 @@ private:
 	struct Node {
 		Node(Edge* e) : edge(e), frequency(0), heapIndex(std::numeric_limits<unsigned int>::max()) {}
 
-		int sort(const Node *n) const {
-			return (frequency - n->frequency) > 0 ? -1 : 1;
+		static int sort(const Node *a, const Node *b) {
+			return (a->frequency - b->frequency) > 0 ? -1 : 1;
 		}
-		unsigned int getHeapIndex() const {
-			return heapIndex;
+		static unsigned int getHeapIndex(const Node *n) {
+			return n->heapIndex;
 		}
-		void setHeapIndex(unsigned int i) {
-			heapIndex = i;
+		static void setHeapIndex(Node *n, unsigned int i) {
+			n->heapIndex = i;
 		}
 
 		Edge* edge;
@@ -54,5 +54,5 @@ public:
 	}
 
 	std::vector<Node*> nodes;
-	InPlaceBinaryHeap<Node> heap;
+	InPlaceBinaryHeap<Node, Node> heap;
 };

@@ -64,14 +64,14 @@ public:
 
 		/* used for initial heuristic computation */
 		unsigned int heapIndex;
-		int sort(const Region *r) const {
-			return (heuristic - r->heuristic) > 0 ? -1 : 1;
+		static int sort(const Region *a, const Region *b) {
+			return (a->heuristic - b->heuristic) > 0 ? -1 : 1;
 		}
-		unsigned int getHeapIndex() const {
-			return heapIndex;
+		static unsigned int getHeapIndex(const Region *r) {
+			return r->heapIndex;
 		}
-		void setHeapIndex(unsigned int i) {
-			heapIndex = i;
+		static void setHeapIndex(Region *r, unsigned int i) {
+			r->heapIndex = i;
 		}
 
 		void updateRegionPath(const std::vector<unsigned int> &rp) {
@@ -154,7 +154,7 @@ private:
 		typedef typename TheBoss::Region Region;
 	public:
 		void dijkstra(TheBoss &theBoss, Region *region) {
-			InPlaceBinaryHeap<Region> open;
+			InPlaceBinaryHeap<Region, Region> open;
 			region->setHeuristicAndPath(0, std::vector<unsigned int>());
 			open.push(region);
 
@@ -186,7 +186,7 @@ private:
 		typedef typename TheBoss::Region Region;
 	public:
 		void dijkstra(TheBoss &theBoss, Region *region) {
-			InPlaceBinaryHeap<Region> open;
+			InPlaceBinaryHeap<Region, Region> open;
 			region->setHeuristicAndPath(0, std::vector<unsigned int>());
 			open.push(region);
 

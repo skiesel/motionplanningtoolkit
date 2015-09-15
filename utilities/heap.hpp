@@ -1,6 +1,6 @@
 #pragma once
 
-/* This shuffles around pointers to class T with the assumption that class T defines:
+/* This shuffles around pointers to class T with the assumption that class Ops defines:
 
 unsigned int getHeapIndex() const
 void setHeapIndex(unsigned int i)
@@ -12,22 +12,19 @@ int sort(const T*) const [ -1 less, 0 equal, 1 greater ]
 #include <cassert>
 #include <vector>
 
-template <class T> class InPlaceBinaryHeap {
+template <class T, class Ops>
+class InPlaceBinaryHeap {
 public:
-	InPlaceBinaryHeap(int size=100) : heap(size), fill(0) {
+	InPlaceBinaryHeap(int size=100) : heap(size), fill(0) {}
 
-	}
-
-	~InPlaceBinaryHeap() {
-
-	}
+	~InPlaceBinaryHeap() {}
 
 	void push(T *data) {
 		if(fill >= heap.size()) {
 			heap.resize(heap.size() * 2);
 		}
 		heap[fill] = data;
-		data->setHeapIndex(fill);
+		Ops::setHeapIndex(data, fill+1);
 		fill++;
 		siftUp(fill-1);
 	}
@@ -43,7 +40,7 @@ public:
 		swap(0,fill-1);
 		fill--;
 		siftDown(0);
-		ret_T->setHeapIndex(std::numeric_limits<unsigned int>::max());
+		Ops::setHeapIndex(ret_T, std::numeric_limits<unsigned int>::max());
 		return ret_T;
 	}
 
@@ -56,33 +53,49 @@ public:
 	}
 
 	bool inHeap(const T *data) const {
-		return data->getHeapIndex() != std::numeric_limits<unsigned int>::max();
+		unsigned int index = Ops::getHeapIndex(data);
+		return index > 0 && index <= fill;
 	}
 
 	void siftFromItem(const T *data) {
-		unsigned int index = data->getHeapIndex();
+		unsigned int index = Ops::getHeapIndex(data);
 		if(index < fill) {
 			int parent_index = parent(index);
-			if(index > 0 && heap[parent_index]->sort(heap[index]) < 0)
+			if(index > 0 && Ops::sort(heap[index], heap[parent_index]) < 0)
 				siftUp(index);
 			else
 				siftDown(index);
 		}
 	}
 
+	void remove(const T* data) {
+		unsigned int index = Ops::getHeapIndex(data);
+		swap(index,fill);
+		fill--;
+		if(index <= fill) {
+			int parent_index = parent(index);
+			if(index > 1 && Ops::sort(heap[index], heap[parent_index]) < 0) {
+				siftUp(index);
+			}
+			else {
+				siftDown(index);
+			}
+		}
+	}
+
 
 protected:
 private:
-	unsigned int left(unsigned int i) {
-		return 2 * i;
+	inline unsigned int left(unsigned int i) {
+		return (2 * i);
 	}
 
-	unsigned int right(unsigned int i) {
-		return 2 * i + 1;
+	inline unsigned int right(unsigned int i) {
+		return (2 * i + 1);
 	}
 
-	unsigned int parent(unsigned int i) {
-		return i / 2;
+	inline unsigned int parent(unsigned int i) {
+		return (i / 2);
 	}
 
 	void swap(unsigned int i, unsigned int j) {
@@ -90,15 +103,15 @@ private:
 		heap[i] = heap[j];
 		heap[j] = temp;
 
-		heap[i]->setHeapIndex(i);
-		heap[j]->setHeapIndex(j);
+		Ops::setHeapIndex(heap[i], i);
+		Ops::setHeapIndex(heap[j], j);
 	}
 
 	unsigned int childToSwap(unsigned int index) {
 		unsigned int left_index = left(index);
 		unsigned int right_index = right(index);
 		if(left_index < fill && right_index < fill) {
-			if(heap[left_index]->sort(heap[right_index]) > 0)
+			if(Ops::sort(heap[left_index], heap[right_index]) < 0)
 				return left_index;
 			else
 				return right_index;
@@ -112,7 +125,7 @@ private:
 
 	void siftDown(unsigned int index) {
 		unsigned int child_index = childToSwap(index);
-		if(heap[index]->sort(heap[child_index]) < 0) {
+		if(Ops::sort(heap[child_index], heap[index]) < 0) {
 			swap(index, child_index);
 			siftDown(child_index);
 		}
@@ -122,7 +135,7 @@ private:
 		if(index == 0) return;
 
 		unsigned int parent_index = parent(index);
-		if(heap[index]->sort(heap[parent_index]) > 0) {
+		if(Ops::sort(heap[index], heap[parent_index]) > 0) {
 			swap(index, parent_index);
 			siftUp(parent_index);
 		}
