@@ -19,6 +19,27 @@ public:
 
 	~InPlaceBinaryHeap() {}
 
+	void createFromVector(std::vector<T*>& vec) {
+		if(heap.size() < vec.size()) {
+			unsigned int size = heap.size() * 2;
+			while(size < vec.size()) {
+				size *= 2;
+			}
+			heap.resize(size);
+		}
+		fill = 0;
+		for(auto item = vec.begin(); item != vec.end(); ++item) {
+			heap[1 + fill++] = *item;
+		}
+		for(int i = fill / 2; i > 0; i--) {
+			siftUp(i);
+		}
+	}
+
+	void clear() {
+		fill = 0;
+	}
+
 	void push(T *data) {
 		if(fill >= heap.size()) {
 			heap.resize(heap.size() * 2);

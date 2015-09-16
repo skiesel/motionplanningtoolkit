@@ -11,18 +11,20 @@ public:
 	typedef typename Agent::State State;
 	typedef typename Agent::Edge Edge;
 
-	RRT(const Workspace &workspace, const Agent &agent, TreeInterface &treeInterface, const InstanceFileMap &args) :
+	RRT(const Workspace &workspace, const Agent &agent, TreeInterface &treeInterface, const InstanceFileMap &args, bool quiet = false) :
 		workspace(workspace), agent(agent), treeInterface(treeInterface), solutionCost(-1), poseNumber(-1),
 		samplesGenerated(0), edgesAdded(0), edgesRejected(0) {
 		steeringDT = args.doubleVal("Steering Delta t");
 		collisionCheckDT = args.doubleVal("Collision Check Delta t");
 
-		dfpair(stdout, "steering dt", "%g", steeringDT);
-		dfpair(stdout, "collision check dt", "%g", collisionCheckDT);
+		if(!quiet) {
+			dfpair(stdout, "steering dt", "%g", steeringDT);
+			dfpair(stdout, "collision check dt", "%g", collisionCheckDT);
+		}
 	}
 
 
-	std::vector<const Edge*> query(const State &start, const State &goal, int iterationsAtATime = -1, bool firstInvocation = true) {
+	std::vector<const Edge*> query(const State &start, const State &goal, int iterationsAtATime = -1, bool firstInvocation = true, bool quiet = false) {
 
 #ifdef WITHGRAPHICS
 		auto green = OpenGLWrapper::Color::Green();
@@ -31,8 +33,10 @@ public:
 #endif
 
 		if(agent.isGoal(start, goal)) {
-			dfpair(stdout, "solution cost", "0");
-			dfpair(stdout, "solution length", "0");
+			if(!quiet) {
+				dfpair(stdout, "solution cost", "0");
+				dfpair(stdout, "solution length", "0");
+			}
 			return std::vector<const Edge*>();
 		}
 
@@ -69,19 +73,22 @@ public:
 			Edge *e = pool.construct(edge);
 			e->updateParent(treeSample.first);
 
-			if(agent.isGoal(e->end, goal)) {
-
-				dfpair(stdout, "solution cost", "%g", e->gCost());
-				std::vector<const Edge *> newSolution;
-				newSolution.push_back(e);
-
-				unsigned int edgeCount = 1;
-				while(newSolution.back()->parent != NULL) {
-					edgeCount++;
-					newSolution.push_back(newSolution.back()->parent);
-				}
-				dfpair(stdout, "solution length", "%u", edgeCount);
+			if(agent.isGoal(e->end, goal)) {	
 				if(solutionCost < 0 || e->gCost() < solutionCost) {
+					std::vector<const Edge *> newSolution;
+					newSolution.push_back(e);
+
+					unsigned int edgeCount = 1;
+					while(newSolution.back()->parent != NULL) {
+						edgeCount++;
+						newSolution.push_back(newSolution.back()->parent);
+					}
+
+					if(!quiet) {
+						dfpair(stdout, "solution cost", "%g", e->gCost());
+						dfpair(stdout, "solution length", "%u", edgeCount);
+					}
+
 					poseNumber = 0;
 					std::reverse(newSolution.begin(), newSolution.end());
 					solution.clear();
@@ -144,8 +151,10 @@ public:
 		// }
 #endif
 
-		dfpair(stdout, "solution cost", "-1");
-		dfpair(stdout, "solution length", "-1");
+		if(!quiet) {
+			dfpair(stdout, "?????solution cost", "-1");
+			dfpair(stdout, "solution length", "-1");
+		}
 		return std::vector<const Edge*>();
 	}
 

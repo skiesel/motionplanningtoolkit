@@ -26,9 +26,11 @@ std::default_random_engine GlobalRandomGenerator;
 #include "agents/omnimultid.hpp"
 
 #include "planners/rrt.hpp"
+#include "planners/anytimerrt.hpp"
 #include "planners/rrtconnect.hpp"
 #include "planners/kpiece.hpp"
 #include "planners/restartingrrtwithpostprocessing.hpp"
+#include "planners/anytimerestartingrrtwithpostprocessing.hpp"
 
 #include "postprocessors/simplepostprocessor.hpp"
 
@@ -38,6 +40,7 @@ std::default_random_engine GlobalRandomGenerator;
 #include "samplers/goalbiassampler.hpp"
 
 #include "discrete_searches/simplebestfirst.hpp"
+#include "discrete_searches/aees.hpp"
 
 #include "tree_interfaces/treeinterface.hpp"
 #include "tree_interfaces/plakutreeinterface.hpp"

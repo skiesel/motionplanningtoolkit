@@ -4,14 +4,14 @@ class SimpleBestFirst {
 	struct Node {
 		Node(unsigned int id, double val) : id(id), val(val), heapIndex(std::numeric_limits<unsigned int>::max()) {}
 		
-		int sort(const Node *n) const {
-			return (val - n->val) > 0 ? -1 : 1;
+		static int sort(const Node *a, const Node *b) {
+			return (a->val - b->val) > 0 ? -1 : 1;
 		}
-		unsigned int getHeapIndex() const {
-			return heapIndex;
+		static unsigned int getHeapIndex(const Node *n) {
+			return n->heapIndex;
 		}
-		void setHeapIndex(unsigned int i) {
-			heapIndex = i;
+		static void setHeapIndex(Node *n, unsigned int i) {
+			n->heapIndex = i;
 		}
 
 		unsigned int id;
@@ -34,5 +34,5 @@ public:
 		heap.siftFromItem(heap.peek());
 	}
 
-	InPlaceBinaryHeap<Node> heap;
+	InPlaceBinaryHeap<Node, Node> heap;
 };
