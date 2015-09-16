@@ -417,8 +417,9 @@ public:
 	}
 
 	Edge constructEdge(const State &start, const State &end) const {
-		fprintf(stderr, "OmniMultiD::constructEdge not implemented\n");
-		exit(1);
+		Control emptyControls;
+		double distance = State::evaluateDistance(start, end);
+		return Edge(start, end, distance, emptyControls, distance);
 	}
 
 	State buildState(const StateVars &stateVars) const {
