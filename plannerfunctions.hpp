@@ -154,6 +154,23 @@ void go_MRRTPlusS(const InstanceFileMap &args, const Agent &agent, const Workspa
 }
 
 template<class Workspace, class Agent>
+void go_AORRT(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+                   const typename Agent::State &start, const typename Agent::State &goal) {
+
+	clock_t startT = clock();
+
+	dfpair(stdout, "planner", "%s", "AO RRT");
+	
+	typedef AORRT<Workspace, Agent> Planner;
+
+	Planner planner(workspace, agent, args);
+	
+	planner.query(start, goal, startT);
+
+	// go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
+}
+
+template<class Workspace, class Agent>
 void go_KPIECE(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
                const typename Agent::State &start, const typename Agent::State &goal) {
 	dfpair(stdout, "planner", "%s", "KPIECE");
@@ -306,6 +323,8 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 		go_SSTGridPPRM<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("MRRT+S") == 0) {
 		go_MRRTPlusS<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("AO RRT") == 0) {
+		go_AORRT<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("MRRT+S") == 0) {
 		go_NewSearch<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else {

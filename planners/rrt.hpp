@@ -11,9 +11,10 @@ public:
 	typedef typename Agent::State State;
 	typedef typename Agent::Edge Edge;
 
-	RRT(const Workspace &workspace, const Agent &agent, TreeInterface &treeInterface, const InstanceFileMap &args, bool quiet = false) :
+	RRT(const Workspace &workspace, const Agent &agent, TreeInterface &treeInterface, const InstanceFileMap &args, bool quiet = false,
+		double gBound = std::numeric_limits<double>::infinity()) :
 		workspace(workspace), agent(agent), treeInterface(treeInterface), solutionCost(-1), poseNumber(-1),
-		samplesGenerated(0), edgesAdded(0), edgesRejected(0) {
+		samplesGenerated(0), edgesAdded(0), edgesRejected(0), quiet(quiet), gBound(gBound) {
 		steeringDT = args.doubleVal("Steering Delta t");
 		collisionCheckDT = args.doubleVal("Collision Check Delta t");
 
@@ -24,7 +25,7 @@ public:
 	}
 
 
-	std::vector<const Edge*> query(const State &start, const State &goal, int iterationsAtATime = -1, bool firstInvocation = true, bool quiet = false) {
+	std::vector<const Edge*> query(const State &start, const State &goal, int iterationsAtATime = -1, bool firstInvocation = true) {
 
 #ifdef WITHGRAPHICS
 		auto green = OpenGLWrapper::Color::Green();
@@ -57,6 +58,10 @@ public:
 #endif
 
 			auto edge = agent.steer(treeSample.first->end, treeSample.second, steeringDT);
+
+			if(edge.gCost() >= gBound) {
+				continue;
+			}
 
 			++iterations;
 
@@ -177,4 +182,7 @@ private:
 	int poseNumber;
 
 	unsigned int samplesGenerated, edgesAdded, edgesRejected;
+
+	bool quiet;
+	double gBound;
 };

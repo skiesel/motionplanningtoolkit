@@ -5,15 +5,15 @@
 #include "../samplers/uniformsampler.hpp"
 #include "../samplers/goalbiassampler.hpp"
 
-template<class Workspace, class Agent, class PostProcessor>
-class AnytimeRestartingRRTWithPostProcessing {
+template<class Workspace, class Agent>
+class AORRT {
 public:
 
 	typedef typename Agent::State State;
 	typedef typename Agent::Edge Edge;
 
-	AnytimeRestartingRRTWithPostProcessing(const Workspace &workspace, const Agent &agent, const PostProcessor &postProcessor, const InstanceFileMap &args) :
-		workspace(workspace), agent(agent), postProcessor(postProcessor), args(args) {
+	AORRT(const Workspace &workspace, const Agent &agent, const InstanceFileMap &args) :
+		workspace(workspace), agent(agent), args(args) {
 			timeout = args.doubleVal("Timeout");
 
 			selfPtr = this;
@@ -39,8 +39,8 @@ public:
 		typedef RRT<Workspace, Agent, TreeInterface> Planner;
 
 		startTime = startT;
-		signal(SIGTERM, AnytimeRestartingRRTWithPostProcessing::cleanup);
-		boost::thread timer(AnytimeRestartingRRTWithPostProcessing::timerFunction);
+		signal(SIGTERM, AORRT::cleanup);
+		boost::thread timer(AORRT::timerFunction);
 
 		double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
 		dfpair(stdout, "goal bias", "%g", goalBias);
@@ -59,7 +59,7 @@ public:
 			GBSampler goalbiassampler(uniformsampler, goal, goalBias);
 
 			TreeInterface treeInterface(kdtree, goalbiassampler);
-			Planner planner(workspace, agent, treeInterface, args, true);
+			Planner planner(workspace, agent, treeInterface, args, true, bestCost);
 
 			std::vector<const Edge*> incumbent = planner.query(start, goal, -1, true);
 
@@ -68,8 +68,6 @@ public:
 				bestCost = incumbentCost;
 				dfrow(stdout, "solution", "gugu", bestCost, incumbent.size(), (double)(clock()-startTime) / CLOCKS_PER_SEC, 0);
 			}
-
-			incumbent = postProcessor.postProcess(incumbent);
 
 			incumbentCost = incumbent.back()->gCost();
 			if(incumbentCost < bestCost) {
@@ -87,13 +85,12 @@ public:
 private:
 	const Workspace &workspace;
 	const Agent &agent;
-	const PostProcessor &postProcessor;
 	const InstanceFileMap &args;
 	double timeout;
 	clock_t startTime;
 
-	static AnytimeRestartingRRTWithPostProcessing<Workspace, Agent, PostProcessor> *selfPtr;
+	static AORRT<Workspace, Agent> *selfPtr;
 };
 
-template<class Workspace, class Agent, class PostProcessor>
-AnytimeRestartingRRTWithPostProcessing<Workspace, Agent, PostProcessor> *AnytimeRestartingRRTWithPostProcessing<Workspace, Agent, PostProcessor>::selfPtr = NULL;
+template<class Workspace, class Agent>
+AORRT<Workspace, Agent> *AORRT<Workspace, Agent>::selfPtr = NULL;

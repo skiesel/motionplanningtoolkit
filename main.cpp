@@ -31,6 +31,7 @@ std::default_random_engine GlobalRandomGenerator;
 #include "planners/kpiece.hpp"
 #include "planners/restartingrrtwithpostprocessing.hpp"
 #include "planners/anytimerestartingrrtwithpostprocessing.hpp"
+#include "planners/aorrt.hpp"
 
 #include "postprocessors/simplepostprocessor.hpp"
 
