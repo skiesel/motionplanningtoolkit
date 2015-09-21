@@ -34,12 +34,24 @@ public:
 			didAddNewEdge = true;
 		} else {
 			Edge *prevBest = prevBestPair->second;
-			if(edge->gCost() < prevBest->gCost()) {
+
+			//make sure the previous best is still in the tree
+			if(prevBest->getPointIndex() != 0 && edge->gCost() < prevBest->gCost()) {
+				tree[prevBest->parent].erase(prevBest);
+				removeSubtree(prevBest);
+
 				witnessInterface[key] = edge;
-				insertionInterface.removeFromTree(prevBest);
 				insertionInterface.insertIntoTree(edge);
 				didAddNewEdge = true;
 			}
+		}
+
+		if(didAddNewEdge) {
+			if(tree.find(edge->parent) == tree.end()) {
+				tree[edge->parent] = std::unordered_set<Edge*>();
+			}
+			
+			tree[edge->parent].insert(edge);
 		}
 
 		double failureRate = updateHistory(didAddNewEdge);
@@ -127,6 +139,14 @@ private:
 		}
 	}
 
+	void removeSubtree(Edge *e) {
+		for(Edge *kid : tree[e]) {
+			removeSubtree(kid);
+		}
+		tree.erase(e);
+		insertionInterface.removeFromTree(e);
+	}
+
 	InsertionInteface &insertionInterface;
 	QueryInterface &queryInterface;
 	std::unordered_map<unsigned int, Edge*> witnessInterface;
@@ -136,4 +156,5 @@ private:
 	std::vector<int> history;
 	int historyIndex, historyFails;
 	bool historyFilled;
+	std::unordered_map<Edge*, std::unordered_set<Edge*>> tree;
 };

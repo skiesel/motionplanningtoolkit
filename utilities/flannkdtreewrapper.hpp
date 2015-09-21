@@ -7,11 +7,13 @@
 template<class KDTreeType, class DistanceMetric, class Element>
 class FLANN_KDTreeWrapper {
 	struct LookupElement {
-		LookupElement() : data(NULL), point(NULL) {}
-		LookupElement(Element *data, double *point) : data(data), point(point) {}
-		LookupElement(const LookupElement &le) : data(le.data), point(le.point) {}
+		LookupElement() : data(NULL), point(NULL), matrix(NULL) {}
+		LookupElement(Element *data, double *point, flann::Matrix<double> *matrix) : data(data), point(point), matrix(matrix) {}
+		LookupElement(const LookupElement &le) : data(le.data), point(le.point), matrix(le.matrix) {}
+
 		Element *data;
 		double *point;
+		flann::Matrix<double> *matrix;
 	};
 
 public:
@@ -31,17 +33,21 @@ public:
 
 	void insertPoint(Element *elem) {
 		const std::vector<double> &stateVars = elem->getTreeStateVars();
-		double *data = new double[stateVars.size()];
+		double *data = new double[stateVars.size()]();
 		for(unsigned int i = 0; i < stateVars.size(); i++)
 			data[i] = stateVars[i];
 
-		flann::Matrix<double> point(data, 1, stateVars.size());
+		flann::Matrix<double> *point = new flann::Matrix<double>(data, 1, stateVars.size());
 
-		kdtree.addPoints(point, 2); //2 is the rebuild threshold
+		unsigned int size = kdtree.size();
+
+		kdtree.addPoints(*point, 2); //2 is the resize threshold
+
+		assert(kdtree.size() - size == 1);
 
 		elem->setPointIndex(currentPointIndex);
-		lookup[currentPointIndex] = LookupElement(elem, data);
-		++currentPointIndex;
+		lookup[currentPointIndex] = LookupElement(elem, data, point);
+		currentPointIndex++;
 	}
 
 	void insertIntoTree(Element *elem) {
@@ -50,11 +56,14 @@ public:
 
 	void removePoint(Element *elem) {
 		unsigned int index = elem->getPointIndex();
-		if(index == 0) return;
+
+		assert(index != 0);
+		assert(lookup.find(index) != lookup.end());
 
 		kdtree.removePoint(index);
 
 		elem->setPointIndex(0);
+		
 		lookup.erase(index);
 	}
 

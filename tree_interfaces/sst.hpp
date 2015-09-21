@@ -47,16 +47,31 @@ public:
 			insertionInterface.insertIntoTree(edge);
 			didAddNewEdge = true;
 		} else {
-			Edge* prevBest = nearest.elements[0]->edge;
-			if(edge->gCost() < prevBest->gCost()) {
-				nearest.elements[0]->edge = edge;
-				insertionInterface.removeFromTree(prevBest);
+			Witness *witnessNode = nearest.elements[0];
+			Edge *prevBest = witnessNode->edge;
+
+			//make sure the previous best is still in the tree
+			if(prevBest->getPointIndex() != 0 && edge->gCost() < prevBest->gCost()) {
+				tree[prevBest->parent].erase(prevBest);
+				removeSubtree(prevBest);
+
+				witnessNode->edge = edge;
 				insertionInterface.insertIntoTree(edge);
 				didAddNewEdge = true;
 			}
 		}
 
+		if(didAddNewEdge) {
+			if(tree.find(edge->parent) == tree.end()) {
+				tree[edge->parent] = std::unordered_set<Edge*>();
+			}
+			
+			tree[edge->parent].insert(edge);
+		}
+
+
 		double failureRate = updateHistory(didAddNewEdge);
+		
 		if(historyFilled && failureRate >= resizeThreshold) {
 			radius *= 0.5;
 			resetHistory();
@@ -89,6 +104,14 @@ private:
 		historyFilled = historyIndex = historyFails = 0;
 	}
 
+	void removeSubtree(Edge *e) {
+		for(Edge *kid : tree[e]) {
+			removeSubtree(kid);
+		}
+		tree.erase(e);
+		insertionInterface.removeFromTree(e);
+	}
+
 	InsertionInteface &insertionInterface;
 	QueryInterface &queryInterface;
 	KDTree witnessInterface;
@@ -96,4 +119,5 @@ private:
 	std::vector<bool> history;
 	int historyIndex, historyFails;
 	bool historyFilled;
+	std::unordered_map<Edge*, std::unordered_set<Edge*>> tree;
 };

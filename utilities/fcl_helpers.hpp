@@ -9,6 +9,8 @@
 
 #include <boost/tokenizer.hpp>
 
+#include "math.hpp"
+
 using namespace fcl;
 
 namespace fcl_helpers {

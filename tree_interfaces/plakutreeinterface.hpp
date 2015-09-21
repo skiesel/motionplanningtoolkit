@@ -235,6 +235,11 @@ public:
 		return result.elements[0];
 	}
 
+	typename KDTree::KNNResult nearest(const Edge *edge) const {
+		unsigned int cellId = discretization.getCellId(edge->end);
+		return regions[cellId]->edgesInRegion->nearest(edge);
+	}
+
 	void removeFromTree(Edge *edge) {
 		unsigned int cellId = discretization.getCellId(edge->end);
 		regions[cellId]->edgesInRegion->removePoint(edge);
