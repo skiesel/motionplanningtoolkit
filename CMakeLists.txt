@@ -4,10 +4,9 @@ project (MotionPlanning)
 set(CMAKE_MODULE_PATH
   ${PROJECT_SOURCE_DIR}/CMakeModules
 )
-set(BUILDGRAPHICS 1)
+set(BUILDGRAPHICS 0)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wunused ${CMAKE_CXX_FLAGS}")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build")
 
 add_executable(Planner main.cpp)
 #add_executable(Planner mesh_testing.cpp)
@@ -28,6 +27,8 @@ find_package(Boost 1.57.0 COMPONENTS thread system REQUIRED)
 
 find_package(ASSIMP REQUIRED)
 find_package(OMPL REQUIRED)
+find_library(LZ4 lz4)
+
 
 include_directories(
 	${Boost_INCLUDE_DIRS}
@@ -44,12 +45,8 @@ target_link_libraries(Planner
 	${ASSIMP_LIBRARIES}
 	${CONNEXION_LIBRARIES}
 	${OMPL_LIBRARIES}
+	${LZ4}
 )
-
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  find_library(LZ4 lz4)
-  target_link_libraries(Planner ${LZ4})
-endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 if(BUILDGRAPHICS)
 	set_target_properties(Planner PROPERTIES
