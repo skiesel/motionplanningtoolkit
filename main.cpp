@@ -12,7 +12,6 @@ std::default_random_engine GlobalRandomGenerator;
 #include "utilities/flann_helpers.hpp"
 #include "utilities/heap.hpp"
 
-
 #include "workspaces/map3d.hpp"
 #include "workspaces/planarlinkage.hpp"
 #include "workspaces/kink.hpp"
@@ -39,6 +38,7 @@ std::default_random_engine GlobalRandomGenerator;
 #include "samplers/normalsampler.hpp"
 #include "samplers/fbiasedsampler.hpp"
 #include "samplers/goalbiassampler.hpp"
+#include "samplers/probabilitydensityfunction.hpp"
 
 #include "discrete_searches/simplebestfirst.hpp"
 #include "discrete_searches/aees.hpp"
