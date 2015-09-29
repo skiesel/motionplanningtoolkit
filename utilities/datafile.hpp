@@ -166,19 +166,19 @@ void dfrow(FILE *f, const char *name, const char *colfmt, ...) {
 		switch(colfmt[i]) {
 		case 'g':
 			g = va_arg(ap, double);
-			m = snprintf(buf+n, Bufsz-n, "\t%g", g);
+			m = snprintf(buf+n, Bufsz-n, "\t\"%g\"", g);
 			break;
 		case 'f':
 			g = va_arg(ap, double);
-			m = snprintf(buf+n, Bufsz-n, "\t%lf", g);
+			m = snprintf(buf+n, Bufsz-n, "\t\"%lf\"", g);
 			break;
 		case 'd':
 			d = va_arg(ap, long);
-			m = snprintf(buf+n, Bufsz-n, "\t%ld", d);
+			m = snprintf(buf+n, Bufsz-n, "\t\"%ld\"", d);
 			break;
 		case 'u':
 			u = va_arg(ap, unsigned long);
-			m = snprintf(buf+n, Bufsz-n, "\t%lu", u);
+			m = snprintf(buf+n, Bufsz-n, "\t\"%lu\"", u);
 			break;
 		}
 		if(m > (unsigned int) Bufsz-n)
