@@ -6,7 +6,7 @@ set(CMAKE_MODULE_PATH
 )
 set(BUILDGRAPHICS 0)
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -Wunused ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-std=c++11 -Wunused ${CMAKE_CXX_FLAGS} -O3")
 
 add_executable(Planner main.cpp)
 #add_executable(Planner mesh_testing.cpp)
@@ -23,7 +23,7 @@ pkg_search_module(FCL REQUIRED fcl)
 set(Boost_USE_STATIC_LIBS OFF) 
 set(Boost_USE_MULTITHREADED ON)  
 set(Boost_USE_STATIC_RUNTIME OFF) 
-find_package(Boost 1.57.0 COMPONENTS thread system REQUIRED)
+find_package(Boost 1.46.0 COMPONENTS thread system REQUIRED)
 
 find_package(ASSIMP REQUIRED)
 find_package(OMPL REQUIRED)
