@@ -60,14 +60,14 @@ public:
 			fprintf(stderr, "\n");
 		}
 
-		void move(Control control) {
-			const int dimensions = treeStateVars.size();
-			assert(control.size() == dimensions);
+		// void move(Control control) {
+		// 	const int dimensions = treeStateVars.size();
+		// 	assert(control.size() == dimensions);
 
-			for (int i = 0; i < dimensions; ++i) {
-				treeStateVars[i] = treeStateVars[i] + control[i];
-			}
-		}
+		// 	for (int i = 0; i < dimensions; ++i) {
+		// 		treeStateVars[i] = treeStateVars[i] + control[i];
+		// 	}
+		// }
 
 #ifdef WITHGRAPHICS
 
@@ -465,8 +465,28 @@ public:
 			sourceStateVars[i]  = workspaceDistributions[i](GlobalRandomGenerator);
 		}
 
-		Edge edge = randomSteer(buildState(std::move(sourceStateVars)), radius);
+		Edge edge = randomSteer(buildState(std::move(sourceStateVars)), zeroToOne(GlobalRandomGenerator) * radius);
 		return edge.end;
+	}
+
+	State getRandomStateNearState(const State &state, double radius) const {
+		auto stateVars = state.getStateVars();
+		auto coords = math::randomPointInUnitHyperSphere(stateVars.size());
+
+		double scale = zeroToOne(GlobalRandomGenerator) * radius;
+		for(unsigned int i = 0; i < stateVars.size(); ++i) {
+			stateVars[i] += coords[i] * scale;
+		}
+
+		return buildState(std::move(stateVars));
+	}
+
+	State getRandomState() const {
+		StateVars stateVars(dimensions);
+		for (int i = 0; i < dimensions; ++i) {
+			stateVars[i]  = workspaceDistributions[i](GlobalRandomGenerator);
+		}
+		return buildState(std::move(stateVars));
 	}
 
 	AbstractState toAbstractState(const State &s) const {
@@ -500,4 +520,5 @@ private:
 
 	mutable std::vector <std::uniform_real_distribution<double>> workspaceDistributions;
 	mutable std::vector <std::uniform_real_distribution<double>> controlDistributions;
+	mutable std::uniform_real_distribution<double> zeroToOne;
 };
