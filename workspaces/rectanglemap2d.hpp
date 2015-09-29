@@ -47,7 +47,7 @@ public:
 		}
 	}
 
-	const WorkspaceBounds &getBounds() const {
+	const WorkspaceBounds& getBounds() const {
 		return workspaceBounds;
 	}
 
@@ -119,5 +119,5 @@ public:
 
 private:
 	WorkspaceBounds workspaceBounds;
-	std::vector<const Rectangle> obstacles;
+	std::vector<Rectangle> obstacles;
 };
