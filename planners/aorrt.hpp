@@ -45,7 +45,7 @@ public:
 		double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
 		dfpair(stdout, "goal bias", "%g", goalBias);
 
-		dfrowhdr(stdout, "solution", 4, "cost", "length", "time", "shorcut");
+		dfrowhdr(stdout, "solution", 3, "cost", "length", "time");
 
 		std::vector<const Edge*> best;
 		double bestCost = std::numeric_limits<double>::infinity();
@@ -66,13 +66,13 @@ public:
 			double incumbentCost = incumbent.back()->gCost();
 			if(incumbentCost < bestCost) {
 				bestCost = incumbentCost;
-				dfrow(stdout, "solution", "gugu", bestCost, incumbent.size(), (double)(clock()-startTime) / CLOCKS_PER_SEC, 0);
+				dfrow(stdout, "solution", "gug", bestCost, incumbent.size(), (double)(clock()-startTime) / CLOCKS_PER_SEC, 0);
 			}
 
 			incumbentCost = incumbent.back()->gCost();
 			if(incumbentCost < bestCost) {
 				bestCost = incumbentCost;
-				dfrow(stdout, "solution", "gugu", bestCost, incumbent.size(), (double)(clock()-startTime) / CLOCKS_PER_SEC, 1);
+				dfrow(stdout, "solution", "gug", bestCost, incumbent.size(), (double)(clock()-startTime) / CLOCKS_PER_SEC, 1);
 			}
 		}
 	}

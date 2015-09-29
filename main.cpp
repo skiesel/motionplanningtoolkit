@@ -11,6 +11,7 @@ std::default_random_engine GlobalRandomGenerator;
 #include "utilities/fcl_helpers.hpp"
 #include "utilities/flann_helpers.hpp"
 #include "utilities/heap.hpp"
+#include "utilities/datafile.hpp"
 
 #include "workspaces/map3d.hpp"
 #include "workspaces/planarlinkage.hpp"
@@ -27,12 +28,14 @@ std::default_random_engine GlobalRandomGenerator;
 #include "agents/omnimultid.hpp"
 #include "agents/omni2d.hpp"
 
-#include "planners/rrt.hpp"
 #include "planners/anytimerrt.hpp"
+#include "planners/anytimeest.hpp"
+#include "planners/anytimerestartingrrtwithpostprocessing.hpp"
+
+#include "planners/rrt.hpp"
 #include "planners/rrtconnect.hpp"
 #include "planners/kpiece.hpp"
 #include "planners/restartingrrtwithpostprocessing.hpp"
-#include "planners/anytimerestartingrrtwithpostprocessing.hpp"
 #include "planners/aorrt.hpp"
 #include "planners/est.hpp"
 #include "planners/estbidirectional.hpp"

@@ -2,6 +2,7 @@
 
 #include "../utilities/flannkdtreewrapper.hpp"
 #include "../tree_interfaces/treeinterface.hpp"
+#include "../planners/rrt.hpp"
 #include "../samplers/uniformsampler.hpp"
 #include "../samplers/goalbiassampler.hpp"
 

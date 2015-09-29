@@ -27,9 +27,42 @@ template<class Workspace, class Agent>
 void go_RRT(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
             const typename Agent::State &start, const typename Agent::State &goal) {
 
+	dfpair(stdout, "planner", "%s", "RRT");
+	// typedef flann::KDTreeSingleIndexParams KDTreeType;
+	typedef flann::KDTreeIndexParams KDTreeType;
+	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, typename Agent::Edge> KDTree;
+	typedef UniformSampler<Workspace, Agent, KDTree> USampler;
+	typedef GoalBiasSampler<Agent, USampler> GBSampler;
+	typedef TreeInterface<Agent, KDTree, GBSampler> TreeInterface;
+	typedef RRT<Workspace, Agent, TreeInterface> Planner;
+
+	/* planner config */
+
+	KDTreeType kdtreeType(1);
+	KDTree kdtree(kdtreeType, agent.getDistanceEvaluator(), agent.getTreeStateSize());
+	USampler uniformsampler(workspace, agent, kdtree);
+
+	double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
+	dfpair(stdout, "goal bias", "%g", goalBias);
+
+	GBSampler goalbiassampler(uniformsampler, goal, goalBias);
+	TreeInterface treeInterface(kdtree, goalbiassampler);
+	Planner planner(workspace, agent, treeInterface, args);
+
+	planner.query(start, goal);
+
+	planner.dfpairs();
+
+	// go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
+}
+
+template<class Workspace, class Agent>
+void go_AnytimeRRT(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+            const typename Agent::State &start, const typename Agent::State &goal) {
+
 	clock_t startT = clock();
 
-	dfpair(stdout, "planner", "%s", "RRT");
+	dfpair(stdout, "planner", "%s", "Anytime RRT");
 	// typedef flann::KDTreeSingleIndexParams KDTreeType;
 	typedef flann::KDTreeIndexParams KDTreeType;
 	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, typename Agent::Edge> KDTree;
@@ -50,6 +83,25 @@ void go_RRT(const InstanceFileMap &args, const Agent &agent, const Workspace &wo
 	GBSampler goalbiassampler(uniformsampler, goal, goalBias);
 	TreeInterface treeInterface(kdtree, goalbiassampler);
 	Planner planner(workspace, agent, treeInterface, args);
+
+	planner.query(start, goal, startT);
+
+	planner.dfpairs();
+
+	// go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
+}
+
+template<class Workspace, class Agent>
+void go_AnytimeEST(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+            const typename Agent::State &start, const typename Agent::State &goal) {
+
+	clock_t startT = clock();
+
+	dfpair(stdout, "planner", "%s", "Anytime EST");
+
+	typedef AnytimeEST<Workspace, Agent> Planner;
+
+	Planner planner(workspace, agent, args);
 
 	planner.query(start, goal, startT);
 
@@ -424,6 +476,10 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 		go_ESTBIDIR<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("AO EST") == 0) {
 		go_AOEST<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("Anytime RRT") == 0) {
+		go_AnytimeRRT<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("Anytime EST") == 0) {
+		go_AnytimeEST<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else {
 		fprintf(stderr, "unreocognized planner: %s\n", planner.c_str());
 	}
