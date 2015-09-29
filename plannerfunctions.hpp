@@ -53,6 +53,8 @@ void go_RRT(const InstanceFileMap &args, const Agent &agent, const Workspace &wo
 
 	planner.query(start, goal, startT);
 
+	planner.dfpairs();
+
 	// go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
 }
 
@@ -134,6 +136,26 @@ void go_SSTGrid(const InstanceFileMap &args, const Agent &agent, const Workspace
 }
 
 template<class Workspace, class Agent>
+void go_MRRT(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+                   const typename Agent::State &start, const typename Agent::State &goal) {
+
+	clock_t startT = clock();
+
+	dfpair(stdout, "planner", "%s", "MRRT");
+
+	typedef NoOpPostProcessor<Workspace, Agent> PostProccesor;
+	typedef AnytimeRestartingRRTWithPostProcessing<Workspace, Agent, PostProccesor> Planner;
+
+	PostProccesor postProccesor;
+
+	Planner planner(workspace, agent, postProccesor, args);
+	
+	planner.query(start, goal, startT);
+
+	// go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
+}
+
+template<class Workspace, class Agent>
 void go_MRRTPlusS(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
                    const typename Agent::State &start, const typename Agent::State &goal) {
 
@@ -162,6 +184,73 @@ void go_AORRT(const InstanceFileMap &args, const Agent &agent, const Workspace &
 	dfpair(stdout, "planner", "%s", "AO RRT");
 	
 	typedef AORRT<Workspace, Agent> Planner;
+
+	Planner planner(workspace, agent, args);
+	
+	planner.query(start, goal, startT);
+
+	// go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
+}
+
+template<class Workspace, class Agent>
+void go_EST(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+                   const typename Agent::State &start, const typename Agent::State &goal) {
+
+	dfpair(stdout, "planner", "%s", "EST");
+	// clock_t startT = clock();
+	
+	typedef EST<Workspace, Agent> Planner;
+
+	Planner planner(workspace, agent, args);
+	
+	#ifdef WITHGRAPHICS
+	auto lambda = [&]() {
+		workspace.draw();
+		planner.query(start, goal);
+	};
+	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
+#else
+	planner.query(start, goal);
+	planner.dfpairs();
+#endif
+
+	// go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
+}
+
+template<class Workspace, class Agent>
+void go_ESTBIDIR(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+                   const typename Agent::State &start, const typename Agent::State &goal) {
+
+	dfpair(stdout, "planner", "%s", "EST");
+	// clock_t startT = clock();
+	
+	typedef ESTBidirectional<Workspace, Agent> Planner;
+
+	Planner planner(workspace, agent, args);
+	
+	#ifdef WITHGRAPHICS
+	auto lambda = [&]() {
+		workspace.draw();
+		planner.query(start, goal);
+	};
+	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
+#else
+	planner.query(start, goal);
+	planner.dfpairs();
+#endif
+
+	// go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
+}
+
+template<class Workspace, class Agent>
+void go_AOEST(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+                   const typename Agent::State &start, const typename Agent::State &goal) {
+
+	clock_t startT = clock();
+
+	dfpair(stdout, "planner", "%s", "AO EST");
+	
+	typedef AOEST<Workspace, Agent> Planner;
 
 	Planner planner(workspace, agent, args);
 	
@@ -321,12 +410,20 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 		go_SSTGrid<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("SST + PPRM") == 0) {
 		go_SSTGridPPRM<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("MRRT") == 0) {
+		go_MRRT<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("MRRT+S") == 0) {
 		go_MRRTPlusS<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("AO RRT") == 0) {
 		go_AORRT<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("MRRT+S") == 0) {
 		go_NewSearch<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("EST") == 0) {
+		go_EST<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("EST Bidirectional") == 0) {
+		go_ESTBIDIR<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("AO EST") == 0) {
+		go_AOEST<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else {
 		fprintf(stderr, "unreocognized planner: %s\n", planner.c_str());
 	}
@@ -415,22 +512,22 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 // 	// go<Workspace, Agent>(args, workspace, agent, start, goal);
 // }
 
-void planarLinkage(const InstanceFileMap &args) {
-	typedef PlanarLinkage Agent;
-	typedef PlanarLinkage Workspace;
+// void planarLinkage(const InstanceFileMap &args) {
+// 	typedef PlanarLinkage Agent;
+// 	typedef PlanarLinkage Workspace;
 
-	PlanarLinkage planarLinkage(args);
+// 	PlanarLinkage planarLinkage(args);
 
-	/* start and goal states */
+// 	/* start and goal states */
 
-	auto startPositionVars = args.doubleList("Agent Start Position");
-	auto goalPositionVars = args.doubleList("Agent Goal Position");
+// 	auto startPositionVars = args.doubleList("Agent Start Position");
+// 	auto goalPositionVars = args.doubleList("Agent Goal Position");
 
-	Agent::State start(startPositionVars);
-	Agent::State goal(goalPositionVars);
+// 	Agent::State start(startPositionVars);
+// 	Agent::State goal(goalPositionVars);
 
-	go<Workspace, Agent>(args, planarLinkage, planarLinkage, start, goal);
-}
+// 	go<Workspace, Agent>(args, planarLinkage, planarLinkage, start, goal);
+// }
 
 void kink(const InstanceFileMap &args) {
 	typedef OmniMultiD Agent;
@@ -482,4 +579,30 @@ void narrowPassage(const InstanceFileMap &args, const bool scaleObstacles) {
 	Agent::State goal(goalPositionVars);
 
 	go<Workspace, Agent>(args, workspace, agent, start, goal);
+}
+
+void rectangleMap2D(const InstanceFileMap &args) {
+	typedef Omni2D Agent;
+
+	RectangleMap2D<Agent> map(args);
+
+	#ifdef WITHGRAPHICS
+	auto lambda = [&]() {
+		map.draw();
+	};
+	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
+#endif
+}
+
+void pendulum(const InstanceFileMap &args) {
+
+	Pendulum pendulum(args);
+
+	#ifdef WITHGRAPHICS
+	auto lambda = [&]() {
+		pendulum.draw();
+		std::cin.ignore();
+	};
+	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
+#endif
 }

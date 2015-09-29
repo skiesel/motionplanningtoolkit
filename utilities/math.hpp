@@ -5,7 +5,7 @@
 
 namespace math {
 std::uniform_real_distribution<double> zeroToOne;
-std::uniform_real_distribution<double> negOneToOne(-1,1);
+
 
 void multiply(const std::vector<double> &m1, const std::vector<double> &m2, std::vector<double> &out) {
 	std::vector<double> temp(16);
@@ -37,6 +37,7 @@ std::vector<double> transpose(const std::vector<double> &transform) {
 
 
 fcl::Vec3f randomPointInSphere(double maxRadius = 1) {
+	static std::uniform_real_distribution<double> negOneToOne(-1,1);
 	double x0, x1, x2, x3;
 
 	double denom = 2;
@@ -64,6 +65,24 @@ fcl::Vec3f randomPointInSphere(double maxRadius = 1) {
 
 	// return fcl::Vec3f(t1 * cos(theta) * radius, t1 * sin(theta) * radius, u * radius);
 
+}
+
+std::vector<double> randomPointInUnitHyperSphere(double dimensions) {
+	static std::normal_distribution<double> distribution;
+
+	std::vector<double> vec(dimensions);
+	double sum = 0;
+	for(unsigned int i = 0; i < dimensions; ++i) {
+		vec[i] = distribution(GlobalRandomGenerator);
+		sum += vec[i] * vec[i];
+	}
+
+	double coeff = 1 / sqrt(sum);
+	for(unsigned int i = 0; i < dimensions; ++i) {
+		vec[i] *= coeff;
+	}
+
+	return vec;
 }
 
 double vectorDistance(const fcl::Vec3f &v1, const fcl::Vec3f &v2) {

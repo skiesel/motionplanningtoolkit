@@ -16,6 +16,8 @@ std::default_random_engine GlobalRandomGenerator;
 #include "workspaces/planarlinkage.hpp"
 #include "workspaces/kink.hpp"
 #include "workspaces/narrowpassage.hpp"
+#include "workspaces/rectanglemap2d.hpp"
+#include "workspaces/pendulum.hpp"
 
 #include "agents/omnidirectional.hpp"
 #include "agents/dubins.hpp"
@@ -23,6 +25,7 @@ std::default_random_engine GlobalRandomGenerator;
 #include "agents/blimp.hpp"
 #include "agents/geometric.hpp"
 #include "agents/omnimultid.hpp"
+#include "agents/omni2d.hpp"
 
 #include "planners/rrt.hpp"
 #include "planners/anytimerrt.hpp"
@@ -31,7 +34,11 @@ std::default_random_engine GlobalRandomGenerator;
 #include "planners/restartingrrtwithpostprocessing.hpp"
 #include "planners/anytimerestartingrrtwithpostprocessing.hpp"
 #include "planners/aorrt.hpp"
+#include "planners/est.hpp"
+#include "planners/estbidirectional.hpp"
+#include "planners/aoest.hpp"
 
+#include "postprocessors/nooppostprocessor.hpp"
 #include "postprocessors/simplepostprocessor.hpp"
 
 #include "samplers/uniformsampler.hpp"
@@ -85,18 +92,23 @@ int main(int argc, char *argv[]) {
 
 	dfpair(stdout, "Agent Type", "%s", domain.c_str());
 
-	if(domain.compare("PlanarLinkage") == 0)
-		planarLinkage(args);
+	// if(domain.compare("PlanarLinkage") == 0)
+	// 	planarLinkage(args);
 	// else if(args.value("Agent Type").compare("Dubins") == 0)
 	// 	dubins(args);
 	// else if(domain.compare("Snake") == 0)
 	// 	snake(args);
-	else if(domain.compare("Kink") == 0)
+	// else
+	if(domain.compare("Kink") == 0)
 		kink(args);
 	else if(domain.compare("NarrowPassageFull") == 0)
 		narrowPassage(args, false);
 	else if(domain.compare("NarrowPassageHalf") == 0)
 		narrowPassage(args, true);
+	else if(domain.compare("Rectangle Map") == 0)
+		rectangleMap2D(args);
+	else if(domain.compare("Pendulum") == 0)
+		pendulum(args);
 	// else if(domain.compare("Blimp") == 0)
 	// 	blimp(args);
 	// else if(domain.compare("Geometric") == 0)

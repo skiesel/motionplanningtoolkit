@@ -650,6 +650,11 @@ public:
 		return edge.end;
 	}
 
+	State getRandomStateNearState(const State &state, double radius) const {
+		Edge edge = randomSteer(state, zeroToOne(GlobalRandomGenerator) * radius);
+		return edge.end;
+	}
+
 	AbstractState toAbstractState(const State &state) const {
 		StateVars stateVars = state.getStateVars();
 		stateVars.resize(getTreeAbstractStateSize());

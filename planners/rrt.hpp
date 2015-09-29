@@ -78,7 +78,7 @@ public:
 			Edge *e = pool.construct(edge);
 			e->updateParent(treeSample.first);
 
-			if(agent.isGoal(e->end, goal)) {	
+			if(agent.isGoal(e->end, goal)) {
 				if(solutionCost < 0 || e->gCost() < solutionCost) {
 					std::vector<const Edge *> newSolution;
 					newSolution.push_back(e);
@@ -157,7 +157,7 @@ public:
 #endif
 
 		if(!quiet) {
-			dfpair(stdout, "?????solution cost", "-1");
+			dfpair(stdout, "solution cost", "-1");
 			dfpair(stdout, "solution length", "-1");
 		}
 		return std::vector<const Edge*>();

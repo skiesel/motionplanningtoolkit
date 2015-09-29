@@ -1,3 +1,5 @@
+#pragma once
+
 template<class Data>
 class ProbabilityDensityFunction {
 public:	
@@ -6,6 +8,10 @@ public:
 
 		Data* getData() const {
 			return data;
+		}
+
+		unsigned int getId() const {
+			return index;
 		}
 
 	protected:
@@ -109,7 +115,7 @@ public:
 			} else {
 				kid = cur->rightChild();
 				if(kid >= elements.size()) return cur->data;
-				offset += left + weight;
+				offset = left + weight;
 				cur = elements[kid];
 			}
 		}
