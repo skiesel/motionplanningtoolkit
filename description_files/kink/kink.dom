@@ -5,3 +5,5 @@ Goal Thresholds ? 0.00000001 0.00000001 0.00000001 0.00000001 0.00000001
 Collision Check Delta t ? 0.01
 
 Zoom ? 75
+
+Timeout ? 60
