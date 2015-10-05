@@ -111,6 +111,58 @@ void go_AnytimeEST(const InstanceFileMap &args, const Agent &agent, const Worksp
 }
 
 template<class Workspace, class Agent>
+void go_AnytimeBidirectionalEST(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+            const typename Agent::State &start, const typename Agent::State &goal) {
+
+	clock_t startT = clock();
+
+	dfpair(stdout, "planner", "%s", "Anytime EST");
+
+	typedef AnytimeBidirectionalEST<Workspace, Agent> Planner;
+
+	Planner planner(workspace, agent, args);
+
+	planner.query(start, goal, startT);
+
+	planner.dfpairs();
+
+	// go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
+}
+
+template<class Workspace, class Agent>
+void go_AnytimePPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+             const typename Agent::State &start, const typename Agent::State &goal) {
+	clock_t startT = clock();
+
+	dfpair(stdout, "planner", "%s", "PPRM");
+
+	typedef PRMLite<Workspace, Agent> PRMLite;
+	typedef PlakuTreeInterface<Workspace, Agent, PRMLite> PlakuTreeInterfaceT;
+	typedef AnytimeRRT<Workspace, Agent, PlakuTreeInterfaceT> Planner;
+
+	unsigned int numberOfPRMVertices = stol(args.value("Number Of PRM Vertices"));
+	unsigned int numberOfNearestNeighborEdgeConsiderations = stol(args.value("Nearest Neighbors To Consider In PRM Edge Construction"));
+	double prmCollisionCheckDT = args.doubleVal("PRM Collision Check DT");
+
+	PRMLite prmLite(workspace, agent, numberOfPRMVertices, numberOfNearestNeighborEdgeConsiderations, prmCollisionCheckDT);
+
+	double alpha = args.doubleVal("Plaku Alpha Value");
+	double b = args.doubleVal("Plaku b Value");
+	double stateRadius = args.doubleVal("Plaku PRM State Selection Radius");
+	double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
+	dfpair(stdout, "goal bias", "%g", goalBias);
+
+	PlakuTreeInterfaceT plakuTreeInterface(workspace, agent, prmLite, start, goal, alpha, b, stateRadius, goalBias);
+
+	Planner planner(workspace, agent, plakuTreeInterface, args);
+
+	planner.query(start, goal, startT);
+	planner.dfpairs();
+
+	// go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
+}
+
+template<class Workspace, class Agent>
 void go_SST(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
                    const typename Agent::State &start, const typename Agent::State &goal) {
 
@@ -255,7 +307,7 @@ void go_EST(const InstanceFileMap &args, const Agent &agent, const Workspace &wo
 
 	Planner planner(workspace, agent, args);
 	
-	#ifdef WITHGRAPHICS
+#ifdef WITHGRAPHICS
 	auto lambda = [&]() {
 		workspace.draw();
 		planner.query(start, goal);
@@ -280,7 +332,7 @@ void go_ESTBIDIR(const InstanceFileMap &args, const Agent &agent, const Workspac
 
 	Planner planner(workspace, agent, args);
 	
-	#ifdef WITHGRAPHICS
+#ifdef WITHGRAPHICS
 	auto lambda = [&]() {
 		workspace.draw();
 		planner.query(start, goal);
@@ -326,6 +378,8 @@ void go_KPIECE(const InstanceFileMap &args, const Agent &agent, const Workspace 
 template<class Workspace, class Agent>
 void go_PPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
              const typename Agent::State &start, const typename Agent::State &goal) {
+	clock_t startT = clock();
+
 	dfpair(stdout, "planner", "%s", "PPRM");
 
 	typedef PRMLite<Workspace, Agent> PRMLite;
@@ -348,7 +402,10 @@ void go_PPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &w
 
 	Planner planner(workspace, agent, plakuTreeInterface, args);
 
-	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
+	planner.query(start, goal, startT);
+	planner.dfpairs();
+
+	// go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
 }
 
 template<class Workspace, class Agent>
@@ -480,6 +537,10 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 		go_AnytimeRRT<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("Anytime EST") == 0) {
 		go_AnytimeEST<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("Anytime Bidirectional EST") == 0) {
+		go_AnytimeBidirectionalEST<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("Anytime PPRM") == 0) {
+		go_AnytimePPRM<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else {
 		fprintf(stderr, "unreocognized planner: %s\n", planner.c_str());
 	}

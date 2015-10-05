@@ -67,6 +67,9 @@ public:
 		static Color Blue() {
 			return Color(0,0,1);
 		}
+		static Color White() {
+			return Color(1,1,1);
+		}
 	private:
 		std::vector<double> color;
 	};
