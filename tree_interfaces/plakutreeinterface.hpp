@@ -172,27 +172,35 @@ public:
 
 		uniformSampler = new UniformSamplerT(workspace, agent, *uniformSamplerBackingKDTree);
 
-		unsigned int regionCount = discretization.getCellCount();
-		regions.reserve(regionCount);
-		for(unsigned int i = 0; i < regionCount; ++i) {
-			regions.push_back(new Region(i, agent));
-		}
-
-		clock_t startT = clock();
-
-		dijkstra(regions[goalRegionId]);
-
-		double endT = clock();
-
-		dfpair(stdout, "dijkstra search time", "%g", (endT-startT) / CLOCKS_PER_SEC);
-
 		bool connected = false;
 		while(!connected) {
+
+			for(auto r : regions) {
+				delete r;
+			}
+			regions.clear();
+
+			unsigned int regionCount = discretization.getCellCount();
+			regions.reserve(regionCount);
+			for(unsigned int i = 0; i < regionCount; ++i) {
+				regions.push_back(new Region(i, agent));
+			}
+
+			clock_t startT = clock();
+
+			dijkstra(regions[goalRegionId]);
+
+			double endT = clock();
+
+			dfpair(stdout, "dijkstra search time", "%g", (endT-startT) / CLOCKS_PER_SEC);
+	
 			connected = true;
 			for(const auto region : regions) {
 				if(region->regionPath.size() == 0) {
 					connected = false;
-					discretization.grow(5000);
+					discretization.grow();
+				goalRegionId = discretization.getCellId(goal);
+
 					break;
 				}
 			}
