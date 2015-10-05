@@ -235,36 +235,23 @@ public:
 
 		if(distribution(GlobalRandomGenerator) < b) {
 			assert(!regionHeap.empty());
+			
+			do {
+				activeRegion = regionHeap.front();
+				std::pop_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
+				regionHeap.pop_back();
+				activeRegion->onOpen = false;
+			} while(activeRegion->getEdgeCount() == 0);
 
-			activeRegion = regionHeap.front();
-			std::pop_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
-			regionHeap.pop_back();
-
-			activeRegion->onOpen = false;
+			assert(activeRegion->getEdgeCount() != 0);
 
 			unsigned int regionAlongPath = activeRegion->getRandomRegionAlongPathToGoal(distribution);
 
 			if(regionAlongPath == goalRegionId && distribution(GlobalRandomGenerator) < goalBias) {
-				while(activeRegion->getEdgeCount() == 0) {
-					activeRegion = regionHeap.front();
-					std::pop_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
-					regionHeap.pop_back();
-				}
-
-				assert(activeRegion->getEdgeCount() != 0);
-
 				return std::make_pair(activeRegion->getNearestEdgeInRegion(goal), goal);
 			}
 
 			State p = discretization.getRandomStateNearRegionCenter(regionAlongPath, stateRadius);
-
-			while(activeRegion->getEdgeCount() == 0) {
-				activeRegion = regionHeap.front();
-				std::pop_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
-				regionHeap.pop_back();
-			}
-
-			assert(activeRegion->getEdgeCount() != 0);
 
 			return std::make_pair(activeRegion->getNearestEdgeInRegion(p), p);
 		} else {
