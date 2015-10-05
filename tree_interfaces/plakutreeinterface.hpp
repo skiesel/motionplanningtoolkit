@@ -100,7 +100,7 @@ class PlakuTreeInterface {
 		}
 
 		static bool HeapCompare(const Region *r1, const Region *r2) {
-			return r1->weight < r2->weight;
+			return r1->weight > r2->weight;
 		}
 
 		unsigned int id, numSelections;
