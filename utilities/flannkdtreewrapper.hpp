@@ -56,7 +56,6 @@ public:
 
 	void removePoint(Element *elem) {
 		unsigned int index = elem->getPointIndex();
-
 		assert(index != 0);
 		assert(lookup.find(index) != lookup.end());
 

@@ -13,15 +13,37 @@ class PlakuTreeInterface {
 
 	typedef typename Agent::State State;
 	typedef typename Agent::Edge Edge;
+	class EdgeWrapper;
 
 	typedef flann::KDTreeSingleIndexParams KDTreeType;
-	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, typename Agent::Edge> KDTree;
+	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, Edge> KDTree;
+	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, EdgeWrapper> KDTree2;
 	typedef UniformSampler<Workspace, Agent, KDTree> UniformSamplerT;
+
+	struct EdgeWrapper {
+		EdgeWrapper(Edge *edge) : edge(edge), treeIndex(0) {}
+
+		/* needed for being inserted into NN datastructure */
+		const typename Agent::StateVars &getTreeStateVars() const {
+			return edge->getTreeStateVars();
+		}
+
+		int getPointIndex() const {
+			return treeIndex;
+		}
+
+		void setPointIndex(int ptInd) {
+			treeIndex = ptInd;
+		}
+
+		int treeIndex;
+		Edge *edge;
+	};
 
 	struct Region {
 		Region(unsigned int id, const Agent &agent) : heapIndex(std::numeric_limits<unsigned int>::max()), id(id), numSelections(0), heuristic(std::numeric_limits<double>::infinity()), weight(0), onOpen(false) {
 			KDTreeType kdtreeType;
-			edgesInRegion = new KDTree(kdtreeType, agent.getDistanceEvaluator(), agent.getTreeStateSize());
+			edgesInRegion = new KDTree2(kdtreeType, agent.getDistanceEvaluator(), agent.getTreeStateSize());
 		}
 
 		~Region() {
@@ -77,11 +99,32 @@ class PlakuTreeInterface {
 			return regionPath[randomIndex];
 		}
 
+		void insertEdge(Edge *edge) {
+			EdgeWrapper *ew = new EdgeWrapper(edge);
+			edgeWrapperLookup[edge] = ew;
+			edgesInRegion->insertPoint(ew);
+		}
+
+		Edge* nearest(Edge *edge) {
+			EdgeWrapper ew(edge);
+			return edgesInRegion->nearest(&ew).elements[0]->edge;
+		}
+
 		Edge* getNearestEdgeInRegion(const State &s) const {
 			Edge e(s);
-			auto res = edgesInRegion->nearest(&e, 0, 1);
+			EdgeWrapper ew(&e);
+			auto res = edgesInRegion->nearest(&ew, 0, 1);
 			assert(res.elements.size() > 0);
-			return res.elements[0];
+			return res.elements[0]->edge;
+		}
+
+		void removeEdge(Edge *edge) {
+			edgesInRegion->removePoint(edgeWrapperLookup[edge]);
+			edgeWrapperLookup.erase(edge);
+		}
+
+		unsigned int getEdgeCount() const {
+			return edgeWrapperLookup.size();
 		}
 
 		/* used for initial heuristic computation */
@@ -112,7 +155,8 @@ class PlakuTreeInterface {
 		std::vector<std::vector<unsigned int>> regionPathCandidates;
 
 		bool onOpen;
-		KDTree *edgesInRegion;
+		KDTree2 *edgesInRegion;
+		std::unordered_map<Edge*, EdgeWrapper*> edgeWrapperLookup;
 	};
 
 public:
@@ -201,11 +245,26 @@ public:
 			unsigned int regionAlongPath = activeRegion->getRandomRegionAlongPathToGoal(distribution);
 
 			if(regionAlongPath == goalRegionId && distribution(GlobalRandomGenerator) < goalBias) {
+				while(activeRegion->getEdgeCount() == 0) {
+					activeRegion = regionHeap.front();
+					std::pop_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
+					regionHeap.pop_back();
+				}
+
+				assert(activeRegion->getEdgeCount() != 0);
 
 				return std::make_pair(activeRegion->getNearestEdgeInRegion(goal), goal);
 			}
 
 			State p = discretization.getRandomStateNearRegionCenter(regionAlongPath, stateRadius);
+
+			while(activeRegion->getEdgeCount() == 0) {
+				activeRegion = regionHeap.front();
+				std::pop_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
+				regionHeap.pop_back();
+			}
+
+			assert(activeRegion->getEdgeCount() != 0);
 
 			return std::make_pair(activeRegion->getNearestEdgeInRegion(p), p);
 		} else {
@@ -222,7 +281,7 @@ public:
 			regions[newCellId]->onOpen = true;
 		}
 
-		regions[newCellId]->edgesInRegion->insertPoint(edge);
+		regions[newCellId]->insertEdge(edge);
 		uniformSamplerBackingKDTree->insertPoint(edge);
 
 		return true;
@@ -231,18 +290,17 @@ public:
 	Edge *getTreeEdge(const State &s) const {
 		Edge edge(s);
 		unsigned int cellId = discretization.getCellId(edge.end);
-		typename KDTree::KNNResult result = regions[cellId]->edgesInRegion->nearest(&edge);
-		return result.elements[0];
+		return regions[cellId]->nearest(&edge);;
 	}
 
-	typename KDTree::KNNResult nearest(const Edge *edge) const {
-		unsigned int cellId = discretization.getCellId(edge->end);
-		return regions[cellId]->edgesInRegion->nearest(edge);
-	}
+	// typename KDTree::KNNResult nearest(const Edge *edge) const {
+	// 	unsigned int cellId = discretization.getCellId(edge->end);
+	// 	return regions[cellId]->nearest(edge);
+	// }
 
 	void removeFromTree(Edge *edge) {
 		unsigned int cellId = discretization.getCellId(edge->end);
-		regions[cellId]->edgesInRegion->removePoint(edge);
+		regions[cellId]->removeEdge(edge);
 		uniformSamplerBackingKDTree->removePoint(edge);
 	}
 
@@ -305,14 +363,21 @@ private:
 	public:
 		void dijkstra(TheBoss &theBoss, Region *region) {
 			InPlaceBinaryHeap<Region, Region> open;
+			std::unordered_set<unsigned int> closed;
 			region->setHeuristicAndPath(0, std::vector<unsigned int>());
 			open.push(region);
+
+			closed.insert(region->id);
 
 			while(!open.isEmpty()) {
 				Region *current = open.pop();
 
+				closed.insert(region->id);
+
 				std::vector<unsigned int> kids = theBoss.discretization.getNeighboringCells(current->id);
 				for(unsigned int kid : kids) {
+					if(closed.find(kid) != closed.end()) continue;
+
 					double newHeuristic = current->heuristic + theBoss.discretization.getEdgeCostBetweenCells(current->id, kid);
 					Region *kidPtr = theBoss.regions[kid];
 
@@ -340,11 +405,15 @@ private:
 	public:
 		void dijkstra(TheBoss &theBoss, Region *region) {
 			InPlaceBinaryHeap<Region, Region> open;
+			std::unordered_set<unsigned int> closed;
 			region->setHeuristicAndPath(0, std::vector<unsigned int>());
 			open.push(region);
+			closed.insert(region->id);
 
 			while(!open.isEmpty()) {
 				Region *current = open.peek();
+
+				closed.insert(region->id);
 
 				unsigned int pathLength = current->regionPath.size();
 
@@ -362,6 +431,8 @@ private:
 
 				std::vector<unsigned int> kids = theBoss.discretization.getNeighboringCells(current->id);
 				for(unsigned int kid : kids) {
+					if(closed.find(kid) != closed.end()) continue;
+
 					double newHeuristic = current->heuristic + theBoss.discretization.getEdgeCostBetweenCells(current->id, kid);
 					Region *kidPtr = theBoss.regions[kid];
 					double oldHeuristic = kidPtr->heuristic;
