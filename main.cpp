@@ -30,6 +30,7 @@ std::default_random_engine GlobalRandomGenerator;
 
 #include "planners/anytimerrt.hpp"
 #include "planners/anytimeest.hpp"
+#include "planners/anytimebidirectionalest.hpp"
 #include "planners/anytimerestartingrrtwithpostprocessing.hpp"
 
 #include "planners/rrt.hpp"
