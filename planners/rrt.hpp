@@ -98,6 +98,7 @@ public:
 					std::reverse(newSolution.begin(), newSolution.end());
 					solution.clear();
 					solution.insert(solution.begin(), newSolution.begin(), newSolution.end());
+					assert(agent.isGoal(solution.back()->end, goal));
 				}
 
 #ifdef WITHGRAPHICS
@@ -122,25 +123,26 @@ public:
 		}
 
 #ifdef WITHGRAPHICS
-		for(const Edge *edge : treeEdges) {
-			edge->draw(OpenGLWrapper::Color::Red());
-		}
+		// for(const Edge *edge : treeEdges) {
+		// 	edge->draw(OpenGLWrapper::Color::Red());
+		// }
 
-		treeEdges.clear();
+		// treeEdges.clear();
 
 		// for(const State &sample : samples) {
 		// 	sample.draw();
 		// }
 
 		if(solution.size() > 0) {
-			auto red = OpenGLWrapper::Color::Red();
-			for(const Edge *edge : solution) {
-				edge->draw(red);
-			}
-			agent.drawSolution(solution, collisionCheckDT);
-			// if(poseNumber >= solution.size() * 2) poseNumber = -1;
-			// if(poseNumber >= 0)
-			// 	agent.animateSolution(solution, poseNumber++);
+		// 	auto red = OpenGLWrapper::Color::Red();
+		// 	for(const Edge *edge : solution) {
+		// 		edge->draw(red);
+		// 	}
+		// 	agent.drawSolution(solution, collisionCheckDT);
+		// 	// if(poseNumber >= solution.size() * 2) poseNumber = -1;
+		// 	// if(poseNumber >= 0)
+		// 	// 	agent.animateSolution(solution, poseNumber++);
+			assert(agent.isGoal(solution.back()->end, goal));
 			return solution;
 		}
 #endif
