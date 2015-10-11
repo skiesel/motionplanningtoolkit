@@ -27,8 +27,7 @@ public:
 		double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
 		dfpair(stdout, "goal bias", "%g", goalBias);
 
-		std::vector<const Edge*> best;
-		double bestCost = std::numeric_limits<double>::infinity();
+
 
 		while(true) {
 
@@ -39,17 +38,35 @@ public:
 			GBSampler goalbiassampler(uniformsampler, goal, goalBias);
 
 			TreeInterface treeInterface(kdtree, goalbiassampler);
-			Planner planner(workspace, agent, treeInterface, args);
+			Planner planner(workspace, agent, treeInterface, args, true);
 
 			std::vector<const Edge*> incumbent = planner.query(start, goal);
 
-			incumbent = postProcessor.postProcess(incumbent);
+			auto incumbent2 = postProcessor.postProcess(incumbent);
 
-			double incumbentCost = incumbent.back()->gCost();
+			double incumbentCost = incumbent2.back()->gCost();
 			if(incumbentCost < bestCost) {
+
+#ifdef WITHGRAPHICS
+			auto red = OpenGLWrapper::Color::Red();
+			for(const Edge *edge : incumbent) {
+				edge->draw(red);
+			}
+
+			auto blue = OpenGLWrapper::Color::Blue();
+			for(const Edge *edge : incumbent2) {
+				edge->draw(blue);
+			}
+
+#endif
 				bestCost = incumbentCost;
 				best.clear();
-				best.insert(best.begin(), incumbent.begin(), incumbent.end());
+				best.insert(best.begin(), incumbent2.begin(), incumbent2.end());
+
+				dfpair(stdout, "solution cost", "%g", bestCost);
+				dfpair(stdout, "solution length", "%u", best.size());
+
+				break;
 			}
 		}
 		return best;
@@ -58,6 +75,9 @@ public:
 	void dfpairs() const {}
 
 private:
+	std::vector<const Edge*> best;
+	double bestCost = std::numeric_limits<double>::infinity();
+
 	const Workspace &workspace;
 	const Agent &agent;
 	const PostProcessor &postProcessor;
