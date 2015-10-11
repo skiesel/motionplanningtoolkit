@@ -11,51 +11,60 @@ public:
 	}
 
 	std::vector<const Edge*> postProcess(const std::vector<const Edge*> &path) const {
-		std::vector<const Edge*> newPath;
+		std::vector<Edge*> newPath;
 
-		double g = 0;
-
-		for(unsigned int i = 0; i < path.size()-1; ++i) {
-			for(unsigned int lastConsumedEdge = i + 1; lastConsumedEdge < path.size(); ++lastConsumedEdge) {
-				Edge edge = agent.constructEdge(path[i]->start, path[lastConsumedEdge]->end);
-
-				// fprintf(stderr, "looking at %u -> %u ....", i, lastConsumedEdge);
+		for(unsigned int i = 0; i < path.size(); ++i) {
+			for(unsigned int j = i + 1; j < path.size(); ++j) {
+				Edge edge = agent.constructEdge(newPath.size() == 0 ? path.front()->start : newPath.back()->end, path[j]->end);
 
 				//We are going to ignore cost and assume less edges are going to be cheaper
 				if(!workspace.safeEdge(agent, edge, collisionCheckDT)) {
-					// fprintf(stderr, "DONE\n");
 
-					if(lastConsumedEdge == i+1) {
-						// fprintf(stderr, "copying %u\n", i);
+					if(j == i+1) {
 						//didn't combine any edges
 						Edge *e = new Edge(*path[i]);
-						g += e->cost;
-						e->g = g;
+						if(newPath.size() > 0) {
+							e->updateParent(newPath.back());
+						} else {
+							e->g = e->cost;
+						}
+
 						newPath.push_back(e);
 					} else {
-						lastConsumedEdge--;
-						// fprintf(stderr, "end at %u -> %u\n", i, lastConsumedEdge);
-						Edge *e = new Edge(agent.constructEdge(path[i]->start, path[lastConsumedEdge]->end));
-						g += e->cost;
-						e->g = g;
+						Edge *e = new Edge(agent.constructEdge(newPath.size() == 0 ? path.front()->start : newPath.back()->end, path[j-1]->end));
+						if(newPath.size() > 0) {
+							e->updateParent(newPath.back());
+						} else {
+							e->g = e->cost;
+						}
+
 						newPath.push_back(e);
-						i = lastConsumedEdge;
+						i = j - 2;
 					}
 					break;
 				} else {
-					if(lastConsumedEdge == (path.size() - 1)) {
-						// fprintf(stderr, "last edge! ...");
-						Edge *e = new Edge(*path[i]);
-						g += e->cost;
-						e->g = g;
+					if(j == (path.size() - 1)) {
+						Edge *e = new Edge(agent.constructEdge(newPath.back()->end, path.back()->end));
+						if(newPath.size() > 0) {
+							e->updateParent(newPath.back());
+						} else {
+							e->g = e->cost;
+						}
+
 						newPath.push_back(e);
+						i = j;
+						break;
 					}
-					// fprintf(stderr, "safe\n");
 				}
 			}
 		}
-		// fprintf(stderr, "DONE!!\n");
-		return newPath;
+
+		std::vector<const Edge*> constNewPath;
+		constNewPath.insert(constNewPath.begin(), newPath.begin(), newPath.end());
+
+		assert(newPath.back()->end.equals(path.back()->end));
+
+		return constNewPath;
 	}
 
 private:
