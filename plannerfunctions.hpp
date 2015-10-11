@@ -268,6 +268,7 @@ void go_MRRTPlusS(const InstanceFileMap &args, const Agent &agent, const Workspa
 	dfpair(stdout, "planner", "%s", "MRRT+S");
 
 	typedef SimplePostProcessor<Workspace, Agent> PostProccesor;
+	// typedef RestartingRRTWithPostProcessing<Workspace, Agent, PostProccesor> Planner;
 	typedef AnytimeRestartingRRTWithPostProcessing<Workspace, Agent, PostProccesor> Planner;
 
 	PostProccesor postProccesor(workspace, agent, args);
@@ -566,8 +567,6 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 		go_MRRTPlusS<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("AO RRT") == 0) {
 		go_AORRT<Workspace, Agent>(args, agent, workspace, start, goal);
-	} else if(planner.compare("MRRT+S") == 0) {
-		go_NewSearch<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("EST") == 0) {
 		go_EST<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("EST Bidirectional") == 0) {
