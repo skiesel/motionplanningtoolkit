@@ -172,27 +172,35 @@ public:
 
 		uniformSampler = new UniformSamplerT(workspace, agent, *uniformSamplerBackingKDTree);
 
-		unsigned int regionCount = discretization.getCellCount();
-		regions.reserve(regionCount);
-		for(unsigned int i = 0; i < regionCount; ++i) {
-			regions.push_back(new Region(i, agent));
-		}
-
-		clock_t startT = clock();
-
-		dijkstra(regions[goalRegionId]);
-
-		double endT = clock();
-
-		dfpair(stdout, "dijkstra search time", "%g", (endT-startT) / CLOCKS_PER_SEC);
-
 		bool connected = false;
 		while(!connected) {
+
+			for(auto r : regions) {
+				delete r;
+			}
+			regions.clear();
+
+			unsigned int regionCount = discretization.getCellCount();
+			regions.reserve(regionCount);
+			for(unsigned int i = 0; i < regionCount; ++i) {
+				regions.push_back(new Region(i, agent));
+			}
+
+			clock_t startT = clock();
+
+			dijkstra(regions[goalRegionId]);
+
+			double endT = clock();
+
+			dfpair(stdout, "dijkstra search time", "%g", (endT-startT) / CLOCKS_PER_SEC);
+	
 			connected = true;
 			for(const auto region : regions) {
 				if(region->regionPath.size() == 0) {
 					connected = false;
-					discretization.grow(5000);
+					discretization.grow();
+				goalRegionId = discretization.getCellId(goal);
+
 					break;
 				}
 			}
@@ -235,36 +243,23 @@ public:
 
 		if(distribution(GlobalRandomGenerator) < b) {
 			assert(!regionHeap.empty());
+			
+			do {
+				activeRegion = regionHeap.front();
+				std::pop_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
+				regionHeap.pop_back();
+				activeRegion->onOpen = false;
+			} while(activeRegion->getEdgeCount() == 0);
 
-			activeRegion = regionHeap.front();
-			std::pop_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
-			regionHeap.pop_back();
-
-			activeRegion->onOpen = false;
+			assert(activeRegion->getEdgeCount() != 0);
 
 			unsigned int regionAlongPath = activeRegion->getRandomRegionAlongPathToGoal(distribution);
 
 			if(regionAlongPath == goalRegionId && distribution(GlobalRandomGenerator) < goalBias) {
-				while(activeRegion->getEdgeCount() == 0) {
-					activeRegion = regionHeap.front();
-					std::pop_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
-					regionHeap.pop_back();
-				}
-
-				assert(activeRegion->getEdgeCount() != 0);
-
 				return std::make_pair(activeRegion->getNearestEdgeInRegion(goal), goal);
 			}
 
 			State p = discretization.getRandomStateNearRegionCenter(regionAlongPath, stateRadius);
-
-			while(activeRegion->getEdgeCount() == 0) {
-				activeRegion = regionHeap.front();
-				std::pop_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
-				regionHeap.pop_back();
-			}
-
-			assert(activeRegion->getEdgeCount() != 0);
 
 			return std::make_pair(activeRegion->getNearestEdgeInRegion(p), p);
 		} else {

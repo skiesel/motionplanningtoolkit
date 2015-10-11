@@ -416,7 +416,7 @@ void go_AnytimeSSTPPRM(const InstanceFileMap &args, const Agent &agent, const Wo
 	clock_t startT = clock();
 	dfpair(stdout, "planner", "%s", "PPRM + SST");
 
-	typedef LazyPRMLite<Workspace, Agent> PRMLite;
+	typedef PRMLite<Workspace, Agent> PRMLite;
 	typedef PlakuTreeInterface<Workspace, Agent, PRMLite> PlakuTreeInterfaceT;
 	typedef SST<Workspace, Agent, PlakuTreeInterfaceT, PlakuTreeInterfaceT> SSTTreeInterface;
 	typedef AnytimeRRT<Workspace, Agent, SSTTreeInterface> Planner;
@@ -455,7 +455,7 @@ void go_SSTGridPPRM(const InstanceFileMap &args, const Agent &agent, const Works
                    const typename Agent::State &start, const typename Agent::State &goal) {
 	dfpair(stdout, "planner", "%s", "SST + PPRM");
 
-	typedef LazyPRMLite<Workspace, Agent> PRMLite;
+	typedef PRMLite<Workspace, Agent> PRMLite;
 	typedef PlakuTreeInterface<Workspace, Agent, PRMLite> PlakuTreeInterfaceT;
 	typedef SST_Grid<Workspace, Agent, PlakuTreeInterfaceT, PlakuTreeInterfaceT> SSTTreeInterface;
 	typedef RRT<Workspace, Agent, SSTTreeInterface> Planner;
@@ -490,7 +490,7 @@ void go_NewSearch(const InstanceFileMap &args, const Agent &agent, const Workspa
 	dfpair(stdout, "planner", "%s", "NewSearch");
 	
 	typedef FrequencyTreeInterface<Agent> RegionManager;
-	typedef LazyPRMLite<Workspace, Agent> PRMLite;
+	typedef PRMLite<Workspace, Agent> PRMLite;
 	typedef NewTreeInterface<Workspace, Agent, PRMLite, SimpleBestFirst, RegionManager> TreeInterface;
 	typedef RRT<Workspace, Agent, TreeInterface> Planner;
 

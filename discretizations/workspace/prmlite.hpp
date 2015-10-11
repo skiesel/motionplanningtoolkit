@@ -69,12 +69,25 @@ public:
 		  agent(agent),
 		  kdtree(KDTreeType(1), agent.getAbstractDistanceEvaluator(), agent.getTreeAbstractStateSize()),
 		  collisionCheckDT(collisionCheckDT),
-		  collisionChecks(0) {
+		  collisionChecks(0),
+		  numVertices(numVertices), edgeSetSize(edgeSetSize), shouldGenerateEdges(shouldGenerateEdges) {
 		initialize(numVertices, edgeSetSize, shouldGenerateEdges);
 	}
 
-	void grow(unsigned int howManyToAdd) {
-		fatal("PRM addMoreVertices not implemented");
+	void grow() {
+		numVertices *= 2;
+		generateVertices(numVertices);
+		
+		edges.clear();
+
+		if(shouldGenerateEdges) {
+			clock_t edgeStart = clock();
+
+			generateEdges(edgeSetSize);
+
+			dfpair(stdout, "prm edge build time", "%g", (double)(clock()-edgeStart) / CLOCKS_PER_SEC);
+			dfpair(stdout, "prm collision checks", "%u", collisionChecks);
+		}
 	}
 
 	unsigned int getCellCount() const {
@@ -147,7 +160,6 @@ protected:
 		dfpair(stdout, "prm vertex set size", "%lu", numVertices);
 		dfpair(stdout, "prm edge set size", "%lu", edgeSetSize);
 		dfpair(stdout, "prm edge collision check dt", "%g", collisionCheckDT);
-		dfpair(stdout, "prm random quaternion z only", "%s", "true");
 
 		startTime = clock();
 
@@ -360,4 +372,8 @@ protected:
 	unsigned int collisionChecks;
 	mutable KDTree kdtree;
 	clock_t startTime;
+
+
+	unsigned int numVertices, edgeSetSize;
+	bool shouldGenerateEdges;
 };
