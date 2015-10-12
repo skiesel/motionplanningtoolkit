@@ -1,5 +1,3 @@
-Seed ? 1
-
 Agent Type ? Rectangle Map
 
 Dimensions ? 2
@@ -8,15 +6,12 @@ Agent Start Location ? 0.1 0.7
 Agent Goal Location ? 0.9 0.7
 
 Goal Thresholds ? 0.00000001 0.00000001
-Goal Bias ? 0.5
 
 Obstacles ? 0.2 0.3 0.2 0.45 0.25 0.45 0.25 0.3      0.2 0.7 0.2 0.55 0.25 0.55 0.25 0.7   0.6 0.3 0.2 0.3 0.2 0.35 0.6 0.35    0.6 0.7 0.2 0.7 0.2 0.65 0.6 0.65     0.6 0.7 0.6 0.3 0.55 0.3 0.55 0.7
 
 Steering Delta t ?  0.15
 
 Zoom ? 80
-
-Planner ? MRRT
 
 Collision Check Delta t ? 0.01
 
