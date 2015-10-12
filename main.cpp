@@ -26,7 +26,6 @@ std::default_random_engine GlobalRandomGenerator;
 #include "agents/blimp.hpp"
 #include "agents/geometric.hpp"
 #include "agents/omnimultid.hpp"
-#include "agents/omni2d.hpp"
 
 #include "planners/anytimerrt.hpp"
 #include "planners/anytimeest.hpp"
@@ -65,7 +64,9 @@ std::default_random_engine GlobalRandomGenerator;
 #include "discretizations/workspace/prmlite.hpp"
 #include "discretizations/workspace/lazyprmlite.hpp"
 
-#include "plannerfunctions.hpp"
+#include "anytimeplanners.hpp"
+#include "planners.hpp"
+#include "domains.hpp"
 
 int main(int argc, char *argv[]) {
 	if(argc < 2) {

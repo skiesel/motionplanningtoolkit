@@ -8,15 +8,46 @@ template<typename Agent>
 class RectangleMap2D {
 	typedef typename Agent::Edge Edge;
 	typedef typename Agent::State State;
+	typedef typename Agent::StateVars StateVars;
 	typedef typename Agent::AbstractState AbstractState;
 	typedef typename Agent::AbstractEdge AbstractEdge;
 
 	struct Rectangle {
 		Rectangle(const std::vector<double> &vertList, unsigned int begin, unsigned int end) :
-		vertices(vertList.begin() + begin, vertList.begin() + end) {}
+		vertices(vertList.begin() + begin, vertList.begin() + end), minx(std::numeric_limits<double>::infinity()),
+		miny(std::numeric_limits<double>::infinity()) {
 
-		bool contains(const State &state) const {
-			return false;
+
+			for(unsigned int i = 0; i < vertices.size(); i+=2) {
+				if(vertices[i] < minx) {
+					minx = vertices[i];
+				}
+				if(vertices[i+1] < miny) {
+					miny = vertices[i+1];
+				}
+			}
+
+			double width = 0, height = 0;
+			for(unsigned int i = 0; i < vertices.size(); i+=2) {
+				double w = vertices[i] - minx;
+				double h = vertices[i+1] - miny;
+				if(w > width) {
+					width = w;
+				}
+				if(h > height) {
+					height = h;
+				}
+			}
+
+			maxx = minx + width;
+			maxy = miny + height;
+		}
+
+		bool contains(const StateVars &vars) const {
+			assert(vars.size() == 2);
+
+			return vars[0] >= minx && vars[0] <= maxx &&
+					vars[1] >= miny && vars[1] <= maxy;
 		}
 
 #ifdef WITHGRAPHICS
@@ -34,6 +65,7 @@ class RectangleMap2D {
 #endif
 
 		std::vector<double> vertices;
+		double minx, miny, maxx, maxy;
 	};
 
 public:
@@ -65,7 +97,7 @@ public:
 
 	bool safeStates(const Agent &agent, const std::vector<State> &states) const {
 		for (const auto &state : states) {
-			if (!safeAbstractState(agent, state)) {
+			if (!safeState(agent, state)) {
 				return false;
 			}
 		}
@@ -84,7 +116,21 @@ public:
 	}
 
 	bool safeState(const Agent &agent, const State &state) const {
-		return safeAbstractState(agent, state);
+		const auto &stateVars = state.getTreeStateVars();
+
+		for (auto var : stateVars) {
+			if (var < 0 || var > 1) {
+				return false;
+			}
+		}
+
+		for(const auto &rect : obstacles) {
+			if(rect.contains(state.getStateVars())) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	bool safeAbstractState(const Agent &agent, const AbstractState &state) const {
@@ -92,6 +138,12 @@ public:
 
 		for (auto var : stateVars) {
 			if (var < 0 || var > 1) {
+				return false;
+			}
+		}
+
+		for(const auto &rect : obstacles) {
+			if(rect.contains(state.getStateVars())) {
 				return false;
 			}
 		}
