@@ -61,6 +61,7 @@ protected:
 	};
 
 	typedef flann::KDTreeIndexParams KDTreeType;
+	// typedef flann::KDTreeSingleIndexParams KDTreeType;
 	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::AbstractDistanceEvaluator, Vertex> KDTree;
 
 public:
@@ -142,6 +143,24 @@ public:
 #endif
 	}
 
+#ifdef WITHGRAPHICS
+	void drawVertex(unsigned int index, const std::vector<double> &c) const {
+		glPointSize(5);
+		OpenGLWrapper::Color color(c[0], c[1], c[2]);
+		vertices[index]->state.draw(color);
+		glPointSize(1);
+	}
+
+	void drawEdge(unsigned int a, unsigned int b, const std::vector<double> &c) const {
+		OpenGLWrapper::Color color(c[0], c[1], c[2]);
+		const auto &start = vertices[a]->state.getTreeStateVars();
+		const auto &end = vertices[b]->state.getTreeStateVars();
+
+		OpenGLWrapper::getOpenGLWrapper().drawLine(start[0], start[1], start[2], end[0], end[1], end[2], color);
+	}
+
+#endif
+
 	bool edgeExists(unsigned int c1, unsigned int c2) const {
 		auto vertexAndEdges = edges.find(c1);
 		if(vertexAndEdges == edges.end()) {
@@ -191,7 +210,7 @@ protected:
 	void generateVertices(unsigned int numVertices) {
 		vertices.reserve(numVertices);
 
-		auto bounds = workspace.getBounds();
+		auto bounds = agent.getAbstractStateVarRanges(workspace.getBounds());
 
 		AbstractState::getRandomAbstractState(bounds);
 
@@ -206,7 +225,7 @@ protected:
 		}
 	}
 
-	virtual void generateEdges(double edgeSetSize) {
+	virtual void generateEdges(unsigned int edgeSetSize) {
 		for(unsigned int i = 0; i < vertices.size(); ++i) {
 			auto res = kdtree.kNearest(vertices[i], edgeSetSize+1);
 
@@ -241,7 +260,7 @@ protected:
 #ifdef WITHGRAPHICS
 	void drawOpenGL(bool drawPoints, bool drawLines, const std::vector<std::vector<double>> &colors) const {
 		if(drawPoints) {
-			glPointSize(1);
+			glPointSize(5);
 			unsigned int curIndex = 0;
 			std::vector<double> white(3,1);
 			for(const auto vert : vertices) {
@@ -261,27 +280,32 @@ protected:
 			glPointSize(1);
 		}
 
-		// if(drawLines) {
-		// 	OpenGLWrapper::Color color;
+		if(drawLines) {
+			OpenGLWrapper::Color color;
 
-		// 	for(const auto& edgeSet : edges) {
-		// 		// std::vector<double> edgeForVrep(6);
-		// 		const auto &start = vertices[edgeSet.first]->state;
+			for(const auto& edgeSet : edges) {
+				// std::vector<double> edgeForVrep(6);
+				const auto &start = vertices[edgeSet.first]->state;
 
-		// 		for(const auto& edge : edgeSet.second) {
-		// 			const auto &end = vertices[edge.second.endpoint]->state;
+				const auto &startVars = start.getTreeStateVars();
 
-		// 			AbstractEdge edgeCandidate = Agent::AbstractState::interpolate(start, end, collisionCheckDT);
+				for(const auto& edge : edgeSet.second) {
+					const auto &end = vertices[edge.second.endpoint]->state;
 
-		// 			for(const auto &s : edgeCandidate) {
-		// 				s.draw();
-		// 			}
+					// AbstractEdge edgeCandidate = Agent::AbstractState::interpolate(start, end, collisionCheckDT);
 
-		// 			// start.draw2DAbstractEdge(end, color);
-		// 			// OpenGLWrapper::getOpenGLWrapper().drawLine(trans[0], trans[1], trans[2], trans2[0], trans2[1], trans2[2], color);
-		// 		}
-		// 	}
-		// }
+					// for(const auto &s : edgeCandidate) {
+					// 	s.draw();
+					// }
+
+					// start.draw2DAbstractEdge(end, color);
+					// OpenGLWrapper::getOpenGLWrapper().drawLine(trans[0], trans[1], trans[2], trans2[0], trans2[1], trans2[2], color);
+
+					const auto &endVars = end.getTreeStateVars();
+					OpenGLWrapper::getOpenGLWrapper().drawLine(startVars[0], startVars[1], startVars[2], endVars[0], endVars[1], endVars[2], color);
+				}
+			}
+		}
 	}
 
 	void drawOpenGLPoint(const fcl::Vec3f &point, const std::vector<double> &color) const {

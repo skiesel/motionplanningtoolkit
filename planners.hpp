@@ -1,12 +1,23 @@
 #pragma once
 
+#include <iostream>
+
 template<class Planner, class Workspace, class Agent>
 void go_COMMON(const InstanceFileMap &args, Planner &planner,
 		const Workspace &workspace, const Agent &agent,
 		const typename Agent::State &start, const typename Agent::State &goal) {
 
 #ifdef WITHGRAPHICS
-	assert(false);
+	bool firstIteration = true;
+	auto lambda = [&]() {
+		// std::cin.ignore();
+		start.draw();
+		goal.draw();
+		workspace.draw();
+		planner.query(start, goal, 1000, firstIteration);
+		firstIteration = false;
+	};
+	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
 #else
 	planner.query(start, goal);
 	planner.dfpairs();
@@ -138,6 +149,15 @@ void go_PPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &w
 	dfpair(stdout, "goal bias", "%g", goalBias);
 
 	PlakuTreeInterfaceT plakuTreeInterface(workspace, agent, prmLite, start, goal, alpha, b, stateRadius, goalBias);
+
+// #ifdef WITHGRAPHICS
+// 	bool firstIteration = true;
+// 	auto lambda = [&]() {
+// 		plakuTreeInterface.draw();
+// 		workspace.draw();
+// 	};
+// 	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
+// #endif
 
 	Planner planner(workspace, agent, plakuTreeInterface, args);
 

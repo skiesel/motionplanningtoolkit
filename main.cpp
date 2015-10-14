@@ -97,14 +97,13 @@ int main(int argc, char *argv[]) {
 
 	dfpair(stdout, "Agent Type", "%s", domain.c_str());
 
-	// if(domain.compare("PlanarLinkage") == 0)
-	// 	planarLinkage(args);
+	if(domain.compare("PlanarLinkage") == 0)
+		planarLinkage(args);
 	// else if(args.value("Agent Type").compare("Dubins") == 0)
 	// 	dubins(args);
 	// else if(domain.compare("Snake") == 0)
 	// 	snake(args);
-	// else
-	if(domain.compare("Kink") == 0)
+	else if(domain.compare("Kink") == 0)
 		kink(args);
 	else if(domain.compare("NarrowPassageFull") == 0)
 		narrowPassage(args, false);
@@ -114,8 +113,8 @@ int main(int argc, char *argv[]) {
 		rectangleMap2D(args);
 	else if(domain.compare("Pendulum") == 0)
 		pendulum(args);
-	// else if(domain.compare("Blimp") == 0)
-	// 	blimp(args);
+	else if(domain.compare("Blimp") == 0)
+		blimp(args);
 	// else if(domain.compare("Geometric") == 0)
 	// 	geometric(args);
 	else

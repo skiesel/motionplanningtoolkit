@@ -1,34 +1,34 @@
 #pragma once
 
-// void blimp(const InstanceFileMap &args) {
-// 	typedef Blimp Agent;
-// 	typedef Map3D<Agent> Workspace;
+void blimp(const InstanceFileMap &args) {
+	typedef Blimp Agent;
+	typedef Map3D<Agent> Workspace;
 
-// 	Agent agent(args);
-// 	Workspace workspace(args);
+	Agent agent(args);
+	Workspace workspace(args);
 
-// 	/* start and goal states */
+	/* start and goal states */
 
-// 	auto startPosition = args.doubleList("Agent Start Location");
-// 	auto startOrientation =  args.doubleList("Agent Start Orientation");
-// 	fcl::Vec3f axis;
-// 	double theta;
-// 	fcl::Quaternion3f startQuaternion(startOrientation[0], startOrientation[1], startOrientation[2], startOrientation[3]);
-// 	startQuaternion.toAxisAngle(axis, theta);
-// 	theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
+	auto startPosition = args.doubleList("Agent Start Location");
+	auto startOrientation =  args.doubleList("Agent Start Orientation");
+	fcl::Vec3f axis;
+	double theta;
+	fcl::Quaternion3f startQuaternion(startOrientation[0], startOrientation[1], startOrientation[2], startOrientation[3]);
+	startQuaternion.toAxisAngle(axis, theta);
+	theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
 
-// 	Agent::State start(startPosition[0], startPosition[1], startPosition[2], theta);
+	Agent::State start(startPosition[0], startPosition[1], startPosition[2], theta);
 
-// 	auto goalPosition = args.doubleList("Agent Goal Location");
-// 	auto goalOrientation = args.doubleList("Agent Goal Orientation");
-// 	fcl::Quaternion3f goalQuaternion(goalOrientation[0], goalOrientation[1], goalOrientation[2], goalOrientation[3]);
-// 	goalQuaternion.toAxisAngle(axis, theta);
-// 	theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
+	auto goalPosition = args.doubleList("Agent Goal Location");
+	auto goalOrientation = args.doubleList("Agent Goal Orientation");
+	fcl::Quaternion3f goalQuaternion(goalOrientation[0], goalOrientation[1], goalOrientation[2], goalOrientation[3]);
+	goalQuaternion.toAxisAngle(axis, theta);
+	theta = (theta - 2 * M_PI * std::floor((theta + M_PI) / (2 * M_PI)));
 
-// 	Agent::State goal(goalPosition[0], goalPosition[1], goalPosition[2], theta);
+	Agent::State goal(goalPosition[0], goalPosition[1], goalPosition[2], theta);
 
-// 	go<Workspace, Agent>(args, workspace, agent, start, goal);
-// }
+	go<Workspace, Agent>(args, workspace, agent, start, goal);
+}
 
 // void snake(const InstanceFileMap &args) {
 // 	typedef SnakeTrailers Agent;
@@ -81,22 +81,23 @@
 // 	// go<Workspace, Agent>(args, workspace, agent, start, goal);
 // }
 
-// void planarLinkage(const InstanceFileMap &args) {
-// 	typedef PlanarLinkage Agent;
-// 	typedef PlanarLinkage Workspace;
+void planarLinkage(const InstanceFileMap &args) {
+	assert(false);
+	// typedef PlanarLinkage Agent;
+	// typedef PlanarLinkage Workspace;
 
-// 	PlanarLinkage planarLinkage(args);
+	// PlanarLinkage planarLinkage(args);
 
-// 	/* start and goal states */
+	// /* start and goal states */
 
-// 	auto startPositionVars = args.doubleList("Agent Start Position");
-// 	auto goalPositionVars = args.doubleList("Agent Goal Position");
+	// auto startPositionVars = args.doubleList("Agent Start Position");
+	// auto goalPositionVars = args.doubleList("Agent Goal Position");
 
-// 	Agent::State start(startPositionVars);
-// 	Agent::State goal(goalPositionVars);
+	// Agent::State start(startPositionVars);
+	// Agent::State goal(goalPositionVars);
 
-// 	go<Workspace, Agent>(args, planarLinkage, planarLinkage, start, goal);
-// }
+	// go<Workspace, Agent>(args, planarLinkage, planarLinkage, start, goal);
+}
 
 void kink(const InstanceFileMap &args) {
 	typedef OmniMultiD Agent;

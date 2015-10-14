@@ -160,7 +160,7 @@ public:
 		samplesGenerated = edgesGenerated = samplesAdded = edgesAdded = 0;
 	}
 
-	std::vector<const Edge*> query(const State &start, const State &goal) {
+	std::vector<const Edge*> query(const State &start, const State &goal, int iterationsAtATime = -1, bool firstInvocation = true) {
 
 #ifdef WITHGRAPHICS
 discretization.draw();

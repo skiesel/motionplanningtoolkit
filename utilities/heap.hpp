@@ -41,26 +41,25 @@ public:
 	}
 
 	void push(T *data) {
-		if(fill >= heap.size()) {
+		if(fill+1 >= heap.size()) {
 			heap.resize(heap.size() * 2);
 		}
-		heap[fill] = data;
-		Ops::setHeapIndex(data, fill+1);
-		fill++;
-		siftUp(fill-1);
+		heap[++fill] = data;
+		Ops::setHeapIndex(data, fill);
+		siftUp(fill);
 	}
 
 	T *peek() {
 		assert(fill > 0);
-		return heap[0];
+		return heap[1];
 	}
 
 	T *pop() {
 		assert(fill > 0);
-		T *ret_T = heap[0];
-		swap(0,fill-1);
+		T *ret_T = heap[1];
+		swap(1,fill);
 		fill--;
-		siftDown(0);
+		siftDown(1);
 		Ops::setHeapIndex(ret_T, std::numeric_limits<unsigned int>::max());
 		return ret_T;
 	}
@@ -75,17 +74,19 @@ public:
 
 	bool inHeap(const T *data) const {
 		unsigned int index = Ops::getHeapIndex(data);
-		return index > 0 && index <= fill;
+		return index > 1 && index <= fill;
 	}
 
 	void siftFromItem(const T *data) {
 		unsigned int index = Ops::getHeapIndex(data);
-		if(index < fill) {
+		if(index > 0 && index <= fill) {
 			int parent_index = parent(index);
-			if(index > 0 && Ops::sort(heap[index], heap[parent_index]) < 0)
+			if(index > 1 && Ops::pred(heap[index], heap[parent_index])) {
 				siftUp(index);
-			else
+			}
+			else {
 				siftDown(index);
+			}
 		}
 	}
 
@@ -95,7 +96,7 @@ public:
 		fill--;
 		if(index <= fill) {
 			int parent_index = parent(index);
-			if(index > 1 && Ops::sort(heap[index], heap[parent_index]) < 0) {
+			if(index > 1 && Ops::pred(heap[index], heap[parent_index])) {
 				siftUp(index);
 			}
 			else {
@@ -131,32 +132,37 @@ private:
 	unsigned int childToSwap(unsigned int index) {
 		unsigned int left_index = left(index);
 		unsigned int right_index = right(index);
-		if(left_index < fill && right_index < fill) {
-			if(Ops::sort(heap[left_index], heap[right_index]) < 0)
+		if(left_index <= fill && right_index <= fill) {
+			if(Ops::pred(heap[left_index], heap[right_index])) {
 				return left_index;
-			else
+			}
+			else {
 				return right_index;
-		} else if(left_index < fill)
+			}
+		} else if(left_index <= fill) {
 			return left_index;
-		else if(right_index < fill)
+		}
+		else if(right_index <= fill) {
 			return right_index;
-		else
+		}
+		else {
 			return index;
+		}
 	}
 
 	void siftDown(unsigned int index) {
 		unsigned int child_index = childToSwap(index);
-		if(Ops::sort(heap[child_index], heap[index]) < 0) {
+		if(Ops::pred(heap[child_index], heap[index])) {
 			swap(index, child_index);
 			siftDown(child_index);
 		}
 	}
 
 	void siftUp(unsigned int index) {
-		if(index == 0) return;
+		if(index <= 1) return;
 
 		unsigned int parent_index = parent(index);
-		if(Ops::sort(heap[index], heap[parent_index]) > 0) {
+		if(Ops::pred(heap[index], heap[parent_index])) {
 			swap(index, parent_index);
 			siftUp(parent_index);
 		}

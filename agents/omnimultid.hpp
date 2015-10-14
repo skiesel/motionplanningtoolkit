@@ -338,6 +338,10 @@ public:
 		return bounds;
 	}
 
+	StateVarRanges getAbstractStateVarRanges(const WorkspaceBounds &bounds) const {
+		return bounds;
+	}
+
 	bool isGoal(const State &state, const State &goal) const {
 		const auto &targetStateVars = state.getStateVars();
 		const auto &goalStateVars = goal.getStateVars();

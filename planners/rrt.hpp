@@ -129,15 +129,15 @@ public:
 
 		// treeEdges.clear();
 
-		// for(const State &sample : samples) {
-		// 	sample.draw();
-		// }
+		for(const State &sample : samples) {
+			sample.draw();
+		}
 
 		if(solution.size() > 0) {
-		// 	auto red = OpenGLWrapper::Color::Red();
-		// 	for(const Edge *edge : solution) {
-		// 		edge->draw(red);
-		// 	}
+			auto red = OpenGLWrapper::Color::Red();
+			for(const Edge *edge : solution) {
+				edge->draw(red);
+			}
 		// 	agent.drawSolution(solution, collisionCheckDT);
 		// 	// if(poseNumber >= solution.size() * 2) poseNumber = -1;
 		// 	// if(poseNumber >= 0)

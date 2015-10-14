@@ -15,7 +15,8 @@ class PlakuTreeInterface {
 	typedef typename Agent::Edge Edge;
 	class EdgeWrapper;
 
-	typedef flann::KDTreeSingleIndexParams KDTreeType;
+	typedef flann::KDTreeIndexParams KDTreeType;
+	// typedef flann::KDTreeSingleIndexParams KDTreeType;
 	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, Edge> KDTree;
 	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, EdgeWrapper> KDTree2;
 	typedef UniformSampler<Workspace, Agent, KDTree> UniformSamplerT;
@@ -42,7 +43,7 @@ class PlakuTreeInterface {
 
 	struct Region {
 		Region(unsigned int id, const Agent &agent) : heapIndex(std::numeric_limits<unsigned int>::max()), id(id), numSelections(0), heuristic(std::numeric_limits<double>::infinity()), weight(0), onOpen(false) {
-			KDTreeType kdtreeType;
+			KDTreeType kdtreeType(1);
 			edgesInRegion = new KDTree2(kdtreeType, agent.getDistanceEvaluator(), agent.getTreeStateSize());
 		}
 
@@ -129,8 +130,8 @@ class PlakuTreeInterface {
 
 		/* used for initial heuristic computation */
 		unsigned int heapIndex;
-		static int sort(const Region *a, const Region *b) {
-			return (a->heuristic - b->heuristic) > 0 ? -1 : 1;
+		static bool pred(const Region *a, const Region *b) {
+			return a->heuristic < b->heuristic;
 		}
 		static unsigned int getHeapIndex(const Region *r) {
 			return r->heapIndex;
@@ -143,7 +144,7 @@ class PlakuTreeInterface {
 		}
 
 		static bool HeapCompare(const Region *r1, const Region *r2) {
-			return r1->weight > r2->weight;
+			return r1->weight < r2->weight;
 		}
 
 		unsigned int id, numSelections;
@@ -167,7 +168,7 @@ public:
 
 		assert(alpha > 0 && alpha < 1);
 
-		KDTreeType kdtreeType;
+		KDTreeType kdtreeType(1);
 		uniformSamplerBackingKDTree = new KDTree(kdtreeType, agent.getDistanceEvaluator(), agent.getTreeStateSize());
 
 		uniformSampler = new UniformSamplerT(workspace, agent, *uniformSamplerBackingKDTree);
@@ -194,16 +195,14 @@ public:
 
 			dfpair(stdout, "dijkstra search time", "%g", (endT-startT) / CLOCKS_PER_SEC);
 	
-			connected = true;
-			for(const auto region : regions) {
-				if(region->regionPath.size() == 0) {
-					connected = false;
-					discretization.grow();
-				goalRegionId = discretization.getCellId(goal);
+			connected = regions[discretization.getCellId(start)]->regionPath.size() != 0;
 
-					break;
-				}
+			if(!connected) {
+				fprintf(stderr, "... growing discretization ...\n");
+				discretization.grow();
 			}
+
+			goalRegionId = discretization.getCellId(goal);
 		}
 	}
 
@@ -232,8 +231,6 @@ public:
 
 	std::pair<Edge*, State> getTreeSample() {
 		if(activeRegion != NULL) {
-			activeRegion->selected(alpha);
-
 			if(!activeRegion->onOpen) {
 				regionHeap.push_back(activeRegion);
 				std::push_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
@@ -248,10 +245,28 @@ public:
 				activeRegion = regionHeap.front();
 				std::pop_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
 				regionHeap.pop_back();
+
+				activeRegion->selected(alpha);
 				activeRegion->onOpen = false;
 			} while(activeRegion->getEdgeCount() == 0);
 
 			assert(activeRegion->getEdgeCount() != 0);
+
+#ifdef WITHGRAPHICS
+			// unsigned int vertexCount = activeRegion->regionPath.size();
+			// unsigned int cur = activeRegion->id;
+			// unsigned int counter = 0;
+			// for(auto r : activeRegion->regionPath) {
+			// 	discretization.drawEdge(cur, r, getColor(0, vertexCount, counter));
+			// 	cur = r;
+			// 	discretization.drawVertex(cur, getColor(0, vertexCount, counter++));
+			// }
+
+			// std::vector<double> white(4, 1);
+			// for(const auto &r : regionHeap) {
+			// 	discretization.drawVertex(r->id, white);
+			// }
+#endif
 
 			unsigned int regionAlongPath = activeRegion->getRandomRegionAlongPathToGoal(distribution);
 
@@ -271,6 +286,7 @@ public:
 		unsigned int newCellId = discretization.getCellId(edge->end);
 
 		if(!regions[newCellId]->onOpen) {
+			regions[newCellId]->selected(alpha);
 			regionHeap.push_back(regions[newCellId]);
 			std::push_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
 			regions[newCellId]->onOpen = true;
@@ -367,7 +383,7 @@ private:
 			while(!open.isEmpty()) {
 				Region *current = open.pop();
 
-				closed.insert(region->id);
+				closed.insert(current->id);
 
 				std::vector<unsigned int> kids = theBoss.discretization.getNeighboringCells(current->id);
 				for(unsigned int kid : kids) {
@@ -408,7 +424,7 @@ private:
 			while(!open.isEmpty()) {
 				Region *current = open.peek();
 
-				closed.insert(region->id);
+				closed.insert(current->id);
 
 				unsigned int pathLength = current->regionPath.size();
 

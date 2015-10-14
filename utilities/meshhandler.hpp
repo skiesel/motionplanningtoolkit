@@ -26,6 +26,8 @@ public:
 
 		fcl::Transform3f tf = fcl_helpers::parseTransform(pose);
 
+		// transform = fcl_helpers::fclTransformToOpenGL(tf);
+
 		for(unsigned int i = 0; i < 16; ++i) {
 			if((i%4) == (i/4)) transform[i] = 1;
 		}

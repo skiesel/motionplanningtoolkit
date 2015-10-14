@@ -31,7 +31,7 @@ class OpenGLWrapper {
 	//windows?
 	//GENBUFFERS glGenBuffers = (GENBUFFERS)wglGetProcAddress("glGenBuffers");
 #if __APPLE__
-	//GENBUFFERS glGenBuffers = (GENBUFFERS)glfwGetProcAddress("glGenBuffers");
+	// GENBUFFERS glGenBuffers = (GENBUFFERS)glfwGetProcAddress("glGenBuffers");
 #else
 	GENBUFFERS glGenBuffers = (GENBUFFERS)glXGetProcAddress((const GLubyte *) "glGenBuffers");
 #endif

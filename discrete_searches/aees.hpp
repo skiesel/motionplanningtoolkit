@@ -23,11 +23,11 @@ class AEES {
 			n->fIndex = index;
 		}
 
-		static int sort(const Node *a, const Node *b) {
+		static bool pred(const Node *a, const Node *b) {
 			if(a->f == b->f) {
-				return a->g - b->g;
+				return a->g < b->g;
 			}
-			return a->f - b->f;
+			return a->f < b->f;
 		}
 	};
 
@@ -40,11 +40,11 @@ class AEES {
 			n->searchEffortIndex = index;
 		}
 
-		static int sort(const Node *a, const Node *b) {
+		static bool pred(const Node *a, const Node *b) {
 			if(a->searchEffort == b->searchEffort) {
-				return a->fhat - b->fhat;
+				return a->fhat < b->fhat;
 			}
-			return a->searchEffort - b->searchEffort;
+			return a->searchEffort < b->searchEffort;
 		}
 	};
 

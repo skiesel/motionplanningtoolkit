@@ -1,34 +1,33 @@
 Seed ? 1
 
 Agent Type ? Blimp
-Agent Mesh ? ../mesh_models/agent_models/simple_blimp.dxf
 Goal Thresholds ? 0.25 0.25 0.25
 
 Blimp Length ? 0.2
 Blimp Radius ? 0.1
 
-Minimum Velocity ? -5
-Maximum Velocity ? 5
-Minimum Turning ? -0.785398
-Maximum Turning ? 0.785398
-Minimum Velocity Z ? -5
-Maximum Velocity Z ? 5
-Minimum Forward Acceleration ? -1
-Maximum Forward Acceleration ? 1
-Minimum Z Acceleration ? -1
-Maximum Z Acceleration ? 1
-Minimum Angular Acceleration ? -0.1745
-Maximum Angular Acceleration ? 0.1745
+Minimum Velocity ? -1
+Maximum Velocity ? 1
+Minimum Turning ? -0.174533
+Maximum Turning ? 0.174533
+Minimum Velocity Z ? -1
+Maximum Velocity Z ? 1
+Minimum Forward Acceleration ? -0.1
+Maximum Forward Acceleration ? 0.1
+Minimum Z Acceleration ? -0.1
+Maximum Z Acceleration ? 0.1
+Minimum Angular Acceleration ? -0.01745
+Maximum Angular Acceleration ? 0.01745
 
 Environment Mesh ? ../mesh_models/environment_models/blimp_world.dxf
-Environment Location ? -10000 0 0 1 0 0 0
+Environment Location ? 0 0 0 1 0 0 0
 Environment Bounding Box ? -2.5 2.5 -2.5 2.5 0 1
 
-Steering Delta t ? 0.15
-Collision Check Delta t ? 0.01
+Steering Delta t ? 0.3
+Collision Check Delta t ? 0.05
 
 Integration Step Size ? 0.01
 
 Zoom ? 35
-Rotate X ? 9
-Rotate Y ? -9
+#Rotate X ? 9
+#Rotate Y ? -9

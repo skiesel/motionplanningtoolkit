@@ -29,6 +29,12 @@ public:
 	typedef std::vector<double> StateVars;
 	typedef std::vector<double> Control;
 
+	// typedef flann_helpers::Distance DistanceEvaluator;
+	// typedef flann_helpers::Distance AbstractDistanceEvaluator;
+
+	typedef flann::L2<double> DistanceEvaluator;
+	typedef flann::L2<double> AbstractDistanceEvaluator;
+
 	class State {
 	public:
 		State() : stateVars(7) {}
@@ -43,6 +49,10 @@ public:
 		State(const State &s) : stateVars(s.stateVars.begin(), s.stateVars.end()) {}
 
 		State(const StateVars &vars) : stateVars(vars.begin(), vars.end()) {}
+
+		State(const AbstractState &s) : stateVars(s.treeStateVars.begin(), s.treeStateVars.end()) {
+			stateVars.resize(7);
+		}
 
 		State &operator=(const State &s) {
 			stateVars.resize(7);
@@ -159,10 +169,11 @@ public:
 
 		void buildTreeVars() {
 			const auto &vars = end.getStateVars();
-			treeVars.resize(vars.size());
-			for(unsigned int i = 0; i < vars.size(); ++i) {
-				treeVars[i] = (Blimp::NormalizeStateVars[i].first + vars[i]) * Blimp::NormalizeStateVars[i].second;
-			}
+			treeVars = vars;
+			// treeVars.resize(vars.size());
+			// for(unsigned int i = 0; i < vars.size(); ++i) {
+			// 	treeVars[i] = (Blimp::NormalizeStateVars[i].first + vars[i]) * Blimp::NormalizeStateVars[i].second;
+			// }
 		}
 
 		double gCost() const {
@@ -265,8 +276,33 @@ public:
 #endif
 	}
 
+	// DistanceEvaluator getDistanceEvaluator() const {
+	// 	std::vector<bool> rotationalCoordinate(getTreeStateSize(), false);
+	// 	rotationalCoordinate[THETA] = true;
+	// 	rotationalCoordinate[PSI] = true;
+	// 	return flann_helpers::Distance(rotationalCoordinate);
+	// }
+
+	// AbstractDistanceEvaluator getAbstractDistanceEvaluator() const {
+	// 	std::vector<bool> rotationalCoordinate(getTreeAbstractStateSize(), false);
+	// 	rotationalCoordinate[THETA] = true;
+	// 	return flann_helpers::Distance(rotationalCoordinate);
+	// }
+
+	DistanceEvaluator getDistanceEvaluator() const {
+		return DistanceEvaluator();
+	}
+
+	AbstractDistanceEvaluator getAbstractDistanceEvaluator() const {
+		return DistanceEvaluator();
+	}
+
 	unsigned int getTreeStateSize() const {
 		return 7;
+	}
+
+	unsigned int getTreeAbstractStateSize() const {
+		return 3;
 	}
 
 	StateVarRanges getStateVarRanges(const WorkspaceBounds &b) const {
@@ -275,6 +311,13 @@ public:
 		bounds.emplace_back(minimumVelocity, maximumVelocity);
 		bounds.emplace_back(minimumTurning, maximumTurning);
 		bounds.emplace_back(minimumVelocityZ, maximumVelocityZ);
+
+		return bounds;
+	}
+
+	StateVarRanges getAbstractStateVarRanges(const WorkspaceBounds &b) const {
+		StateVarRanges bounds(b.begin(), b.end());
+		// bounds.emplace_back(0, 2*M_PI);
 
 		return bounds;
 	}
@@ -291,10 +334,21 @@ public:
 		return controlBounds;
 	}
 
-	State getRandomStateNearAbstractState(const AbstractState &a, double radius) const {
-		fprintf(stderr, "getRandomStateNear no implemented\n");
-		exit(0);
-		return State();
+	State getRandomStateNearAbstractState(const AbstractState &s, double radius) const {
+		State concrete(s);
+
+		concrete.stateVars[THETA] = zeroToOne(GlobalRandomGenerator) * 2 * M_PI;
+		concrete.stateVars[V] = minimumVelocity + zeroToOne(GlobalRandomGenerator) * (maximumVelocity - minimumVelocity);
+		concrete.stateVars[PSI] = minimumTurning + zeroToOne(GlobalRandomGenerator) * (maximumTurning - minimumTurning);
+		concrete.stateVars[VZ] = minimumVelocityZ + zeroToOne(GlobalRandomGenerator) * (maximumVelocityZ - minimumVelocityZ);
+
+		Edge e = randomSteer(concrete, radius);
+		return e.end;
+	}
+
+	State getRandomStateNearState(const State &s, double radius) const {
+		Edge e = randomSteer(s, radius);
+		return e.end;
 	}
 
 	// State transformToState(const State &s, const fcl::Transform3f &transform) const {
@@ -340,8 +394,30 @@ public:
 		return Edge(start, end, dt, a, w, z);
 	}
 
+	double steerDistancePeek(const State &a, const State &b) const {
+		const StateVars &av = a.getStateVars();
+		const StateVars &bv = b.getStateVars();
+
+		double sum = 0;
+		for(unsigned int i = 0; i < 3; ++i) {
+			sum += fabs(av[i] - bv[i]);
+		}
+		return sum;
+	}
+
 	Edge steer(const State &start, const State &goal, double dt) const {
-		return randomSteer(start, dt);
+		Edge bestEdge(start);
+		double bestDistance = std::numeric_limits<double>::infinity();
+		for(unsigned int i = 0; i < 10; ++i) {
+			Edge e = randomSteer(start, dt);
+			double d = steerDistancePeek(e.end, goal);
+			if(d < bestDistance) {
+				bestDistance = d;
+				bestEdge = e;
+			}
+		}
+
+		return bestEdge;
 	}
 
 	Edge randomSteer(const State &start, double dt) const {
@@ -373,7 +449,10 @@ public:
 		s.treeStateVars.push_back(state.stateVars[X]);
 		s.treeStateVars.push_back(state.stateVars[Y]);
 		s.treeStateVars.push_back(state.stateVars[Z]);
-		s.treeStateVars.push_back(state.stateVars[THETA]);
+		// s.treeStateVars.push_back(state.stateVars[THETA]);
+
+		s.transform = state.toFCLTransform();
+
 		return s;
 	}
 
@@ -409,7 +488,7 @@ public:
 		std::vector<std::vector<fcl::Transform3f> > retPoses;
 
 		unsigned int steps = std::isinf(dt) ? 0 : edge.dt / dt;
-
+		
 		State state = edge.start;
 
 		retPoses.emplace_back();
@@ -436,28 +515,22 @@ public:
 	}
 
 	std::vector<std::vector<fcl::Transform3f> > getAbstractMeshPoses(const AbstractEdge &edge, double dt) const {
+		auto ps = math::interpolate(edge[0].transform, edge[1].transform, dt);
 		std::vector<std::vector<fcl::Transform3f> > poses;
 
-		fprintf(stderr, "Blimp::getAbstractMeshPoses not implemented\n");
-		exit(1);
-
+		for(const auto &p : ps) {
+			poses.emplace_back(1, p);
+		}
 		return poses;
 	}
 
 	std::vector<fcl::Transform3f> getAbstractMeshPoses(const AbstractState &state) const {
-		std::vector<fcl::Transform3f> poses;
-
-		fprintf(stderr, "Blimp::getAbstractMeshPoses not implemented\n");
-		exit(1);
-
+		std::vector<fcl::Transform3f> poses = { state.transform };
 		return poses;
 	}
 
 	AbstractEdge generateAbstractEdge(const AbstractState &s1, const AbstractState &s2) const {
-		AbstractEdge edge;
-
-		fprintf(stderr, "Blimp::generateAbstractEdge not implemented\n");
-		exit(1);
+		AbstractEdge edge = {s1, s2};
 
 		return edge;
 	}
@@ -508,7 +581,6 @@ public:
 		auto transform = s.toOpenGLTransform();
 		mesh.draw(color, transform);
 	}
-
 
 	void drawMesh(const fcl::Transform3f &transform) const {
 		drawMesh(transform, color);
@@ -587,6 +659,7 @@ public:
 				stepSize = leftOver;
 			}
 
+
 			newState[X] = newState[X] + cos(newState[THETA]) * newState[V] * stepSize;
 			newState[Y] = newState[Y] + sin(newState[THETA]) * newState[V] * stepSize;
 			newState[THETA] = normalizeTheta(newState[THETA] + newState[V] * tan(newState[PSI]) / blimpLength);
@@ -625,7 +698,7 @@ public:
 
 	CapsuleHandler mesh;
 	double blimpLength, minimumVelocity, maximumVelocity, minimumTurning, maximumTurning, minimumVelocityZ, maximumVelocityZ, integrationStepSize;
-	mutable std::uniform_real_distribution<double> linearAccelerations, zLinearAccelerations, angularAccelerations;
+	mutable std::uniform_real_distribution<double> linearAccelerations, zLinearAccelerations, angularAccelerations, zeroToOne;
 
 	std::vector< std::pair<double, double> > controlBounds;
 

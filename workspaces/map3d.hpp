@@ -65,7 +65,7 @@ public:
 				}
 			}
 		}
-
+		
 		return !MeshHandler::isInCollision(mesh, agentMeshes, agentPoses, checkSelfCollision);;
 	}
 

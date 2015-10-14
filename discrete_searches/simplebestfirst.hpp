@@ -4,8 +4,8 @@ class SimpleBestFirst {
 	struct Node {
 		Node(unsigned int id, double val) : id(id), val(val), heapIndex(std::numeric_limits<unsigned int>::max()) {}
 		
-		static int sort(const Node *a, const Node *b) {
-			return (a->val - b->val) > 0 ? -1 : 1;
+		static bool pred(const Node *a, const Node *b) {
+			return a->val < b->val;
 		}
 		static unsigned int getHeapIndex(const Node *n) {
 			return n->heapIndex;
