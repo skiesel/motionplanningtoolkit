@@ -226,6 +226,8 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 		go_AnytimeRRT<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("Anytime EST") == 0) {
 		go_AnytimeEST<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("Anytime Restarting EST") == 0) {
+		go_AnytimeRestartingEST<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("Anytime Bidirectional EST") == 0) {
 		go_AnytimeBidirectionalEST<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("Anytime PPRM") == 0) {

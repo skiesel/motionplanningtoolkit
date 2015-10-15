@@ -279,3 +279,18 @@ void go_AOEST(const InstanceFileMap &args, const Agent &agent, const Workspace &
 
 	go_COMMONANYTIME<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal, startT);
 }
+
+template<class Workspace, class Agent>
+void go_AnytimeRestartingEST(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+                   const typename Agent::State &start, const typename Agent::State &goal) {
+
+	clock_t startT = clock();
+
+	dfpair(stdout, "planner", "%s", "Anytime Restarting EST");
+
+	typedef AnytimeRestartingEST<Workspace, Agent> Planner;
+
+	Planner planner(workspace, agent, args);
+
+	go_COMMONANYTIME<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal, startT);
+}

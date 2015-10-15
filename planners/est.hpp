@@ -100,7 +100,7 @@ class EST {
 // 	};
 
 	struct Discretization {
-		Discretization(const Workspace &workspace, const Agent &agent, unsigned int numRegions) {
+		Discretization(const Workspace &workspace, const Agent &agent) {
 			discretization = 0.05;
 			dimSize = 1 / discretization;
 			cellCount = 1 / (discretization * discretization);
@@ -132,7 +132,7 @@ public:
 
 	EST(const Workspace &workspace, const Agent &agent, const InstanceFileMap &args, bool quiet = false,
 		double gBound = std::numeric_limits<double>::infinity()) :
-		workspace(workspace), agent(agent), discretization(workspace, agent, args.integerVal("Number of Regions")), quiet(quiet), gBound(gBound) {
+		workspace(workspace), agent(agent), discretization(workspace, agent), quiet(quiet), gBound(gBound) {
 		collisionCheckDT = args.doubleVal("Collision Check Delta t");
 		goalBias = args.doubleVal("Goal Bias");
 		howManySamplePoints = args.integerVal("Number of Sample Points");
