@@ -58,12 +58,11 @@ void go_EST(const InstanceFileMap &args, const Agent &agent, const Workspace &wo
                    const typename Agent::State &start, const typename Agent::State &goal) {
 
 	dfpair(stdout, "planner", "%s", "EST");
-	clock_t startT = clock();
-	
+
 	typedef EST<Workspace, Agent> Planner;
 
 	Planner planner(workspace, agent, args);
-	
+
 	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
 }
 
@@ -73,11 +72,11 @@ void go_ESTBIDIR(const InstanceFileMap &args, const Agent &agent, const Workspac
 
 	dfpair(stdout, "planner", "%s", "EST");
 	// clock_t startT = clock();
-	
+
 	typedef ESTBidirectional<Workspace, Agent> Planner;
 
 	Planner planner(workspace, agent, args);
-	
+
 	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
 }
 
@@ -121,9 +120,9 @@ void go_SSTGridPPRM(const InstanceFileMap &args, const Agent &agent, const Works
 	double sstResize = args.doubleVal("SST Resize Threshold");
 
 	SSTTreeInterface sstTreeInterface(workspace, agent, plakuTreeInterface, plakuTreeInterface, sstRadius, sstResize);
-	
+
 	Planner planner(workspace, agent, sstTreeInterface, args);
-	
+
 	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
 }
 
@@ -168,7 +167,7 @@ template<class Workspace, class Agent>
 void go_NewSearch(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
                    const typename Agent::State &start, const typename Agent::State &goal) {
 	dfpair(stdout, "planner", "%s", "NewSearch");
-	
+
 	typedef FrequencyTreeInterface<Agent> RegionManager;
 	typedef PRMLite<Workspace, Agent> PRMLite;
 	typedef NewTreeInterface<Workspace, Agent, PRMLite, SimpleBestFirst, RegionManager> TreeInterface;
