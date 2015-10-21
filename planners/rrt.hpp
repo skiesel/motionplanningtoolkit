@@ -59,6 +59,8 @@ public:
 
 			auto edge = agent.steer(treeSample.first->end, treeSample.second, steeringDT);
 
+			edge.updateParent(treeSample.first);
+
 			if(edge.gCost() >= gBound) {
 				continue;
 			}
@@ -123,15 +125,17 @@ public:
 		}
 
 #ifdef WITHGRAPHICS
-		// for(const Edge *edge : treeEdges) {
-		// 	edge->draw(OpenGLWrapper::Color::Red());
-		// }
+		for(const Edge *edge : treeEdges) {
+			edge->draw(OpenGLWrapper::Color::Red());
+		}
 
-		// treeEdges.clear();
+		treeEdges.clear();
 
 		for(const State &sample : samples) {
 			sample.draw();
 		}
+
+		samples.clear();
 
 		if(solution.size() > 0) {
 			auto red = OpenGLWrapper::Color::Red();

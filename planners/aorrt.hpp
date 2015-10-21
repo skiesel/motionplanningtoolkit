@@ -69,11 +69,6 @@ public:
 				dfrow(stdout, "solution", "gug", bestCost, incumbent.size(), (double)(clock()-startTime) / CLOCKS_PER_SEC, 0);
 			}
 
-			incumbentCost = incumbent.back()->gCost();
-			if(incumbentCost < bestCost) {
-				bestCost = incumbentCost;
-				dfrow(stdout, "solution", "gug", bestCost, incumbent.size(), (double)(clock()-startTime) / CLOCKS_PER_SEC, 1);
-			}
 		}
 	}
 
