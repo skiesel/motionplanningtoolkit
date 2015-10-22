@@ -7,3 +7,5 @@ Plaku b Value ? 0.85
 Plaku PRM State Selection Radius ? 0.1
 
 Goal Bias ? 0.5
+
+RRTConnect Max Extensions ? 1000

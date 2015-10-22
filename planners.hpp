@@ -54,6 +54,35 @@ void go_RRT(const InstanceFileMap &args, const Agent &agent, const Workspace &wo
 }
 
 template<class Workspace, class Agent>
+void go_RRTConnect(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+            const typename Agent::State &start, const typename Agent::State &goal) {
+
+	dfpair(stdout, "planner", "%s", "RRT-Connect");
+	// typedef flann::KDTreeSingleIndexParams KDTreeType;
+	typedef flann::KDTreeIndexParams KDTreeType;
+	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, typename Agent::Edge> KDTree;
+	typedef UniformSampler<Workspace, Agent, KDTree> USampler;
+	typedef GoalBiasSampler<Agent, USampler> GBSampler;
+	typedef TreeInterface<Agent, KDTree, GBSampler> TreeInterface;
+	typedef RRTConnect<Workspace, Agent, TreeInterface> Planner;
+
+	/* planner config */
+
+	KDTreeType kdtreeType(1);
+	KDTree kdtree(kdtreeType, agent.getDistanceEvaluator(), agent.getTreeStateSize());
+	USampler uniformsampler(workspace, agent, kdtree);
+
+	double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
+	dfpair(stdout, "goal bias", "%g", goalBias);
+
+	GBSampler goalbiassampler(uniformsampler, goal, goalBias);
+	TreeInterface treeInterface(kdtree, goalbiassampler);
+	Planner planner(workspace, agent, treeInterface, args);
+
+	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
+}
+
+template<class Workspace, class Agent>
 void go_EST(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
                    const typename Agent::State &start, const typename Agent::State &goal) {
 
@@ -133,7 +162,7 @@ void go_PPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &w
 
 	typedef PRMLite<Workspace, Agent> PRMLite;
 	typedef PlakuTreeInterface<Workspace, Agent, PRMLite> PlakuTreeInterfaceT;
-	typedef RRT<Workspace, Agent, PlakuTreeInterfaceT> Planner;
+	typedef RRTConnect<Workspace, Agent, PlakuTreeInterfaceT> Planner;
 
 	unsigned int numberOfPRMVertices = stol(args.value("Number Of PRM Vertices"));
 	unsigned int numberOfNearestNeighborEdgeConsiderations = stol(args.value("Nearest Neighbors To Consider In PRM Edge Construction"));
@@ -197,8 +226,8 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 
 	if(planner.compare("RRT") == 0) {
 		go_RRT<Workspace, Agent>(args, agent, workspace, start, goal);
-	// } else if(planner.compare("RRT Connect") == 0) {
-		// go_RRTConnect<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("RRT Connect") == 0) {
+		go_RRTConnect<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("PPRM") == 0) {
 		go_PPRM<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("KPIECE") == 0) {
