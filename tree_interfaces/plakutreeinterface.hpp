@@ -211,6 +211,7 @@ public:
 		delete uniformSamplerBackingKDTree;
 	}
 
+#ifdef WITHGRAPHICS
 	void draw() {
 		std::vector<std::vector<double>> colorLookup(regions.size());
 
@@ -228,6 +229,61 @@ public:
 
 		discretization.draw(true, false, colorLookup);
 	}
+
+	void drawNextTreeSample() {
+		static double maxHeuristicValue = 0;
+		if(maxHeuristicValue == 0) {
+			for(const auto r : regions) {
+				if(r->heuristic > maxHeuristicValue) {
+					maxHeuristicValue = r->heuristic;
+				}
+			}
+		}
+
+		if(distribution(GlobalRandomGenerator) < b) {
+			assert(!regionHeap.empty());
+			std::vector<Region*> saved;
+			do {
+				saved.push_back(regionHeap.front());
+				std::pop_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
+				regionHeap.pop_back();
+			} while(activeRegion->getEdgeCount() == 0);
+
+			assert(saved.back()->getEdgeCount() != 0);
+
+			unsigned int regionAlongPath = saved.back()->getRandomRegionAlongPathToGoal(distribution);
+
+			if(regionAlongPath == goalRegionId && distribution(GlobalRandomGenerator) < goalBias) {
+				goal.draw();
+			} else {
+				unsigned int cur = saved.back()->regionPath.front();
+				for(auto r : saved.back()->regionPath) {
+					discretization.drawEdge(cur, r, getColor(0, maxHeuristicValue, regions[r]->heuristic));
+					cur = r;
+					discretization.drawVertex(cur, getColor(0, maxHeuristicValue, regions[r]->heuristic));
+				}
+
+				double maxWeight = 0;
+				for(const auto r : regionHeap) {
+					if(r->weight > maxWeight) {
+						maxWeight = r->weight;
+					}
+				}
+
+				for(const auto r : regionHeap) {
+					discretization.drawVertex(r->id, getColor(0, maxWeight, r->weight));
+				}
+			}
+
+			for(auto r : saved) {
+				regionHeap.push_back(r);
+				std::push_heap(regionHeap.begin(), regionHeap.end(), Region::HeapCompare);
+			}
+		} else {
+			uniformSampler->getTreeSample().second.draw();
+		}
+	}
+#endif
 
 	std::pair<Edge*, State> getTreeSample() {
 		if(activeRegion != NULL) {
@@ -251,22 +307,6 @@ public:
 			} while(activeRegion->getEdgeCount() == 0);
 
 			assert(activeRegion->getEdgeCount() != 0);
-
-#ifdef WITHGRAPHICS
-			// unsigned int vertexCount = activeRegion->regionPath.size();
-			// unsigned int cur = activeRegion->id;
-			// unsigned int counter = 0;
-			// for(auto r : activeRegion->regionPath) {
-			// 	discretization.drawEdge(cur, r, getColor(0, vertexCount, counter));
-			// 	cur = r;
-			// 	discretization.drawVertex(cur, getColor(0, vertexCount, counter++));
-			// }
-
-			// std::vector<double> white(4, 1);
-			// for(const auto &r : regionHeap) {
-			// 	discretization.drawVertex(r->id, white);
-			// }
-#endif
 
 			unsigned int regionAlongPath = activeRegion->getRandomRegionAlongPathToGoal(distribution);
 

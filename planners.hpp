@@ -122,9 +122,43 @@ void go_KPIECE(const InstanceFileMap &args, const Agent &agent, const Workspace 
 }
 
 template<class Workspace, class Agent>
-void go_SSTGridPPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+void go_SSTPPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
                    const typename Agent::State &start, const typename Agent::State &goal) {
 	dfpair(stdout, "planner", "%s", "SST + PPRM");
+
+	typedef PRMLite<Workspace, Agent> PRMLite;
+	typedef PlakuTreeInterface<Workspace, Agent, PRMLite> PlakuTreeInterfaceT;
+	typedef SST<Workspace, Agent, PlakuTreeInterfaceT, PlakuTreeInterfaceT> SSTTreeInterface;
+	typedef RRT<Workspace, Agent, SSTTreeInterface> Planner;
+
+	unsigned int numberOfPRMVertices = stol(args.value("Number Of PRM Vertices"));
+	unsigned int numberOfNearestNeighborEdgeConsiderations = stol(args.value("Nearest Neighbors To Consider In PRM Edge Construction"));
+	double prmCollisionCheckDT = args.doubleVal("PRM Collision Check DT");
+
+	PRMLite prmLite(workspace, agent, numberOfPRMVertices, numberOfNearestNeighborEdgeConsiderations, prmCollisionCheckDT);
+
+	double alpha = args.doubleVal("Plaku Alpha Value");
+	double b = args.doubleVal("Plaku b Value");
+	double stateRadius = args.doubleVal("Plaku PRM State Selection Radius");
+	double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
+	dfpair(stdout, "goal bias", "%g", goalBias);
+
+	PlakuTreeInterfaceT plakuTreeInterface(workspace, agent, prmLite, start, goal, alpha, b, stateRadius, goalBias);
+
+	double sstRadius = args.doubleVal("SST Radius");
+	double sstResize = args.doubleVal("SST Resize Threshold");
+
+	SSTTreeInterface sstTreeInterface(workspace, agent, plakuTreeInterface, plakuTreeInterface, sstRadius, sstResize);
+
+	Planner planner(workspace, agent, sstTreeInterface, args);
+
+	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
+}
+
+template<class Workspace, class Agent>
+void go_SSTGridPPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+                   const typename Agent::State &start, const typename Agent::State &goal) {
+	dfpair(stdout, "planner", "%s", "SST Grid + PPRM");
 
 	typedef PRMLite<Workspace, Agent> PRMLite;
 	typedef PlakuTreeInterface<Workspace, Agent, PRMLite> PlakuTreeInterfaceT;
@@ -162,7 +196,7 @@ void go_PPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &w
 
 	typedef PRMLite<Workspace, Agent> PRMLite;
 	typedef PlakuTreeInterface<Workspace, Agent, PRMLite> PlakuTreeInterfaceT;
-	typedef RRTConnect<Workspace, Agent, PlakuTreeInterfaceT> Planner;
+	typedef RRT<Workspace, Agent, PlakuTreeInterfaceT> Planner;
 
 	unsigned int numberOfPRMVertices = stol(args.value("Number Of PRM Vertices"));
 	unsigned int numberOfNearestNeighborEdgeConsiderations = stol(args.value("Nearest Neighbors To Consider In PRM Edge Construction"));
@@ -237,6 +271,8 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 	} else if(planner.compare("SST Grid") == 0) {
 		go_SSTGrid<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("SST + PPRM") == 0) {
+		go_SSTPPRM<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("SST Grid + PPRM") == 0) {
 		go_SSTGridPPRM<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("MRRT") == 0) {
 		go_MRRT<Workspace, Agent>(args, agent, workspace, start, goal);
