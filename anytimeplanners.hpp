@@ -230,6 +230,21 @@ void go_AORRT(const InstanceFileMap &args, const Agent &agent, const Workspace &
 }
 
 template<class Workspace, class Agent>
+void go_AORRT2(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+                   const typename Agent::State &start, const typename Agent::State &goal) {
+
+	clock_t startT = clock();
+
+	dfpair(stdout, "planner", "%s", "AO RRT");
+	
+	typedef AORRT2<Workspace, Agent> Planner;
+
+	Planner planner(workspace, agent, args);
+	
+	go_COMMONANYTIME<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal, startT);
+}
+
+template<class Workspace, class Agent>
 void go_AnytimeSSTPPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
                    const typename Agent::State &start, const typename Agent::State &goal) {
 

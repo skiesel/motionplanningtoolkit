@@ -280,6 +280,8 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 		go_MRRTPlusS<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("AO RRT") == 0) {
 		go_AORRT<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("AO RRT 2") == 0) {
+		go_AORRT2<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("EST") == 0) {
 		go_EST<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("EST Bidirectional") == 0) {

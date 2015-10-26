@@ -35,9 +35,11 @@ std::default_random_engine GlobalRandomGenerator;
 
 #include "planners/rrt.hpp"
 #include "planners/rrtconnect.hpp"
+#include "planners/reusablerrt.hpp"
 #include "planners/kpiece.hpp"
 #include "planners/restartingrrtwithpostprocessing.hpp"
 #include "planners/aorrt.hpp"
+#include "planners/aorrt2.hpp"
 #include "planners/est.hpp"
 #include "planners/estbidirectional.hpp"
 #include "planners/aoest.hpp"

@@ -17,6 +17,10 @@ public:
 		return true;
 	}
 
+	void removeFromTree(Edge *edge) {
+		insertionInterface.removeFromTree(edge);
+	}
+
 	Edge *getTreeEdge(const State &s) const {
 		return queryInterface.getTreeEdge(s);
 	}
