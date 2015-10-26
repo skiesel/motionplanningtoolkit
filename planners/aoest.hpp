@@ -45,11 +45,12 @@ public:
 
 		while(true) {
 
-			Planner planner(workspace, agent, args, bestCost);
+			Planner planner(workspace, agent, args, true, bestCost);
 
 			std::vector<const Edge*> incumbent = planner.query(start, goal);
 
 			double incumbentCost = incumbent.back()->gCost();
+
 			if(incumbentCost < bestCost) {
 				bestCost = incumbentCost;
 				dfrow(stdout, "solution", "gug", bestCost, incumbent.size(), (double)(clock()-startTime) / CLOCKS_PER_SEC, 0);
