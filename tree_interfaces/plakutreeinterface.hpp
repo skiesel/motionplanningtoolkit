@@ -224,7 +224,7 @@ public:
 		}
 
 		for(unsigned int i = 0; i < regions.size(); ++i) {
-			colorLookup[i] = getColor(min, max, regions[i]->heuristic);
+			colorLookup[i] = OpenGLWrapper::getColor(min, max, regions[i]->heuristic);
 		}
 
 		discretization.draw(true, false, colorLookup);
@@ -258,9 +258,9 @@ public:
 			} else {
 				unsigned int cur = saved.back()->regionPath.front();
 				for(auto r : saved.back()->regionPath) {
-					discretization.drawEdge(cur, r, getColor(0, maxHeuristicValue, regions[r]->heuristic));
+					discretization.drawEdge(cur, r, OpenGLWrapper::getColor(0, maxHeuristicValue, regions[r]->heuristic));
 					cur = r;
-					discretization.drawVertex(cur, getColor(0, maxHeuristicValue, regions[r]->heuristic));
+					discretization.drawVertex(cur, OpenGLWrapper::getColor(0, maxHeuristicValue, regions[r]->heuristic));
 				}
 
 				double maxWeight = 0;
@@ -271,7 +271,7 @@ public:
 				}
 
 				for(const auto r : regionHeap) {
-					discretization.drawVertex(r->id, getColor(0, maxWeight, r->weight));
+					discretization.drawVertex(r->id, OpenGLWrapper::getColor(0, maxWeight, r->weight));
 				}
 			}
 
@@ -358,34 +358,6 @@ public:
 private:
 	void dijkstra(Region *region) {
 		dijkstraRunner.dijkstra(*this, region);
-	}
-
-	std::vector<double> getColor(double min, double max, double value) const {
-		std::vector<double> color(3);
-
-		value = ((value - min) / (max - min)) * 765;
-
-		if(value < 255) {
-			color[0] = 0;
-			color[1] = value / 2;
-			color[2] = 255 - value;
-		} else if(value < 510) {
-			double relVal = value - 255;
-			color[0] = relVal;
-			color[1] = (relVal + 255) / 2;
-			color[2] = 0;
-		} else {
-			double relVal = value - 510;
-			color[0] = 255;
-			color[1] = 255 - relVal;
-			color[2] = 0;
-		}
-
-		for(unsigned int i = 0; i < 3; ++i) {
-			color[i] /= 255;
-		}
-
-		return color;
 	}
 
 	const Workspace &workspace;

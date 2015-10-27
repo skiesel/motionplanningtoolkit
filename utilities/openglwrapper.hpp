@@ -473,6 +473,34 @@ public:
 		return Identity;
 	}
 
+	static std::vector<double> getColor(double min, double max, double value) {
+		std::vector<double> color(3);
+
+		value = ((value - min) / (max - min)) * 765;
+
+		if(value < 255) {
+			color[0] = 0;
+			color[1] = value / 2;
+			color[2] = 255 - value;
+		} else if(value < 510) {
+			double relVal = value - 255;
+			color[0] = relVal;
+			color[1] = (relVal + 255) / 2;
+			color[2] = 0;
+		} else {
+			double relVal = value - 510;
+			color[0] = 255;
+			color[1] = 255 - relVal;
+			color[2] = 0;
+		}
+
+		for(unsigned int i = 0; i < 3; ++i) {
+			color[i] /= 255;
+		}
+
+		return color;
+	}
+
 private:
 	OpenGLWrapper() : xRot(0), yRot(0), zRot(0), Identity(16, 0) {
 		makeIdentity(transformMatrix);
