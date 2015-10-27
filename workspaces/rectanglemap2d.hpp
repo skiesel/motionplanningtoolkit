@@ -92,7 +92,10 @@ public:
 	}
 
 	bool safeAbstractEdge(const Agent &agent, const AbstractEdge &edge, double dt, bool checkSelfCollision = false) const {
-		return safeAbstractStates(agent, edge);
+		auto intermediateStates = State::interpolate(edge[0], edge[1], dt);
+		intermediateStates.push_back(edge[0]);
+		intermediateStates.push_back(edge[1]);
+		return safeAbstractStates(agent, intermediateStates);
 	}
 
 	bool safeStates(const Agent &agent, const std::vector<State> &states) const {
@@ -143,7 +146,7 @@ public:
 		}
 
 		for(const auto &rect : obstacles) {
-			if(rect.contains(state.getStateVars())) {
+			if(rect.contains(stateVars)) {
 				return false;
 			}
 		}
