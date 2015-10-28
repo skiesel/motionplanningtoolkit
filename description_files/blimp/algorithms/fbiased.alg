@@ -8,5 +8,3 @@ Nearest Neighbors To Consider In PRM Edge Construction ? 10
 PRM Collision Check DT ? 0.05
 
 Goal Bias ? 0.05
-
-Seed ? 9
