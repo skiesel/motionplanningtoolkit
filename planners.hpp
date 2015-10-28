@@ -126,6 +126,54 @@ void go_FBiasedRRT(const InstanceFileMap &args, const Agent &agent, const Worksp
 }
 
 template<class Workspace, class Agent>
+void go_FBiasedShellRRT(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
+            const typename Agent::State &start, const typename Agent::State &goal) {
+
+	dfpair(stdout, "planner", "%s", "FBiased Shell RRT");
+	typedef PRMLite<Workspace, Agent> PRMLite;
+	// typedef flann::KDTreeSingleIndexParams KDTreeType;
+	typedef flann::KDTreeIndexParams KDTreeType;
+	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, typename Agent::Edge> KDTree;
+	typedef FBiasedSampler<Workspace, Agent, KDTree, PRMLite> Sampler;
+	// typedef GoalBiasSampler<Agent, Sampler> GBSampler;
+	// typedef TreeInterface<Agent, KDTree, GBSampler> TreeInterface;
+	typedef Shell<Agent, KDTree, Sampler> TreeInterface;
+	typedef RRT<Workspace, Agent, TreeInterface> Planner;
+
+	/* planner config */
+
+	unsigned int numberOfPRMVertices = stol(args.value("Number Of PRM Vertices"));
+	unsigned int numberOfNearestNeighborEdgeConsiderations = stol(args.value("Nearest Neighbors To Consider In PRM Edge Construction"));
+	double prmCollisionCheckDT = args.doubleVal("PRM Collision Check DT");
+
+	PRMLite prmLite(workspace, agent, numberOfPRMVertices, numberOfNearestNeighborEdgeConsiderations, prmCollisionCheckDT);
+
+	KDTreeType kdtreeType(1);
+	KDTree kdtree(kdtreeType, agent.getDistanceEvaluator(), agent.getTreeStateSize());
+
+	double omega = args.doubleVal("FBias Omega");
+	double stateRadius = args.doubleVal("FBias State Selection Radius");
+
+	dfpair(stdout, "omega", "%g", omega);
+	dfpair(stdout, "state selection radius", "%g", stateRadius);
+
+	Sampler sampler(workspace, agent, kdtree, prmLite, start, goal, stateRadius, omega, false);
+
+	// double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
+	// dfpair(stdout, "goal bias", "%g", goalBias);
+
+	// GBSampler goalbiassampler(sampler, goal, goalBias);
+
+	double shellDepth = args.doubleVal("Shell Depth");
+	dfpair(stdout, "shell depth", "%g", shellDepth);
+
+	TreeInterface treeInterface(kdtree, sampler, shellDepth);
+	Planner planner(workspace, agent, treeInterface, args);
+
+	go_COMMON<Planner, Workspace, Agent>(args, planner, workspace, agent, start, goal);
+}
+
+template<class Workspace, class Agent>
 void go_EST(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
                    const typename Agent::State &start, const typename Agent::State &goal) {
 
@@ -307,6 +355,8 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 		go_RRTConnect<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("FBiased RRT") == 0) {
 		go_FBiasedRRT<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("FBiased Shell RRT") == 0) {
+		go_FBiasedShellRRT<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("PPRM") == 0) {
 		go_PPRM<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("KPIECE") == 0) {

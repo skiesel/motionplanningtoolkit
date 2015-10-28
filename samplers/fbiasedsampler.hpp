@@ -10,7 +10,7 @@ class FBiasedSampler {
 	typedef typename Agent::StateVarRanges StateVarRanges;
 
 	struct Node {
-		Node() : g(std::numeric_limits<double>::infinity()), h(std::numeric_limits<double>::infinity()) {}
+		Node() : g(std::numeric_limits<double>::infinity()), h(std::numeric_limits<double>::infinity()), inPDF(false) {}
 		static double getG(const Node &n) {
 			return n.g;
 		}
@@ -46,11 +46,12 @@ class FBiasedSampler {
 		unsigned int id;
 		double g, h, f;
 		double score;
+		bool inPDF;
 	};
 
 public:
 	FBiasedSampler(const Workspace &workspace, const Agent &agent, NN &nn, const WorkspaceDiscretization &discretization,
-	               const State &start, const State &goal, double stateRadius, double omega = 4) :
+	               const State &start, const State &goal, double stateRadius, double omega = 4, bool addAllRegions = true) :
 		workspace(workspace), agent(agent), nn(nn), discretization(discretization), omega(omega), stateRadius(stateRadius) {
 
 		unsigned int startIndex = discretization.getCellId(start);
@@ -97,8 +98,14 @@ public:
 			n->score = minScore;
 		}
 
-		for(unsigned int i = 0; i < nodes.size(); ++i) {
-			pdf.add(&nodes[i], nodes[i].score);
+		if(addAllRegions) {
+			for(unsigned int i = 0; i < nodes.size(); ++i) {
+				pdf.add(&nodes[i], nodes[i].score);
+				nodes[i].inPDF = true;
+			}
+		} else {
+			pdf.add(&nodes[startIndex], nodes[startIndex].score);
+			nodes[startIndex].inPDF = true;
 		}
 	}
 
@@ -114,6 +121,72 @@ public:
 		auto edge = Edge(s);
 		typename NN::KNNResult result = nn.nearest(&edge);
 		return result.elements[0];
+	}
+
+	void reached(const Edge *e, double shellDepth) {
+
+		struct node {
+			node(unsigned int id, unsigned int depth, double value) : id(id), value(value) {}
+
+			static bool pred(const node *a, const node *b) {
+				return a->value < b->value;
+			}
+			static unsigned int getHeapIndex(const node *r) {
+				return r->heapIndex;
+			}
+			static void setHeapIndex(node *r, unsigned int i) {
+				r->heapIndex = i;
+			}
+
+			unsigned int id, depth, heapIndex;
+			double value;
+		};
+
+		InPlaceBinaryHeap<node, node> open;
+		std::unordered_set<unsigned int> closed;
+		std::unordered_map<unsigned int, node*> lookup;
+
+		unsigned int start = discretization.getCellId(e->end);
+		lookup[start] = new node(start, 0, 0);
+
+		open.push(lookup[start]);
+		while(!open.isEmpty()) {
+			node *current = open.pop();
+			closed.insert(current->id);
+
+			std::vector<unsigned int> kids = discretization.getNeighboringCells(current->id);
+			for(unsigned int kid : kids) {
+				if(closed.find(kid) != closed.end()) continue;
+
+				double newValue = current->value + discretization.getEdgeCostBetweenCells(current->id, kid);
+				if(newValue <= shellDepth /*|| current->depth == 0*/) {
+					if(lookup.find(kid) != lookup.end()) {
+						if(newValue < lookup[kid]->value) {
+							lookup[kid]->value = newValue;
+							lookup[kid]->depth = current->depth + 1;
+							open.siftFromItem(lookup[kid]);
+						}
+					} else {
+						lookup[kid] = new node(kid, current->depth + 1, newValue);
+						open.push(lookup[kid]);
+					}
+				}
+			}
+		}
+
+		for(auto entry : lookup) {
+			auto n = entry.first;
+			delete entry.second;
+			if(!nodes[n].inPDF) {
+				pdf.add(&nodes[n], nodes[n].score);
+				nodes[n].inPDF = true;
+			}
+		}
+	}
+
+	void removed(const Edge *e) {
+		fprintf(stderr, "FBiasedSampler removed() not implemented\n");
+		exit(1);
 	}
 
 #ifdef WITHGRAPHICS
@@ -137,6 +210,24 @@ public:
 #endif
 
 private:
+
+	void dfsToDepth(unsigned int root, double value, std::unordered_map<unsigned int, double> &nodesInsideBound, double bound) const {
+		nodesInsideBound[root] = value;
+		std::vector<unsigned int> kids = discretization.getNeighboringCells(root);
+		for(auto kid : kids) {
+			double cost = value + discretization.getEdgeCostBetweenCells(root, kid);
+
+			if(nodesInsideBound.find(kid) != nodesInsideBound.end()) {
+				if(nodesInsideBound[kid] <= cost) {
+					continue;
+				}
+			}
+
+			if(cost < bound) {
+				dfsToDepth(kid, cost, nodesInsideBound, bound);
+			}
+		}
+	}
 
 	void dijkstraG(Node &start) {
 		Node::sort = Node::sortG;
