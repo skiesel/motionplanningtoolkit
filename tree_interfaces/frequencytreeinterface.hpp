@@ -10,8 +10,8 @@ private:
 	struct Node {
 		Node(Edge* e) : edge(e), frequency(0), heapIndex(std::numeric_limits<unsigned int>::max()) {}
 
-		static int sort(const Node *a, const Node *b) {
-			return (a->frequency - b->frequency) > 0 ? -1 : 1;
+		static bool pred(const Node *a, const Node *b) {
+			return a->frequency < b->frequency;
 		}
 		static unsigned int getHeapIndex(const Node *n) {
 			return n->heapIndex;
@@ -30,10 +30,14 @@ public:
 	FrequencyTreeInterface() {}
 
 	std::pair<Edge*, State> getTreeSample() {
+		static bool once = false;
 		Node *best = heap.peek();
 		best->frequency++;
 		heap.siftFromItem(best);
-		fprintf(stderr, "FrequencyTreeInterface::getTreeSample returning edge->end as state to steer towards!");
+		if(!once) {
+			fprintf(stderr, "FrequencyTreeInterface::getTreeSample returning edge->end as state to steer towards!");
+			once = true;
+		}
 		return std::make_pair(best->edge, best->edge->end);
 	}
 
@@ -51,6 +55,10 @@ public:
 
 	void removeFromTree(Edge *edge) {
 		fatal("FrequencyTreeInterface::removeFromTree not implemented");
+	}
+
+	bool isEmpty() const {
+		return heap.isEmpty();
 	}
 
 	std::vector<Node*> nodes;

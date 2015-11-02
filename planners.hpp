@@ -320,12 +320,17 @@ void go_PPRM(const InstanceFileMap &args, const Agent &agent, const Workspace &w
 template<class Workspace, class Agent>
 void go_NewSearch(const InstanceFileMap &args, const Agent &agent, const Workspace &workspace,
                    const typename Agent::State &start, const typename Agent::State &goal) {
-	dfpair(stdout, "planner", "%s", "NewSearch");
+	dfpair(stdout, "planner", "%s", "New Search");
 
-	typedef FrequencyTreeInterface<Agent> RegionManager;
+	typedef flann::KDTreeIndexParams KDTreeType;
+	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, typename Agent::Edge> KDTree;
+	// typedef FrequencyTreeInterface<Agent> RegionManager;
 	typedef PRMLite<Workspace, Agent> PRMLite;
-	typedef NewTreeInterface<Workspace, Agent, PRMLite, SimpleBestFirst, RegionManager> TreeInterface;
+	typedef NewTreeInterface<Workspace, Agent, KDTree, PRMLite> TreeInterface;
 	typedef RRT<Workspace, Agent, TreeInterface> Planner;
+
+	KDTreeType kdtreeType(1);
+	KDTree kdtree(kdtreeType, agent.getDistanceEvaluator(), agent.getTreeStateSize());
 
 	unsigned int numberOfPRMVertices = stol(args.value("Number Of PRM Vertices"));
 	unsigned int numberOfNearestNeighborEdgeConsiderations = stol(args.value("Nearest Neighbors To Consider In PRM Edge Construction"));
@@ -333,9 +338,13 @@ void go_NewSearch(const InstanceFileMap &args, const Agent &agent, const Workspa
 
 	PRMLite prmLite(workspace, agent, numberOfPRMVertices, numberOfNearestNeighborEdgeConsiderations, prmCollisionCheckDT);
 
-	SimpleBestFirst discreteSearch;
+	// SimpleBestFirst discreteSearch;
 
-	TreeInterface treeInterface(workspace, agent, prmLite, discreteSearch, start, goal);
+	double stateRadius = args.doubleVal("PRM State Selection Radius");
+	double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
+	dfpair(stdout, "goal bias", "%g", goalBias);
+
+	TreeInterface treeInterface(workspace, agent, kdtree, prmLite, start, goal, stateRadius, goalBias);
 
 	Planner planner(workspace, agent, treeInterface, args);
 
@@ -357,6 +366,8 @@ void go(const InstanceFileMap &args, const Workspace &workspace, const Agent &ag
 		go_FBiasedRRT<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("FBiased Shell RRT") == 0) {
 		go_FBiasedShellRRT<Workspace, Agent>(args, agent, workspace, start, goal);
+	} else if(planner.compare("New Search") == 0) {
+		go_NewSearch<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("PPRM") == 0) {
 		go_PPRM<Workspace, Agent>(args, agent, workspace, start, goal);
 	} else if(planner.compare("KPIECE") == 0) {
