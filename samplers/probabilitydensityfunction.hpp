@@ -86,20 +86,25 @@ public:
 	Element* remove(unsigned int index) {
 		Element *element = elements[index];
 
-		Element *replaceWith = elements.back();
-		updateTree(replaceWith, -replaceWith->weight);
+		if(index != elements.size()-1) {
+			Element *replaceWith = elements.back();
+			updateTree(replaceWith, -replaceWith->weight);
 
-		updateTree(element, replaceWith->weight - element->weight);
+			updateTree(element, replaceWith->weight - element->weight);
 
-		elements[index] = replaceWith;
-		elements[index]->index = index;
-		elements[index]->leftSubtreeWeight = element->leftSubtreeWeight;
-		elements[index]->rightSubtreeWeight = element->rightSubtreeWeight;
+			elements[index] = replaceWith;
+			elements[index]->index = index;
+			elements[index]->leftSubtreeWeight = element->leftSubtreeWeight;
+			elements[index]->rightSubtreeWeight = element->rightSubtreeWeight;
+		} else {
+			updateTree(element, -element->weight);
+		}
+
 		elements.resize(elements.size() - 1);
 
 		delete element;
 
-		return elements[index];
+		return index >= elements.size() ? NULL : elements[index];
 	}
 
 	Data* sample() const {

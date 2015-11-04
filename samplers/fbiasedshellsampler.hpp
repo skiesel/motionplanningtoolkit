@@ -157,7 +157,9 @@ public:
 		
 		if(nodes[start].inExteriorPDF) {
 			auto el = exterior.remove(nodes[start].pdfID);
-			el->getData()->pdfID = el->getId();
+			if(el != NULL) {
+				el->getData()->pdfID = el->getId();
+			}
 		}
 
 		auto el = interior.add(&nodes[start], nodes[start].score);
