@@ -100,16 +100,6 @@ public:
 			mostRecentNode = open.peek();
 			State sample = discretization.getRandomStateNearRegionCenter(nodes[mostRecentNode->nextNode].id, stateRadius);
 
-			if(open.getFill() >= 3) {
-				const auto &h = open.cheat();
-
-				if(h[1]->e - h[2]->e > 1 || h[1]->e - h[3]->e > 1) {
-					open.siftFromItem(mostRecentNode);
-				}
-				assert(h[1]->e - h[2]->e <= 1);
-				assert(h[1]->e - h[3]->e <= 1);
-			}
-
 			//automatically updates chosen count
 			Edge *edge = mostRecentNode->regionManager.getTreeSample().first;
 			return std::make_pair(edge, sample);

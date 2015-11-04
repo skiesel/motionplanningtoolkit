@@ -41,6 +41,11 @@ public:
 	}
 
 	void push(T *data) {
+		// if(!checkInvariant()) {
+		// 	fprintf(stderr, "invariant failed going out of push\n");
+		// 	exit(1);
+		// }
+
 		fill++;
 		if(fill >= heap.size()) {
 			heap.resize(heap.size() * 2);
@@ -51,6 +56,11 @@ public:
 
 		siftUp(fill);
 
+
+		// if(!checkInvariant()) {
+		// 	fprintf(stderr, "invariant failed going out of push\n");
+		// 	exit(1);
+		// }
 	}
 
 	T *peek() {
@@ -83,6 +93,7 @@ public:
 	}
 
 	void siftFromItem(const T *data, bool debug = false) {
+
 		unsigned int index = Ops::getHeapIndex(data);
 		if(index > 0 && index <= fill) {
 			int parent_index = parent(index);
@@ -95,6 +106,11 @@ public:
 				siftDown(index, debug);
 			}
 		}
+
+		// if(!checkInvariant()) {
+		// 	fprintf(stderr, "invariant failed going out of siftFromItem\n");
+		// 	exit(1);
+		// }
 	}
 
 	void remove(const T* data) {
@@ -110,6 +126,16 @@ public:
 				siftDown(index);
 			}
 		}
+	}
+
+	bool checkInvariant() const {
+		for(unsigned int i = 1; i < fill; i++) {
+			auto l = left(i);
+			auto r = right(i);
+			if(l < fill && !Ops::pred(heap[i], heap[l])) return false;
+			if(r < fill && !Ops::pred(heap[i], heap[r])) return false;
+		}
+		return true;
 	}
 
 	const std::vector<T *>& cheat() const {
@@ -128,15 +154,15 @@ protected:
 	}
 
 private:
-	inline unsigned int left(unsigned int i) {
+	inline unsigned int left(unsigned int i) const {
 		return (2 * i);
 	}
 
-	inline unsigned int right(unsigned int i) {
+	inline unsigned int right(unsigned int i) const {
 		return (2 * i + 1);
 	}
 
-	inline unsigned int parent(unsigned int i) {
+	inline unsigned int parent(unsigned int i) const {
 		return (i / 2);
 	}
 
