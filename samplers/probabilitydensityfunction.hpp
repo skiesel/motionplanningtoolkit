@@ -71,6 +71,7 @@ public:
 
 	Element* add(Data *data, double weight) {
 		elements.push_back(new Element(data, weight, elements.size()));
+
 		updateTree(elements.back(), weight);
 		return elements.back();
 	}
@@ -82,7 +83,7 @@ public:
 		return element;
 	}
 
-	void remove(unsigned int index) {
+	Element* remove(unsigned int index) {
 		Element *element = elements[index];
 
 		Element *replaceWith = elements.back();
@@ -91,7 +92,14 @@ public:
 		updateTree(element, replaceWith->weight - element->weight);
 
 		elements[index] = replaceWith;
+		elements[index]->index = index;
+		elements[index]->leftSubtreeWeight = element->leftSubtreeWeight;
+		elements[index]->rightSubtreeWeight = element->rightSubtreeWeight;
 		elements.resize(elements.size() - 1);
+
+		delete element;
+
+		return elements[index];
 	}
 
 	Data* sample() const {

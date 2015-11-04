@@ -10,7 +10,7 @@ class FBiasedShellSampler {
 	typedef typename Agent::StateVarRanges StateVarRanges;
 
 	struct Node {
-		Node() : g(std::numeric_limits<double>::infinity()), h(std::numeric_limits<double>::infinity()), inExteriorPDF(false), touched(false), pdfID(0) {}
+		Node() : g(std::numeric_limits<double>::infinity()), h(std::numeric_limits<double>::infinity()), inPDF(false), touched(false), pdfID(0) {}
 		static double getG(const Node &n) {
 			return n.g;
 		}
@@ -46,7 +46,7 @@ class FBiasedShellSampler {
 		unsigned int id;
 		double g, h, f;
 		double score;
-		bool inExteriorPDF, touched;
+		bool inPDF, touched;
 		unsigned int pdfID;
 	};
 
@@ -99,19 +99,20 @@ public:
 			n->score = minScore;
 		}
 
+		for(Node &n : nodes) {
+			n.score *= shellPreference;
+		}
+
+		auto el = pdf.add(&nodes[startIndex], nodes[startIndex].score);
+		nodes[startIndex].pdfID = el->getId();
+		nodes[startIndex].inPDF = true;
 		Edge *e = new Edge(start);
 		reached(e, shellDepth);
 		delete e;
 	}
 
 	std::pair<Edge*, State> getTreeSample() const {
-		Node *randomNode;
-		if(zeroToOne(GlobalRandomGenerator) < shellPreference) {
-			randomNode = exterior.sample();
-		} else {
-			randomNode = interior.sample();
-		}
-
+		Node *randomNode = pdf.sample();
 		State sample = discretization.getRandomStateNearRegionCenter(randomNode->id, stateRadius);
 		Edge sampleEdge = Edge(sample);
 		typename NN::KNNResult result = nn.nearest(&sampleEdge);
@@ -125,7 +126,7 @@ public:
 	}
 
 	void reached(const Edge *e, double shellDepth) {
-		//we have a local shellDepth passed in, and a object level shellDepth -- maybe we want to alter it during runtime?
+	//we have a local shellDepth passed in, and a object level shellDepth -- maybe we want to alter it during runtime?
 		struct node {
 			node(unsigned int id, unsigned int depth, double value) : id(id), value(value) {}
 
@@ -155,14 +156,18 @@ public:
 		
 		lookup[start] = new node(start, 0, 0);
 		
-		if(nodes[start].inExteriorPDF) {
-			auto el = exterior.remove(nodes[start].pdfID);
-			el->getData()->pdfID = el->getId();
+		if(nodes[start].inPDF) {
+			if(!nodes[start].touched) {
+				nodes[start].score /= shellPreference;
+				pdf.update(nodes[start].pdfID, nodes[start].score);
+			}
+		} else {
+			nodes[start].score /= shellPreference;
+			auto el = pdf.add(&nodes[start], nodes[start].score);
+			nodes[start].pdfID = el->getId();
+			nodes[start].inPDF = true;
 		}
 
-		auto el = interior.add(&nodes[start], nodes[start].score);
-		nodes[start].pdfID = el->getId();
-		nodes[start].inExteriorPDF = false;
 		nodes[start].touched = true;
 
 		open.push(lookup[start]);
@@ -193,10 +198,10 @@ public:
 		for(auto entry : lookup) {
 			auto n = entry.first;
 			delete entry.second;
-			if(!(nodes[n].inExteriorPDF || nodes[n].touched)) {
-				auto el = exterior.add(&nodes[n], nodes[n].score);
+			if(!nodes[n].inPDF) {
+				auto el = pdf.add(&nodes[n], nodes[n].score);
 				nodes[n].pdfID = el->getId();
-				nodes[n].inExteriorPDF = true;
+				nodes[n].inPDF = true;
 			}
 		}
 	}
@@ -297,9 +302,8 @@ private:
 	NN &nn;
 	const WorkspaceDiscretization &discretization;
 	std::vector<Node> nodes;
-	ProbabilityDensityFunction<Node> interior, exterior;
+	ProbabilityDensityFunction<Node> pdf;
 	double omega, stateRadius, shellPreference, shellDepth;
-	mutable std::uniform_real_distribution<double> zeroToOne;
 };
 
 template <class W, class A, class N, class D>
