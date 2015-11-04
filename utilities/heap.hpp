@@ -41,12 +41,16 @@ public:
 	}
 
 	void push(T *data) {
-		if(fill+1 >= heap.size()) {
+		fill++;
+		if(fill >= heap.size()) {
 			heap.resize(heap.size() * 2);
 		}
-		heap[++fill] = data;
+		heap[fill] = data;
+
 		Ops::setHeapIndex(data, fill);
+
 		siftUp(fill);
+
 	}
 
 	T *peek() {
@@ -61,6 +65,7 @@ public:
 		fill--;
 		siftDown(1);
 		Ops::setHeapIndex(ret_T, std::numeric_limits<unsigned int>::max());
+
 		return ret_T;
 	}
 
@@ -74,18 +79,20 @@ public:
 
 	bool inHeap(const T *data) const {
 		unsigned int index = Ops::getHeapIndex(data);
-		return index > 1 && index <= fill;
+		return index >= 1 && index <= fill;
 	}
 
-	void siftFromItem(const T *data) {
+	void siftFromItem(const T *data, bool debug = false) {
 		unsigned int index = Ops::getHeapIndex(data);
 		if(index > 0 && index <= fill) {
 			int parent_index = parent(index);
 			if(index > 1 && Ops::pred(heap[index], heap[parent_index])) {
+				if(debug) { fprintf(stderr, "up\n"); }
 				siftUp(index);
 			}
 			else {
-				siftDown(index);
+				if(debug) { fprintf(stderr, "down\n"); }
+				siftDown(index, debug);
 			}
 		}
 	}
@@ -105,8 +112,21 @@ public:
 		}
 	}
 
+	const std::vector<T *>& cheat() const {
+		return heap;
+	}
 
 protected:
+	bool checkIndices() const {
+		for(unsigned int i = 1; i <= fill; ++i) {
+			if(Ops::getHeapIndex(heap[i]) != i) {
+				fprintf(stderr, "%u ?= %u\n", i, Ops::getHeapIndex(heap[i]));
+				return false;
+			}
+		}
+		return true;
+	}
+
 private:
 	inline unsigned int left(unsigned int i) {
 		return (2 * i);
@@ -150,11 +170,21 @@ private:
 		}
 	}
 
-	void siftDown(unsigned int index) {
+	void siftDown(unsigned int index, bool debug = false) {
 		unsigned int child_index = childToSwap(index);
+
+		if(debug) {
+			fprintf(stderr, "%u %u\n", index, child_index);
+		}
+
 		if(Ops::pred(heap[child_index], heap[index])) {
+			if(debug) {
+				fprintf(stderr, "swapping\n");
+			}
+
+
 			swap(index, child_index);
-			siftDown(child_index);
+			siftDown(child_index, debug);
 		}
 	}
 

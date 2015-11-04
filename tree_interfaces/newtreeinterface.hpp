@@ -87,8 +87,9 @@ public:
 	std::pair<Edge*, State> getTreeSample() {
 		if(mostRecentNode != NULL) {
 			//there was a collision so increase effort
-			increaseEffort(mostRecentNode->id);
-			open.push(mostRecentNode);
+			increaseEffort(mostRecentNode->id, 1);
+			open.siftFromItem(&nodes[mostRecentNode->id]);
+			mostRecentNode = NULL;
 		}
 
 		if(distribution(GlobalRandomGenerator) < goalBias) {
@@ -96,8 +97,18 @@ public:
 			typename NN::KNNResult result = nn.nearest(&edge);
 			return std::make_pair(result.elements[0], goal);
 		} else {
-			mostRecentNode = open.pop();
+			mostRecentNode = open.peek();
 			State sample = discretization.getRandomStateNearRegionCenter(nodes[mostRecentNode->nextNode].id, stateRadius);
+
+			if(open.getFill() >= 3) {
+				const auto &h = open.cheat();
+
+				if(h[1]->e - h[2]->e > 1 || h[1]->e - h[3]->e > 1) {
+					open.siftFromItem(mostRecentNode);
+				}
+				assert(h[1]->e - h[2]->e <= 1);
+				assert(h[1]->e - h[3]->e <= 1);
+			}
 
 			//automatically updates chosen count
 			Edge *edge = mostRecentNode->regionManager.getTreeSample().first;
@@ -114,9 +125,10 @@ public:
 	bool insertIntoTree(Edge *edge) {
 		unsigned int index = discretization.getCellId(edge->end);
 
-		if(mostRecentNode != NULL && mostRecentNode->id == index) {
-			//we didn't make progress so increase effort?
-
+		if(mostRecentNode != NULL) {
+			double amount = mostRecentNode->id == index ? 0.5 : 0.1;
+			increaseEffort(mostRecentNode->id, amount);
+			open.siftFromItem(&nodes[mostRecentNode->id]);
 			mostRecentNode = NULL;
 		}
 
@@ -140,8 +152,13 @@ public:
 
 private:
 
-	void increaseEffort(unsigned int id) {
-		nodes[id].e++;
+	void increaseEffort(unsigned int id, double howMuch) {
+		nodes[id].e += howMuch;
+
+		if(open.inHeap(&nodes[id])) {
+			open.siftFromItem(&nodes[id]);
+		}
+
 		std::vector<unsigned int> updates;
 		unsigned int index = 0;
 		updates.push_back(id);
@@ -149,11 +166,11 @@ private:
 		while(index < updates.size()) {
 			unsigned int current = updates[index];
 
-			auto neighbors = discretization.getNeighboringCells(id);
+			auto neighbors = discretization.getNeighboringCells(current);
 			for(auto neighbor : neighbors) {
 				if(nodes[neighbor].nextNode == id) {
 					double oldValue = nodes[neighbor].e;
-					nodes[neighbor].e++;
+					nodes[neighbor].e += howMuch;
 
 					auto neighbors2 = discretization.getNeighboringCells(neighbor);
 					for(auto neighbor2 : neighbors2) {
@@ -163,25 +180,27 @@ private:
 						}
 					}
 					if(nodes[neighbor].e > oldValue) {
-						if(open.inHeap(&nodes[neighbor]))
+						if(open.inHeap(&nodes[neighbor])) {
 							open.siftFromItem(&nodes[neighbor]);
+						}
 						updates.push_back(neighbor);
 					}
+					break;
 				}
 			}
 			index++;
 		}
 	}
 
-	void dijkstraG(Node &start) {
-		Node::sort = Node::sortG;
-		dijkstra(start, Node::getG, Node::setG);
-	}
+	// void dijkstraG(Node &start) {
+	// 	Node::sort = Node::sortG;
+	// 	dijkstra(start, Node::getG, Node::setG);
+	// }
 
-	void dijkstraH(Node &start) {
-		Node::sort = Node::sortH;
-		dijkstra(start, Node::getH, Node::setH);
-	}
+	// void dijkstraH(Node &start) {
+	// 	Node::sort = Node::sortH;
+	// 	dijkstra(start, Node::getH, Node::setH);
+	// }
 
 	void dijkstraE(Node &start) {
 		Node::sort = Node::sortE;
@@ -208,7 +227,7 @@ private:
 			for(unsigned int kid : kids) {
 				if(closed.find(kid) != closed.end()) continue;
 
-				double newValue = peek(*current) + discretization.getEdgeCostBetweenCells(current->id, kid);
+				double newValue = peek(*current) + 1;
 				Node &kidRef = nodes[kid];
 
 				if(newValue < peek(kidRef)) {
