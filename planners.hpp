@@ -134,7 +134,7 @@ void go_FBiasedShellRRT(const InstanceFileMap &args, const Agent &agent, const W
 	// typedef flann::KDTreeSingleIndexParams KDTreeType;
 	typedef flann::KDTreeIndexParams KDTreeType;
 	typedef FLANN_KDTreeWrapper<KDTreeType, typename Agent::DistanceEvaluator, typename Agent::Edge> KDTree;
-	typedef FBiasedSampler<Workspace, Agent, KDTree, PRMLite> Sampler;
+	typedef FBiasedShellSampler<Workspace, Agent, KDTree, PRMLite> Sampler;
 	// typedef GoalBiasSampler<Agent, Sampler> GBSampler;
 	// typedef TreeInterface<Agent, KDTree, GBSampler> TreeInterface;
 	typedef Shell<Agent, KDTree, Sampler> TreeInterface;
@@ -152,6 +152,7 @@ void go_FBiasedShellRRT(const InstanceFileMap &args, const Agent &agent, const W
 	KDTree kdtree(kdtreeType, agent.getDistanceEvaluator(), agent.getTreeStateSize());
 
 	double shellPreference = args.doubleVal("Shell Preference");
+	dfpair(stdout, "shell preference", "%g", shellPreference);
 
 	double omega = args.doubleVal("FBias Omega");
 	double stateRadius = args.doubleVal("FBias State Selection Radius");
@@ -159,15 +160,16 @@ void go_FBiasedShellRRT(const InstanceFileMap &args, const Agent &agent, const W
 	dfpair(stdout, "omega", "%g", omega);
 	dfpair(stdout, "state selection radius", "%g", stateRadius);
 
-	Sampler sampler(workspace, agent, kdtree, prmLite, start, goal, stateRadius, omega, false, shellPreference);
+	double shellDepth = args.doubleVal("Shell Depth");
+	dfpair(stdout, "shell depth", "%g", shellDepth);
+
+
+	Sampler sampler(workspace, agent, kdtree, prmLite, start, goal, stateRadius, shellDepth, omega, shellPreference);
 
 	// double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
 	// dfpair(stdout, "goal bias", "%g", goalBias);
 
 	// GBSampler goalbiassampler(sampler, goal, goalBias);
-
-	double shellDepth = args.doubleVal("Shell Depth");
-	dfpair(stdout, "shell depth", "%g", shellDepth);
 
 	TreeInterface treeInterface(kdtree, sampler, shellDepth);
 	Planner planner(workspace, agent, treeInterface, args);

@@ -3,7 +3,7 @@
 #include <random>
 
 template <class Workspace, class Agent, class NN, class WorkspaceDiscretization>
-class FBiasedSampler {
+class FBiasedShellSampler {
 	typedef typename Agent::State State;
 	typedef typename Agent::Edge Edge;
 	typedef typename Agent::StateVars StateVars;
@@ -51,9 +51,9 @@ class FBiasedSampler {
 	};
 
 public:
-	FBiasedSampler(const Workspace &workspace, const Agent &agent, NN &nn, const WorkspaceDiscretization &discretization,
-	               const State &start, const State &goal, double stateRadius, double omega = 4) :
-		workspace(workspace), agent(agent), nn(nn), discretization(discretization), omega(omega), stateRadius(stateRadius) {
+	FBiasedShellSampler(const Workspace &workspace, const Agent &agent, NN &nn, const WorkspaceDiscretization &discretization,
+	               const State &start, const State &goal, double stateRadius, double shellDepth, double omega = 4, double shellPreference = 1) :
+		workspace(workspace), agent(agent), nn(nn), discretization(discretization), omega(omega), stateRadius(stateRadius), shellPreference(shellPreference), shellDepth(shellDepth) {
 
 		unsigned int startIndex = discretization.getCellId(start);
 		unsigned int goalIndex = discretization.getCellId(goal);
@@ -99,13 +99,16 @@ public:
 			n->score = minScore;
 		}
 
-		
-		for(unsigned int i = 0; i < nodes.size(); ++i) {
-			auto el = pdf.add(&nodes[i], nodes[i].score);
-			nodes[i].pdfID = el->getId();
-			nodes[i].inPDF = true;
+		for(Node &n : nodes) {
+			n.score *= shellPreference;
 		}
-		
+
+		auto el = pdf.add(&nodes[startIndex], nodes[startIndex].score);
+		nodes[startIndex].pdfID = el->getId();
+		nodes[startIndex].inPDF = true;
+		Edge *e = new Edge(start);
+		reached(e, shellDepth);
+		delete e;
 	}
 
 	std::pair<Edge*, State> getTreeSample() const {
@@ -122,8 +125,89 @@ public:
 		return result.elements[0];
 	}
 
+	void reached(const Edge *e, double shellDepth) {
+
+		struct node {
+			node(unsigned int id, unsigned int depth, double value) : id(id), value(value) {}
+
+			static bool pred(const node *a, const node *b) {
+				return a->value < b->value;
+			}
+			static unsigned int getHeapIndex(const node *r) {
+				return r->heapIndex;
+			}
+			static void setHeapIndex(node *r, unsigned int i) {
+				r->heapIndex = i;
+			}
+
+			unsigned int id, depth, heapIndex;
+			double value;
+		};
+
+		unsigned int start = discretization.getCellId(e->end);
+		if(nodes[start].touched) {
+			return;
+		}
+
+		InPlaceBinaryHeap<node, node> open;
+		std::unordered_set<unsigned int> closed;
+		std::unordered_map<unsigned int, node*> lookup;
+
+		
+		lookup[start] = new node(start, 0, 0);
+		
+		if(nodes[start].inPDF) {
+			if(!nodes[start].touched) {
+				nodes[start].score /= shellPreference;
+				pdf.update(nodes[start].pdfID, nodes[start].score);
+			}
+		} else {
+			nodes[start].score /= shellPreference;
+			auto el = pdf.add(&nodes[start], nodes[start].score);
+			nodes[start].pdfID = el->getId();
+			nodes[start].inPDF = true;
+		}
+
+		nodes[start].touched = true;
+
+		open.push(lookup[start]);
+		while(!open.isEmpty()) {
+			node *current = open.pop();
+			closed.insert(current->id);
+
+			std::vector<unsigned int> kids = discretization.getNeighboringCells(current->id);
+			for(unsigned int kid : kids) {
+				if(closed.find(kid) != closed.end()) continue;
+
+				double newValue = current->value + discretization.getEdgeCostBetweenCells(current->id, kid);
+				if(newValue <= shellDepth /*|| current->depth == 0*/) {
+					if(lookup.find(kid) != lookup.end()) {
+						if(newValue < lookup[kid]->value) {
+							lookup[kid]->value = newValue;
+							lookup[kid]->depth = current->depth + 1;
+							open.siftFromItem(lookup[kid]);
+						}
+					} else {
+						lookup[kid] = new node(kid, current->depth + 1, newValue);
+						open.push(lookup[kid]);
+					}
+				}
+			}
+		}
+
+		for(auto entry : lookup) {
+			auto n = entry.first;
+			delete entry.second;
+			if(!nodes[n].inPDF) {
+				auto el = pdf.add(&nodes[n], nodes[n].score);
+				nodes[n].pdfID = el->getId();
+				nodes[n].inPDF = true;
+			}
+		}
+	}
+
 	void removed(const Edge *e) {
-		fprintf(stderr, "FBiasedSampler removed() not implemented\n");
+		fprintf(stderr, "FBiasedShellSampler removed() not implemented\n");
 		exit(1);
 	}
 
@@ -148,6 +232,24 @@ public:
 #endif
 
 private:
+
+	void dfsToDepth(unsigned int root, double value, std::unordered_map<unsigned int, double> &nodesInsideBound, double bound) const {
+		nodesInsideBound[root] = value;
+		std::vector<unsigned int> kids = discretization.getNeighboringCells(root);
+		for(auto kid : kids) {
+			double cost = value + discretization.getEdgeCostBetweenCells(root, kid);
+
+			if(nodesInsideBound.find(kid) != nodesInsideBound.end()) {
+				if(nodesInsideBound[kid] <= cost) {
+					continue;
+				}
+			}
+
+			if(cost < bound) {
+				dfsToDepth(kid, cost, nodesInsideBound, bound);
+			}
+		}
+	}
 
 	void dijkstraG(Node &start) {
 		Node::sort = Node::sortG;
@@ -201,8 +303,11 @@ private:
 	const WorkspaceDiscretization &discretization;
 	std::vector<Node> nodes;
 	ProbabilityDensityFunction<Node> pdf;
-	double omega, stateRadius;
+	double omega, stateRadius, shellPreference, shellDepth;
 };
 
 template <class W, class A, class N, class D>
-std::function<bool(const typename FBiasedSampler<W,A,N,D>::Node *, const typename FBiasedSampler<W,A,N,D>::Node *)> FBiasedSampler<W,A,N,D>::Node::sort = FBiasedSampler<W,A,N,D>::Node::sortG;
+std::function<bool(const typename FBiasedShellSampler<W,A,N,D>::Node *, const typename FBiasedShellSampler<W,A,N,D>::Node *)> FBiasedShellSampler<W,A,N,D>::Node::sort = FBiasedShellSampler<W,A,N,D>::Node::sortG;
+
+
+

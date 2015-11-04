@@ -50,6 +50,7 @@ std::default_random_engine GlobalRandomGenerator;
 #include "samplers/uniformsampler.hpp"
 #include "samplers/normalsampler.hpp"
 #include "samplers/fbiasedsampler.hpp"
+#include "samplers/fbiasedshellsampler.hpp"
 #include "samplers/goalbiassampler.hpp"
 #include "samplers/probabilitydensityfunction.hpp"
 
