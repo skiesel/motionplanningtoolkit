@@ -157,7 +157,7 @@ public:
 		if(!nodes[start].touched) {
 			if(nodes[start].inPDF) {
 				nodes[start].score /= shellPreference;
-				pdf.update(start, nodes[start].score);
+				pdf.update(nodes[start].pdfID, nodes[start].score);
 			} else {
 				auto el = pdf.add(&nodes[start], nodes[start].score);
 				nodes[start].pdfID = el->getId();
