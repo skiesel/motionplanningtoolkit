@@ -96,15 +96,8 @@ class PlakuTreeInterface {
 		}
 
 		unsigned int getRandomRegionAlongPathToGoal(std::uniform_real_distribution<double> &distribution) const {
-			unsigned int randomIndex = (unsigned int)(distribution(GlobalRandomGenerator) * regionPath.size());
+			unsigned int randomIndex = (unsigned int)(distribution(GlobalRandomGenerator) * regionPath.size() / 4) + regionPath.size() / 4;
 			return regionPath[randomIndex];
-		}
-
-		unsigned int getNextRegionAlongPathToGoal(std::uniform_real_distribution<double> &distribution) const {
-			if(regionPath.size() > 1) {
-				return regionPath[regionPath.size() - 2];
-			}
-			return regionPath[0];
 		}
 
 		void insertEdge(Edge *edge) {
@@ -258,8 +251,7 @@ public:
 
 			assert(saved.back()->getEdgeCount() != 0);
 
-			// unsigned int regionAlongPath = saved.back()->getRandomRegionAlongPathToGoal(distribution);
-			unsigned int regionAlongPath = saved.back()->getNextRegionAlongPathToGoal(distribution);
+			unsigned int regionAlongPath = saved.back()->getRandomRegionAlongPathToGoal(distribution);
 
 			if(regionAlongPath == goalRegionId && distribution(GlobalRandomGenerator) < goalBias) {
 				goal.draw();
@@ -316,8 +308,7 @@ public:
 
 			assert(activeRegion->getEdgeCount() != 0);
 
-			// unsigned int regionAlongPath = activeRegion->getRandomRegionAlongPathToGoal(distribution);
-			unsigned int regionAlongPath = activeRegion->getNextRegionAlongPathToGoal(distribution);
+			unsigned int regionAlongPath = activeRegion->getRandomRegionAlongPathToGoal(distribution);
 
 			if(regionAlongPath == goalRegionId && distribution(GlobalRandomGenerator) < goalBias) {
 				return std::make_pair(activeRegion->getNearestEdgeInRegion(goal), goal);
