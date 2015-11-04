@@ -96,7 +96,7 @@ class PlakuTreeInterface {
 		}
 
 		unsigned int getRandomRegionAlongPathToGoal(std::uniform_real_distribution<double> &distribution) const {
-			unsigned int randomIndex = (unsigned int)(distribution(GlobalRandomGenerator) * regionPath.size() / 4) + regionPath.size() / 4;
+			unsigned int randomIndex = (unsigned int)(distribution(GlobalRandomGenerator) * regionPath.size());
 			return regionPath[randomIndex];
 		}
 
