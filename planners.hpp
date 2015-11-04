@@ -151,13 +151,15 @@ void go_FBiasedShellRRT(const InstanceFileMap &args, const Agent &agent, const W
 	KDTreeType kdtreeType(1);
 	KDTree kdtree(kdtreeType, agent.getDistanceEvaluator(), agent.getTreeStateSize());
 
+	double shellPreference = args.doubleVal("Shell Preference");
+
 	double omega = args.doubleVal("FBias Omega");
 	double stateRadius = args.doubleVal("FBias State Selection Radius");
 
 	dfpair(stdout, "omega", "%g", omega);
 	dfpair(stdout, "state selection radius", "%g", stateRadius);
 
-	Sampler sampler(workspace, agent, kdtree, prmLite, start, goal, stateRadius, omega, false);
+	Sampler sampler(workspace, agent, kdtree, prmLite, start, goal, stateRadius, omega, false, shellPreference);
 
 	// double goalBias = args.exists("Goal Bias") ? args.doubleVal("Goal Bias") : 0;
 	// dfpair(stdout, "goal bias", "%g", goalBias);

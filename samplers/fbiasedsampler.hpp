@@ -10,7 +10,7 @@ class FBiasedSampler {
 	typedef typename Agent::StateVarRanges StateVarRanges;
 
 	struct Node {
-		Node() : g(std::numeric_limits<double>::infinity()), h(std::numeric_limits<double>::infinity()), inPDF(false) {}
+		Node() : g(std::numeric_limits<double>::infinity()), h(std::numeric_limits<double>::infinity()), inPDF(false), touched(false), pdfID(0) {}
 		static double getG(const Node &n) {
 			return n.g;
 		}
@@ -46,13 +46,14 @@ class FBiasedSampler {
 		unsigned int id;
 		double g, h, f;
 		double score;
-		bool inPDF;
+		bool inPDF, touched;
+		unsigned int pdfID;
 	};
 
 public:
 	FBiasedSampler(const Workspace &workspace, const Agent &agent, NN &nn, const WorkspaceDiscretization &discretization,
-	               const State &start, const State &goal, double stateRadius, double omega = 4, bool addAllRegions = true) :
-		workspace(workspace), agent(agent), nn(nn), discretization(discretization), omega(omega), stateRadius(stateRadius) {
+	               const State &start, const State &goal, double stateRadius, double omega = 4, bool addAllRegions = true, double shellPreference = 1) :
+		workspace(workspace), agent(agent), nn(nn), discretization(discretization), omega(omega), stateRadius(stateRadius), shellPreference(shellPreference) {
 
 		unsigned int startIndex = discretization.getCellId(start);
 		unsigned int goalIndex = discretization.getCellId(goal);
@@ -100,12 +101,17 @@ public:
 
 		if(addAllRegions) {
 			for(unsigned int i = 0; i < nodes.size(); ++i) {
-				pdf.add(&nodes[i], nodes[i].score);
+				auto el = pdf.add(&nodes[i], nodes[i].score);
+				nodes[i].pdfID = el->getId();
 				nodes[i].inPDF = true;
 			}
 		} else {
-			pdf.add(&nodes[startIndex], nodes[startIndex].score);
+			auto el = pdf.add(&nodes[startIndex], nodes[startIndex].score);
+			nodes[startIndex].pdfID = el->getId();
 			nodes[startIndex].inPDF = true;
+			Edge * e = new Edge(start);
+			reached(e, 0.5); //this should be passed in...
+			delete e;
 		}
 	}
 
@@ -148,6 +154,17 @@ public:
 
 		unsigned int start = discretization.getCellId(e->end);
 		lookup[start] = new node(start, 0, 0);
+		if(!nodes[start].touched) {
+			if(nodes[start].inPDF) {
+				nodes[start].score /= shellPreference;
+				pdf.update(start, nodes[start].score);
+			} else {
+				auto el = pdf.add(&nodes[start], nodes[start].score);
+				nodes[start].pdfID = el->getId();
+				nodes[start].inPDF = true;
+			}
+			nodes[start].touched = true;
+		}
 
 		open.push(lookup[start]);
 		while(!open.isEmpty()) {
@@ -178,7 +195,9 @@ public:
 			auto n = entry.first;
 			delete entry.second;
 			if(!nodes[n].inPDF) {
-				pdf.add(&nodes[n], nodes[n].score);
+				nodes[n].score *= shellPreference;
+				auto el = pdf.add(&nodes[n], nodes[n].score);
+				nodes[n].pdfID = el->getId();
 				nodes[n].inPDF = true;
 			}
 		}
@@ -281,7 +300,7 @@ private:
 	const WorkspaceDiscretization &discretization;
 	std::vector<Node> nodes;
 	ProbabilityDensityFunction<Node> pdf;
-	double omega, stateRadius;
+	double omega, stateRadius, shellPreference;
 };
 
 template <class W, class A, class N, class D>
