@@ -618,9 +618,9 @@ public:
 			newState[DPITCH] += ddpitch * stepSize;
 			newState[DYAW] += ddyaw * stepSize;
 
-			newState[ROLL] += newState[DROLL] * stepSize;
-			newState[PITCH] += newState[DPITCH] * stepSize;
-			newState[YAW] += newState[DYAW] * stepSize;
+			newState[ROLL] = normalizeTheta(newState[ROLL] + newState[DROLL] * stepSize);
+			newState[PITCH] = normalizeTheta(newState[PITCH] + newState[DPITCH] * stepSize);
+			newState[YAW] = normalizeTheta(newState[YAW] + newState[DYAW] * stepSize);
 
 			for(unsigned int i = DX; i <= DZ; i++) {
 				if(newState[i] > maximumVelocity) {
