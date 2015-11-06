@@ -24,6 +24,7 @@ std::default_random_engine GlobalRandomGenerator;
 #include "agents/dubins.hpp"
 #include "agents/snake_trailers.hpp"
 #include "agents/blimp.hpp"
+#include "agents/quadcopter.hpp"
 #include "agents/geometric.hpp"
 #include "agents/omnimultid.hpp"
 
@@ -120,6 +121,8 @@ int main(int argc, char *argv[]) {
 		pendulum(args);
 	else if(domain.compare("Blimp") == 0)
 		blimp(args);
+	else if(domain.compare("Quadcopter") == 0)
+		quadcopter(args);
 	// else if(domain.compare("Geometric") == 0)
 	// 	geometric(args);
 	else

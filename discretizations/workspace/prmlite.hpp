@@ -134,9 +134,9 @@ public:
 		return agent.getRandomStateNearAbstractState(vertices[index]->state, radius);
 	}
 
-	void draw(bool drawPoints=true, bool drawLines=false, std::vector<std::vector<double>> colors = std::vector<std::vector<double>>()) const {
+	void draw(bool drawPoints=true, bool drawLines=false, std::vector<std::vector<double>> colors = std::vector<std::vector<double>>(), const std::unordered_set<unsigned int> *includeThese = NULL) const {
 #ifdef WITHGRAPHICS
-		drawOpenGL(drawPoints, drawLines, colors);
+		drawOpenGL(drawPoints, drawLines, colors, includeThese);
 #endif
 #ifdef VREPPLUGIN
 		drawVREP(drawPoints, drawLines, colors);
@@ -258,12 +258,18 @@ protected:
 	}
 
 #ifdef WITHGRAPHICS
-	void drawOpenGL(bool drawPoints, bool drawLines, const std::vector<std::vector<double>> &colors) const {
+	void drawOpenGL(bool drawPoints, bool drawLines, const std::vector<std::vector<double>> &colors, const std::unordered_set<unsigned int> *includeThese = NULL) const {
 		if(drawPoints) {
 			glPointSize(5);
 			unsigned int curIndex = 0;
 			std::vector<double> white(3,1);
 			for(const auto vert : vertices) {
+				if(includeThese != NULL) {
+					if(includeThese->find(curIndex) == includeThese->end()) {
+						curIndex++;
+						continue;
+					}
+				}
 
 				if(colors.size() == 0) {
 					vert->state.draw();

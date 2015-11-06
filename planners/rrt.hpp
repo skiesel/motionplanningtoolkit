@@ -56,7 +56,6 @@ public:
 #ifdef WITHGRAPHICS
 			samples.push_back(treeSample.second);
 #endif
-
 			auto edge = agent.steer(treeSample.first->end, treeSample.second, steeringDT);
 
 			edge.updateParent(treeSample.first);

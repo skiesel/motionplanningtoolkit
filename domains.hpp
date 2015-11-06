@@ -30,6 +30,24 @@ void blimp(const InstanceFileMap &args) {
 	go<Workspace, Agent>(args, workspace, agent, start, goal);
 }
 
+void quadcopter(const InstanceFileMap &args) {
+	typedef Quadcopter Agent;
+	typedef Map3D<Agent> Workspace;
+
+	Agent agent(args);
+	Workspace workspace(args);
+
+	/* start and goal states */
+
+	auto startPosition = args.doubleList("Agent Start Location");	
+	Agent::State start(startPosition[0], startPosition[1], startPosition[2]);
+
+	auto goalPosition = args.doubleList("Agent Goal Location");
+	Agent::State goal(goalPosition[0], goalPosition[1], goalPosition[2]);
+
+	go<Workspace, Agent>(args, workspace, agent, start, goal);
+}
+
 // void snake(const InstanceFileMap &args) {
 // 	typedef SnakeTrailers Agent;
 // 	typedef Map3D<Agent> Workspace;

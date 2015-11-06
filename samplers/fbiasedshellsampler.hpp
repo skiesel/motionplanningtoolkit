@@ -167,6 +167,10 @@ public:
 		nodes[start].inExteriorPDF = false;
 		nodes[start].touched = true;
 
+#ifdef WITHGRAPHICS		
+		includeThese.insert(start);
+#endif
+
 		open.push(lookup[start]);
 		while(!open.isEmpty()) {
 			node *current = open.pop();
@@ -199,6 +203,9 @@ public:
 				auto el = exterior.add(&nodes[n], nodes[n].score);
 				nodes[n].pdfID = el->getId();
 				nodes[n].inExteriorPDF = true;
+#ifdef WITHGRAPHICS
+				includeThese.insert(n);
+#endif
 			}
 		}
 	}
@@ -207,8 +214,9 @@ public:
 		fprintf(stderr, "FBiasedShellSampler removed() not implemented\n");
 		exit(1);
 	}
-
 #ifdef WITHGRAPHICS
+std::unordered_set<unsigned int> includeThese;
+
 	void draw() const {
 		std::vector<std::vector<double>> colorLookup(nodes.size());
 
@@ -224,30 +232,11 @@ public:
 			colorLookup[i] = OpenGLWrapper::getColor(min, max, nodes[i].score);
 		}
 
-		discretization.draw(true, false, colorLookup);
+		discretization.draw(true, false, colorLookup, &includeThese);
 	}
 #endif
 
 private:
-
-	void dfsToDepth(unsigned int root, double value, std::unordered_map<unsigned int, double> &nodesInsideBound, double bound) const {
-		nodesInsideBound[root] = value;
-		std::vector<unsigned int> kids = discretization.getNeighboringCells(root);
-		for(auto kid : kids) {
-			double cost = value + discretization.getEdgeCostBetweenCells(root, kid);
-
-			if(nodesInsideBound.find(kid) != nodesInsideBound.end()) {
-				if(nodesInsideBound[kid] <= cost) {
-					continue;
-				}
-			}
-
-			if(cost < bound) {
-				dfsToDepth(kid, cost, nodesInsideBound, bound);
-			}
-		}
-	}
-
 	void dijkstraG(Node &start) {
 		Node::sort = Node::sortG;
 		dijkstra(start, Node::getG, Node::setG);

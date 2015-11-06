@@ -1,0 +1,33 @@
+Seed ? 1
+
+Agent Type ? Quadcopter
+Goal Thresholds ? 0.25 0.25 0.25
+
+Quadcopter Radius ? 0.25
+Quadcopter Inner Radius ? 0.1
+Quadcopter Height ? 0.1
+
+Quadcopter Mass ? 1
+Quadcopter Thrust ? 1
+Quadcopter Drag ? 0.1
+
+Minimum Velocity ? -1
+Maximum Velocity ? 1
+Minimum Angular Velocity ? -0.174533
+Maximum Angular Velocity ? 0.174533
+
+Minimum Prop Velocity ? -2
+Maximum Prop Velocity ? 2
+
+Environment Mesh ? ../mesh_models/environment_models/blimp_world.dxf
+Environment Location ? 0 0 0 1 0 0 0
+Environment Bounding Box ? -2.5 2.5 -2.5 2.5 0 1
+
+Steering Delta t ? 0.1
+Collision Check Delta t ? 0.05
+
+Integration Step Size ? 0.01
+
+Zoom ? 35
+#Rotate X ? 9
+#Rotate Y ? -9
