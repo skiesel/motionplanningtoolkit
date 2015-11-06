@@ -86,13 +86,25 @@ public:
 			fcl::Matrix3f rotation;
 			rotation.setIdentity();
 
-			// double sinVal = sin(stateVars[THETA]);
-			// double cosVal = cos(stateVars[THETA]);
+			double sinRoll = sin(stateVars[ROLL]);
+			double sinPitch = sin(stateVars[PITCH]);
+			double sinYaw = sin(stateVars[YAW]);
 
-			// rotation(0,0) = cosVal;
-			// rotation(1,0) = -sinVal;
-			// rotation(0,1) = sinVal;
-			// rotation(1,1) = cosVal;
+			double cosRoll = cos(stateVars[ROLL]);
+			double cosPitch = cos(stateVars[PITCH]);
+			double cosYaw = cos(stateVars[YAW]);
+
+			rotation(0,0) = cosPitch * cosYaw;
+			rotation(1,0) = -cosRoll * sinYaw + sinRoll * sinPitch * cosYaw;
+			rotation(2,0) = sinRoll * sinYaw + cosRoll * sinPitch * cosYaw;
+			
+			rotation(0,1) = cosPitch * sinYaw;
+			rotation(1,1) = cosRoll * cosYaw + sinRoll * sinPitch * sinYaw;
+			rotation(2,1) = -sinRoll * cosYaw + cosRoll * sinPitch * sinYaw;
+			
+			rotation(0,2) = -sinPitch;
+			rotation(1,2) = sinRoll * cosPitch;
+			rotation(2,2) = cosRoll * cosPitch;
 
 			return fcl::Transform3f(rotation, pose);
 		}
