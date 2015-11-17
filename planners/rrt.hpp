@@ -69,6 +69,10 @@ public:
 			if(!workspace.safeEdge(agent, edge, collisionCheckDT)) {
 				edgesRejected++;
 
+				Edge *e = pool.construct(edge);
+				rejectedTreeEdges.push_back(e);
+
+
 				if(iterationsAtATime > 0 && iterations >= iterationsAtATime) break;
 
 				continue;
@@ -130,6 +134,12 @@ public:
 
 		treeEdges.clear();
 
+		for(const Edge *edge : rejectedTreeEdges) {
+			edge->draw(OpenGLWrapper::Color::Blue());
+		}
+
+		rejectedTreeEdges.clear();
+
 		for(const State &sample : samples) {
 			sample.draw();
 		}
@@ -181,6 +191,7 @@ private:
 	boost::object_pool<Edge> pool;
 	std::vector<const Edge *> solution;
 	std::vector<const Edge *> treeEdges;
+	std::vector<const Edge *> rejectedTreeEdges;
 	std::vector<State> samples;
 	double solutionCost;
 	double steeringDT, collisionCheckDT;

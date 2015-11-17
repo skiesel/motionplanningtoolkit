@@ -2,6 +2,7 @@
 
 #include <random>
 #include <fcl/math/transform.h>
+#include <fcl/ccd/motion.h>
 
 namespace math {
 std::uniform_real_distribution<double> zeroToOne;
@@ -125,19 +126,6 @@ fcl::Quaternion3f slerp(fcl::Quaternion3f q1, fcl::Quaternion3f q2, double lambd
 	return normalize(q1 * coeff1 + q2 * coeff2);
 }
 
-fcl::Transform3f interpolateSingle(const fcl::Transform3f &t1, const fcl::Transform3f &t2, double percentage) {
-	assert(percentage < 1);
-
-	const fcl::Vec3f &v1 = t1.getTranslation();
-	const fcl::Vec3f &v2 = t2.getTranslation();
-
-	fcl::Vec3f position = v1 + (v2 - v1) * percentage;
-
-	fcl::Quaternion3f quaternion = slerp(t1.getQuatRotation(), t2.getQuatRotation(), percentage);
-
-	return fcl::Transform3f(quaternion, position);
-}
-
 std::vector<fcl::Transform3f> interpolate(const fcl::Transform3f &t1, const fcl::Transform3f &t2, double linearStepSize) {
 	std::vector<fcl::Transform3f> interpolationPoints;
 
@@ -153,21 +141,17 @@ std::vector<fcl::Transform3f> interpolate(const fcl::Transform3f &t1, const fcl:
 	}
 
 	unsigned int steps = totalLinearDistance / linearStepSize;
-	double percentageStep = linearStepSize / totalLinearDistance;
 
-	fcl::Vec3f vecStep = (v2 - v1) / steps;
-
-	const fcl::Quaternion3f &q1 = t1.getQuatRotation();
-	const fcl::Quaternion3f &q2 = t2.getQuatRotation();
-
+	fcl::InterpMotion interpolate(t1, t2);
 
 	interpolationPoints.emplace_back(t1);
 
 	fcl::Transform3f point(t1);
-	for(unsigned int i = 0; i < steps; ++i) {
-		fcl::Quaternion3f slerped = slerp(q1, q2, percentageStep * (double)(i+1));
-		point.setTransform(slerped, point.getTranslation() + vecStep);
-		interpolationPoints.emplace_back(point);
+	for(unsigned int i = 1; i < steps; ++i) {
+		fcl::Transform3f t;
+		interpolate.integrate((double)i / (double)steps);
+		interpolate.getCurrentTransform(t);
+		interpolationPoints.emplace_back(t);
 	}
 
 	interpolationPoints.emplace_back(t2);

@@ -48,32 +48,69 @@ void quadcopter(const InstanceFileMap &args) {
 	go<Workspace, Agent>(args, workspace, agent, start, goal);
 }
 
-// void snake(const InstanceFileMap &args) {
-// 	typedef SnakeTrailers Agent;
-// 	typedef Map3D<Agent> Workspace;
+void snake(const InstanceFileMap &args) {
+	typedef SnakeTrailers Agent;
+	typedef Map3D<Agent> Workspace;
 
-// 	Agent agent(args);
-// 	Workspace workspace(args);
+	Agent agent(args);
+	Workspace workspace(args);
 
-// 	/* start and goal states */
+	/* start and goal states */
 
-// 	auto startPosition = args.doubleList("Agent Start Location");
-// 	auto startOrientation =  args.doubleList("Agent Start Orientation");
+	auto startPosition = args.doubleList("Agent Start Location");
+	auto startOrientation =  args.doubleList("Agent Start Orientation");
 
-// 	Agent::StateVars startStateVars = startPosition;
-// 	startStateVars.push_back(0); //linear v
-// 	startStateVars.push_back(0); //angular v
+	Agent::StateVars startStateVars = startPosition;
+	startStateVars.push_back(0); //linear v
+	startStateVars.push_back(0); //angular v
 
-// 	startStateVars.insert(startStateVars.end(), startOrientation.begin(), startOrientation.end());
+	startStateVars.insert(startStateVars.end(), startOrientation.begin(), startOrientation.end());
 
-// 	Agent::State start(startStateVars);
+	Agent::State start(startStateVars);
 
-// 	auto goalPosition = args.doubleList("Agent Goal Location");
+	auto goalPosition = args.doubleList("Agent Goal Location");
 
-// 	Agent::State goal(goalPosition);
+	Agent::State goal(goalPosition);
 
-// 	// go<Workspace, Agent>(args, workspace, agent, start, goal);
-// }
+// 	auto edge = agent.steer(start, goal, args.doubleVal("Steering Delta t"));
+
+// #ifdef WITHGRAPHICS
+
+// 	bool wasSafe = true;
+// 	bool pause = false;
+
+// 	auto lambda = [&]() {
+
+// 		// if(pause) {
+// 		// 	std::cin.ignore();
+// 		// 	pause = false;
+// 		// }
+
+// 		// agent.drawMesh(start);
+// 		// start = agent.doSteps(start, 0, 0, args.doubleVal("Steering Delta t"));
+
+// 		// if(wasSafe != workspace.safeState(agent, start)) {
+// 		// 	if(workspace.safeState(agent, start)) { fprintf(stderr, "safe\n"); } else { fprintf(stderr, "collision\n"); }
+// 		// 	wasSafe = !wasSafe;
+// 		// 	pause = true;
+// 		// }
+
+// 		agent.getMeshPoses(edge, args.doubleVal("Collision Check Delta t"));
+
+// 		agent.drawMesh(edge.end);
+
+// 		edge = agent.steer(edge.end, goal, args.doubleVal("Steering Delta t"));
+
+// 		workspace.draw();
+// 	};
+// 	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
+// #else
+// 	planner.query(start, goal);
+// 	planner.dfpairs();
+// #endif
+
+	go<Workspace, Agent>(args, workspace, agent, start, goal);
+}
 
 // void geometric(const InstanceFileMap &args) {
 // 	typedef Geometric Agent;
@@ -99,98 +136,98 @@ void quadcopter(const InstanceFileMap &args) {
 // 	// go<Workspace, Agent>(args, workspace, agent, start, goal);
 // }
 
-void planarLinkage(const InstanceFileMap &args) {
-	assert(false);
-	// typedef PlanarLinkage Agent;
-	// typedef PlanarLinkage Workspace;
+// void planarLinkage(const InstanceFileMap &args) {
+// 	assert(false);
+// 	// typedef PlanarLinkage Agent;
+// 	// typedef PlanarLinkage Workspace;
 
-	// PlanarLinkage planarLinkage(args);
+// 	// PlanarLinkage planarLinkage(args);
 
-	// /* start and goal states */
+// 	// /* start and goal states */
 
-	// auto startPositionVars = args.doubleList("Agent Start Position");
-	// auto goalPositionVars = args.doubleList("Agent Goal Position");
+// 	// auto startPositionVars = args.doubleList("Agent Start Position");
+// 	// auto goalPositionVars = args.doubleList("Agent Goal Position");
 
-	// Agent::State start(startPositionVars);
-	// Agent::State goal(goalPositionVars);
+// 	// Agent::State start(startPositionVars);
+// 	// Agent::State goal(goalPositionVars);
 
-	// go<Workspace, Agent>(args, planarLinkage, planarLinkage, start, goal);
-}
+// 	// go<Workspace, Agent>(args, planarLinkage, planarLinkage, start, goal);
+// }
 
-void kink(const InstanceFileMap &args) {
-	typedef OmniMultiD Agent;
-	typedef Kink<Agent> Workspace;
+// void kink(const InstanceFileMap &args) {
+// 	typedef OmniMultiD Agent;
+// 	typedef Kink<Agent> Workspace;
 
-	Agent agent(args);
-	Workspace workspace(args);
+// 	Agent agent(args);
+// 	Workspace workspace(args);
 
-	/* start and goal states */
-	const int dimensions = args.integerVal("Dimensions");
-	BOOST_ASSERT_MSG(dimensions > 1, "Number of dimensions must be more than 1.");
+// 	/* start and goal states */
+// 	const int dimensions = args.integerVal("Dimensions");
+// 	BOOST_ASSERT_MSG(dimensions > 1, "Number of dimensions must be more than 1.");
 
-	// x, y coordinates
-	Agent::StateVars startPositionVars = {0.75, 0};
-	Agent::StateVars goalPositionVars = {0.25, 1};
+// 	// x, y coordinates
+// 	Agent::StateVars startPositionVars = {0.75, 0};
+// 	Agent::StateVars goalPositionVars = {0.25, 1};
 
-	for (int i = 2; i < dimensions; ++i) {
-		startPositionVars.push_back(0.5);
-		goalPositionVars.push_back(0.5);
-	}
+// 	for (int i = 2; i < dimensions; ++i) {
+// 		startPositionVars.push_back(0.5);
+// 		goalPositionVars.push_back(0.5);
+// 	}
 
-	Agent::State start(startPositionVars);
-	Agent::State goal(goalPositionVars);
+// 	Agent::State start(startPositionVars);
+// 	Agent::State goal(goalPositionVars);
 
-	go<Workspace, Agent>(args, workspace, agent, start, goal);
-}
+// 	go<Workspace, Agent>(args, workspace, agent, start, goal);
+// }
 
-void narrowPassage(const InstanceFileMap &args, const bool scaleObstacles) {
-	typedef OmniMultiD Agent;
-	typedef NarrowPassage<Agent> Workspace;
+// void narrowPassage(const InstanceFileMap &args, const bool scaleObstacles) {
+// 	typedef OmniMultiD Agent;
+// 	typedef NarrowPassage<Agent> Workspace;
 
-	Agent agent(args);
-	Workspace workspace(args, scaleObstacles);
+// 	Agent agent(args);
+// 	Workspace workspace(args, scaleObstacles);
 
-	/* start and goal states */
-	const int dimensions = args.integerVal("Dimensions");
-	BOOST_ASSERT_MSG(dimensions > 1, "Number of dimensions must be more than 1.");
+// 	/* start and goal states */
+// 	const int dimensions = args.integerVal("Dimensions");
+// 	BOOST_ASSERT_MSG(dimensions > 1, "Number of dimensions must be more than 1.");
 
-	// x, y coordinates
-	Agent::StateVars startPositionVars = {0, 0};
-	Agent::StateVars goalPositionVars = {0, 1};
+// 	// x, y coordinates
+// 	Agent::StateVars startPositionVars = {0, 0};
+// 	Agent::StateVars goalPositionVars = {0, 1};
 
-	for (int i = 2; i < dimensions; ++i) {
-		startPositionVars.push_back(0.5);
-		goalPositionVars.push_back(0.5);
-	}
+// 	for (int i = 2; i < dimensions; ++i) {
+// 		startPositionVars.push_back(0.5);
+// 		goalPositionVars.push_back(0.5);
+// 	}
 
-	Agent::State start(startPositionVars);
-	Agent::State goal(goalPositionVars);
+// 	Agent::State start(startPositionVars);
+// 	Agent::State goal(goalPositionVars);
 
-	go<Workspace, Agent>(args, workspace, agent, start, goal);
-}
+// 	go<Workspace, Agent>(args, workspace, agent, start, goal);
+// }
 
-void rectangleMap2D(const InstanceFileMap &args) {
-	typedef OmniMultiD Agent;
-	typedef RectangleMap2D<Agent> Workspace;
+// void rectangleMap2D(const InstanceFileMap &args) {
+// 	typedef OmniMultiD Agent;
+// 	typedef RectangleMap2D<Agent> Workspace;
 
-	Agent agent(args);
-	Workspace workspace(args);
+// 	Agent agent(args);
+// 	Workspace workspace(args);
 
-	Agent::State start(args.doubleList("Agent Start Location"));
-	Agent::State goal(args.doubleList("Agent Goal Location"));
+// 	Agent::State start(args.doubleList("Agent Start Location"));
+// 	Agent::State goal(args.doubleList("Agent Goal Location"));
 
-	go<Workspace, Agent>(args, workspace, agent, start, goal);
-}
+// 	go<Workspace, Agent>(args, workspace, agent, start, goal);
+// }
 
-void pendulum(const InstanceFileMap &args) {
+// void pendulum(const InstanceFileMap &args) {
 
-	Pendulum pendulum(args);
+// 	Pendulum pendulum(args);
 
-#ifdef WITHGRAPHICS
-	auto lambda = [&]() {
-		pendulum.draw();
-		std::cin.ignore();
-	};
-	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
-#endif
-}
+// #ifdef WITHGRAPHICS
+// 	auto lambda = [&]() {
+// 		pendulum.draw();
+// 		std::cin.ignore();
+// 	};
+// 	OpenGLWrapper::getOpenGLWrapper().runWithCallback(lambda, args);
+// #endif
+// }

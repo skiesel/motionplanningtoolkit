@@ -66,10 +66,10 @@ public:
 			}
 		}
 		
-		return !MeshHandler::isInCollision(mesh, agentMeshes, agentPoses, checkSelfCollision);;
+		return !MeshHandler::isInCollision(mesh, agentMeshes, agentPoses, checkSelfCollision);
 	}
 
-	bool safeStates(const Agent &agent, const std::vector<State> &states) const {
+	bool safeStates(const Agent &agent, const std::vector<State> &states, bool checkSelfCollision = false) const {
 		auto agentMeshes = agent.getMeshes();
 
 		std::vector<std::vector<fcl::Transform3f>> wrapper(states.size());
@@ -77,7 +77,7 @@ public:
 			wrapper[i].emplace_back(states[i].getMeshPoses());
 		}
 
-		return !MeshHandler::isInCollision(mesh, agentMeshes, wrapper);
+		return !MeshHandler::isInCollision(mesh, agentMeshes, wrapper, checkSelfCollision);
 	}
 
 	bool safeAbstractStates(const Agent &agent, const std::vector<AbstractState> &states) const {
@@ -91,10 +91,10 @@ public:
 		return !MeshHandler::isInCollision(mesh, agentMeshes, wrapper);
 	}
 
-	bool safeState(const Agent &agent, const State &state) const {
+	bool safeState(const Agent &agent, const State &state, bool checkSelfCollision = false) const {
 		auto agentMeshes = agent.getMeshes();
 		std::vector<std::vector<fcl::Transform3f>> wrapper(1, state.getMeshPoses());
-		return !MeshHandler::isInCollision(mesh, agentMeshes, wrapper);
+		return !MeshHandler::isInCollision(mesh, agentMeshes, wrapper, checkSelfCollision);
 	}
 
 	bool safeAbstractState(const Agent &agent, const AbstractState &state) const {

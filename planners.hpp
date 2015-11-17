@@ -13,6 +13,7 @@ void go_COMMON(const InstanceFileMap &args, Planner &planner,
 		// std::cin.ignore();
 		start.draw();
 		goal.draw();
+		agent.drawMesh(start);
 		workspace.draw();
 		planner.query(start, goal, 1000, firstIteration);
 		firstIteration = false;

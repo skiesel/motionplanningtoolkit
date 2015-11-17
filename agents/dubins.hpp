@@ -25,7 +25,6 @@
 #include <math.h>
 #include <assert.h>
 
-#include "abstracttransformstate.hpp"
 #include "../utilities/fcl_helpers.hpp"
 #include "../utilities/openglwrapper.hpp"
 #include "../utilities/instancefilemap.hpp"

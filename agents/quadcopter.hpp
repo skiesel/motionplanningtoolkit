@@ -3,7 +3,6 @@
 #include <cmath>
 #include <stdlib.h>
 #include <random>
-#include "abstracttransformstate.hpp"
 #include "../utilities/fcl_helpers.hpp"
 #include "../utilities/openglwrapper.hpp"
 #include "../utilities/instancefilemap.hpp"
@@ -25,7 +24,7 @@ class Quadcopter {
 	};
 
 public:
-	typedef AbstractTransformState AbstractState;
+	typedef AbstractFullTransformState AbstractState;
 	typedef std::vector<AbstractState> AbstractEdge;
 
 	typedef std::vector< std::pair<double, double> > WorkspaceBounds;

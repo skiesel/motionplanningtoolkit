@@ -236,7 +236,9 @@ protected:
 				}
 
 				double cost = AbstractState::evaluateDistance(vertices[i]->state, endVertex->state);
-				if(cost == 0) continue;
+				if(cost == 0) {
+					continue;
+				}
 
 				AbstractEdge edgeCandidate = agent.generateAbstractEdge(vertices[i]->state, endVertex->state);
 

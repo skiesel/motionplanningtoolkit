@@ -20,13 +20,19 @@ std::default_random_engine GlobalRandomGenerator;
 #include "workspaces/rectanglemap2d.hpp"
 #include "workspaces/pendulum.hpp"
 
-#include "agents/omnidirectional.hpp"
-#include "agents/dubins.hpp"
+
+#include "state_abstractions/abstractxyztransformstate.hpp"
+#include "state_abstractions/abstractxyzthetatransformstate.hpp"
+#include "state_abstractions/abstractxythetatransformstate.hpp"
+#include "state_abstractions/abstractfulltransformstate.hpp"
+
+// #include "agents/omnidirectional.hpp"
+// #include "agents/dubins.hpp"
 #include "agents/snake_trailers.hpp"
 #include "agents/blimp.hpp"
 #include "agents/quadcopter.hpp"
-#include "agents/geometric.hpp"
-#include "agents/omnimultid.hpp"
+// #include "agents/geometric.hpp"
+// #include "agents/omnimultid.hpp"
 
 #include "planners/anytimerrt.hpp"
 #include "planners/anytimeest.hpp"
@@ -103,22 +109,23 @@ int main(int argc, char *argv[]) {
 
 	dfpair(stdout, "Agent Type", "%s", domain.c_str());
 
-	if(domain.compare("PlanarLinkage") == 0)
-		planarLinkage(args);
+	// if(domain.compare("PlanarLinkage") == 0)
+	// 	planarLinkage(args);
 	// else if(args.value("Agent Type").compare("Dubins") == 0)
 	// 	dubins(args);
-	// else if(domain.compare("Snake") == 0)
-	// 	snake(args);
-	else if(domain.compare("Kink") == 0)
-		kink(args);
-	else if(domain.compare("NarrowPassageFull") == 0)
-		narrowPassage(args, false);
-	else if(domain.compare("NarrowPassageHalf") == 0)
-		narrowPassage(args, true);
-	else if(domain.compare("Rectangle Map") == 0)
-		rectangleMap2D(args);
-	else if(domain.compare("Pendulum") == 0)
-		pendulum(args);
+	// else
+	if(domain.compare("Snake") == 0)
+		snake(args);
+	// else if(domain.compare("Kink") == 0)
+	// 	kink(args);
+	// else if(domain.compare("NarrowPassageFull") == 0)
+	// 	narrowPassage(args, false);
+	// else if(domain.compare("NarrowPassageHalf") == 0)
+	// 	narrowPassage(args, true);
+	// else if(domain.compare("Rectangle Map") == 0)
+	// 	rectangleMap2D(args);
+	// else if(domain.compare("Pendulum") == 0)
+	// 	pendulum(args);
 	else if(domain.compare("Blimp") == 0)
 		blimp(args);
 	else if(domain.compare("Quadcopter") == 0)
