@@ -241,16 +241,16 @@ public:
 
 	class Edge {
 	public:
-		Edge(const State &start) : start(start), end(start), cost(0), dt(0), a(0), w(0), g(0), treeIndex(0) {
+		Edge(const State &start) : start(start), end(start), cost(0), dt(0), a(0), w(0), g(0), treeIndex(0), parent(NULL) {
 			populateTreeStateVars();
 		}
 
 		Edge(const State &start, const State &end, double cost, double a, double w) : start(start), end(end),
-			cost(cost), dt(cost), a(a), w(w), g(0), treeIndex(0) {
+			cost(cost), dt(cost), a(a), w(w), g(0), treeIndex(0), parent(NULL) {
 			populateTreeStateVars();
 		}
 
-		Edge(const Edge &e) : start(e.start), end(e.end), cost(e.cost), dt(e.dt), a(e.a), w(e.w), g(e.g), treeIndex(e.treeIndex) {
+		Edge(const Edge &e) : start(e.start), end(e.end), cost(e.cost), dt(e.dt), a(e.a), w(e.w), g(e.g), treeIndex(e.treeIndex), parent(e.parent) {
 			populateTreeStateVars();
 		}
 
