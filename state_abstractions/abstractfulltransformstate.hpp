@@ -2,6 +2,30 @@
 
 class AbstractFullTransformState {
 public:
+	static AbstractFullTransformState getAbstractState(const std::vector<double> &values) {
+		assert(values.size() == 6);
+
+		AbstractFullTransformState newState;
+
+		fcl::Vec3f pose(values[0], values[1], values[2]);
+
+		double sinGamma = sin(values[3]);
+		double cosGamma = cos(values[3]);
+		double sinBeta = sin(values[4]);
+		double cosBeta = cos(values[4]);
+		double sinAlpha = sin(values[5]);
+		double cosAlpha = cos(values[5]);
+
+		fcl::Matrix3f orientation(
+			cosAlpha * cosBeta, 	cosAlpha * sinBeta * sinGamma - sinAlpha * cosGamma, 	cosAlpha * sinBeta * cosGamma + sinAlpha * sinGamma,
+			sinAlpha * cosBeta, 	sinAlpha * sinBeta * sinGamma + cosAlpha * cosGamma, 	sinAlpha * sinBeta * cosGamma - cosAlpha * sinGamma,
+			-sinBeta, 				cosBeta * sinGamma, 									cosBeta * cosGamma);
+
+		newState.transform = fcl::Transform3f(orientation, pose);		
+
+		return newState;		
+	}
+
 	static AbstractFullTransformState getRandomAbstractState(const std::vector< std::pair<double, double> > &bounds) {
 		assert(bounds.size() == 6);
 

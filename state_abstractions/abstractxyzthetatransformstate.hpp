@@ -2,6 +2,22 @@
 
 class AbstractXYZThetaTransformState {
 public:
+	static AbstractXYZThetaTransformState getAbstractState(const std::vector<double> &values) {
+		assert(values.size() == 4);
+
+		AbstractXYZThetaTransformState newState;
+
+		fcl::Vec3f pose(values[0], values[1], values[2]);
+
+		fcl::Vec3f zAzis(0,0,1);
+		fcl::Quaternion3f quat;
+		quat.fromAxisAngle(zAzis, newState.treeStateVars.back());
+
+		newState.transform = fcl::Transform3f(quat, pose);
+
+		return newState;
+	}
+
 	static AbstractXYZThetaTransformState getRandomAbstractState(const std::vector< std::pair<double, double> > &bounds) {
 		assert(bounds.size() == 4);
 

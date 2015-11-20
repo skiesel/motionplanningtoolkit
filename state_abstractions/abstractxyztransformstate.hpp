@@ -2,6 +2,18 @@
 
 class AbstractXYZTransformState {
 public:
+	static AbstractXYZTransformState getAbstractState(const std::vector<double> &values) {
+		assert(values.size() == 3);
+
+		AbstractXYZTransformState newState;
+
+		fcl::Vec3f pose(values[0], values[1], values[2]);
+
+		newState.transform = fcl::Transform3f(pose);
+
+		return newState;
+	}
+
 	static AbstractXYZTransformState getRandomAbstractState(const std::vector< std::pair<double, double> > &bounds) {
 		assert(bounds.size() == 3);
 
