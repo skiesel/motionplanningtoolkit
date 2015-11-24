@@ -301,7 +301,7 @@ public:
 	}
 
 	unsigned int getTreeAbstractStateSize() const {
-		return 3;
+		return 4;
 	}
 
 	StateVarRanges getStateVarRanges(const WorkspaceBounds &b) const {
@@ -316,8 +316,7 @@ public:
 
 	StateVarRanges getAbstractStateVarRanges(const WorkspaceBounds &b) const {
 		StateVarRanges bounds(b.begin(), b.end());
-		// bounds.emplace_back(0, 2*M_PI);
-
+		bounds.emplace_back(-M_PI, M_PI);
 		return bounds;
 	}
 
@@ -436,7 +435,7 @@ public:
 		s.treeStateVars.push_back(state.stateVars[X]);
 		s.treeStateVars.push_back(state.stateVars[Y]);
 		s.treeStateVars.push_back(state.stateVars[Z]);
-		// s.treeStateVars.push_back(state.stateVars[THETA]);
+		s.treeStateVars.push_back(state.stateVars[THETA]);
 
 		s.transform = state.toFCLTransform();
 

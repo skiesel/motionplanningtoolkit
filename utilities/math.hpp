@@ -142,15 +142,37 @@ std::vector<fcl::Transform3f> interpolate(const fcl::Transform3f &t1, const fcl:
 
 	unsigned int steps = totalLinearDistance / linearStepSize;
 
-	fcl::InterpMotion interpolate(t1, t2);
+	const auto &quat1 = t1.getQuatRotation();
+	const auto &quat2 = t2.getQuatRotation();
+	
+	if(!(quat1.isIdentity() && quat2.isIdentity()) &&
+		fabs(quat1.getW() - quat2.getW()) <= 0.000001 &&
+		fabs(quat1.getX() - quat2.getX()) <= 0.000001 &&
+		fabs(quat1.getY() - quat2.getY()) <= 0.000001 &&
+		fabs(quat1.getZ() - quat2.getZ()) <= 0.000001) {
+
+		fcl::Transform3f newT1(t1.getTranslation());
+		fcl::Transform3f newT2(t2.getTranslation());
+
+		auto steps = interpolate(newT1, newT2, linearStepSize);
+
+		for(auto &step : steps) {
+			step.setQuatRotation(quat1);
+		}	
+
+		return steps;
+	}
+
+	fcl::InterpMotion interpolation(t1, t2);
+
 
 	interpolationPoints.emplace_back(t1);
 
 	fcl::Transform3f point(t1);
 	for(unsigned int i = 1; i < steps; ++i) {
 		fcl::Transform3f t;
-		interpolate.integrate((double)i / (double)steps);
-		interpolate.getCurrentTransform(t);
+		interpolation.integrate((double)i / (double)steps);
+		interpolation.getCurrentTransform(t);
 		interpolationPoints.emplace_back(t);
 	}
 

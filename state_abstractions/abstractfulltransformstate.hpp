@@ -7,6 +7,8 @@ public:
 
 		AbstractFullTransformState newState;
 
+		newState.treeStateVars = values;
+
 		fcl::Vec3f pose(values[0], values[1], values[2]);
 
 		double sinGamma = sin(values[3]);
@@ -21,7 +23,7 @@ public:
 			sinAlpha * cosBeta, 	sinAlpha * sinBeta * sinGamma + cosAlpha * cosGamma, 	sinAlpha * sinBeta * cosGamma - cosAlpha * sinGamma,
 			-sinBeta, 				cosBeta * sinGamma, 									cosBeta * cosGamma);
 
-		newState.transform = fcl::Transform3f(orientation, pose);		
+		newState.transform = fcl::Transform3f(orientation, pose);
 
 		return newState;		
 	}

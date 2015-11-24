@@ -7,11 +7,13 @@ public:
 
 		AbstractXYZThetaTransformState newState;
 
+		newState.treeStateVars = values;
+
 		fcl::Vec3f pose(values[0], values[1], values[2]);
 
 		fcl::Vec3f zAzis(0,0,1);
 		fcl::Quaternion3f quat;
-		quat.fromAxisAngle(zAzis, newState.treeStateVars.back());
+		quat.fromAxisAngle(zAzis, values[3]);
 
 		newState.transform = fcl::Transform3f(quat, pose);
 

@@ -7,11 +7,13 @@ public:
 
 		AbstractXYThetaTransformState newState;
 
+		newState.treeStateVars = values;
+
 		fcl::Vec3f pose(values[0], values[1], 0);
 
 		fcl::Vec3f zAzis(0,0,1);
 		fcl::Quaternion3f quat;
-		quat.fromAxisAngle(zAzis, newState.treeStateVars.back());
+		quat.fromAxisAngle(zAzis, values[2]);
 
 		newState.transform = fcl::Transform3f(quat, pose);
 
@@ -48,7 +50,7 @@ public:
 	static double evaluateDistance(const AbstractXYThetaTransformState &a, const AbstractXYThetaTransformState &b) {
 		assert(a.treeStateVars.size() == b.treeStateVars.size());
 		double sum = 0;
-		for(unsigned int i = 0; i < 3; ++i) {
+		for(unsigned int i = 0; i < 2; ++i) {
 			double diff = a.treeStateVars[i] - b.treeStateVars[i];
 			sum += diff * diff;
 		}

@@ -7,6 +7,8 @@ public:
 
 		AbstractXYZTransformState newState;
 
+		newState.treeStateVars = values;
+
 		fcl::Vec3f pose(values[0], values[1], values[2]);
 
 		newState.transform = fcl::Transform3f(pose);

@@ -303,7 +303,10 @@ public:
 	}
 
 	StateVarRanges getAbstractStateVarRanges(const WorkspaceBounds &b) const {
-		StateVarRanges bounds(b.begin(), b.end());
+		StateVarRanges bounds(b.begin(), b.end()); //XYZ
+		bounds.emplace_back(-M_PI, M_PI); //ROLL
+		bounds.emplace_back(-M_PI, M_PI); //PITCH
+		bounds.emplace_back(-M_PI, M_PI); //YAW
 		return bounds;
 	}
 
