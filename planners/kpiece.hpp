@@ -4,8 +4,12 @@
 #include <boost/pool/object_pool.hpp>
 
 #include <ompl/base/spaces/SE3StateSpace.h>
+#include <ompl/base/spaces/RealVectorStateProjections.h>
+#include <ompl/base/ProjectionEvaluator.h>
+
 #include <ompl/control/spaces/RealVectorControlSpace.h>
 #include <ompl/control/planners/kpiece/KPIECE1.h>
+
 
 template<class Workspace, class Agent>
 class KPIECE {
@@ -117,7 +121,12 @@ public:
 		kpiece->setMaxCloseSamplesCount(stol(args.value("KPIECE Max Close Samples")));
 		dfpair(stdout, "max closed samples", "%u", stol(args.value("KPIECE Max Close Samples")));
 
-		//kpiece->setProjectionEvaluator();
+
+		ompl::base::RealVectorRandomLinearProjectionEvaluator *projectionEvaluator = new ompl::base::RealVectorRandomLinearProjectionEvaluator(baseSpace, stateSpaceDim);
+
+		ompl::base::ProjectionEvaluatorPtr projectionPtr = ompl::base::ProjectionEvaluatorPtr(projectionEvaluator);
+
+		kpiece->setProjectionEvaluator(projectionPtr);
 	}
 
 	~KPIECE() {}
@@ -154,12 +163,20 @@ public:
 		resultState->valid = workspace.safeEdge(agent, edge, collisionCheckDT);
 
 		if(resultState->valid) {
+#ifdef WITHGRAPHICS
+			treeEdges.push_back(resultState->agentEdge);
+#endif
 			edgesAdded++;
 		} else {
+#ifdef WITHGRAPHICS
+			rejectedTreeEdges.push_back(resultState->agentEdge);
+#endif
 			edgesRejected++;
 		}
 
 		resultState->agentEdge->updateParent(state->agentEdge);
+
+		// edge.end.print();
 
 		if(agent.isGoal(edge.end, *agentGoal)) {
 			goalEdge = new typename Agent::Edge(edge);
@@ -218,6 +235,16 @@ public:
 		// 	fprintf(stderr, "did not find goal\n");
 		// }
 
+#ifdef WITHGRAPHICS
+		for(const typename Agent::Edge *edge : treeEdges) {
+			edge->draw(OpenGLWrapper::Color::Red());
+		}
+
+		for(const typename Agent::Edge *edge : rejectedTreeEdges) {
+			edge->draw(OpenGLWrapper::Color::Blue());
+		}
+#endif
+
 		if(goalEdge != NULL) {
 			fprintf(stderr, "found goal\n");
 
@@ -237,6 +264,7 @@ public:
 
 		dfpair(stdout, "solution cost", "-1");
 		dfpair(stdout, "solution length", "-1");
+
 		return std::vector<const typename Agent::Edge *>();
 	}
 
@@ -259,4 +287,7 @@ private:
 	double collisionCheckDT;
 
 	unsigned int samplesGenerated, edgesAdded, edgesRejected;
+	
+	std::vector<const typename Agent::Edge *> treeEdges;
+	std::vector<const typename Agent::Edge *> rejectedTreeEdges;
 };
